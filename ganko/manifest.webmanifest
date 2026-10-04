@@ -1,6 +1,6 @@
 {
- "name": "Mollet Xi",
- "short_name": "Mollet Xi",
+ "name": "耐久がんこちゃん",
+ "short_name": "がんこちゃん",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",
@@ -8,7 +8,7 @@
  "background_color": "#0b0f10",
  "theme_color": "#0b0f10",
  "lang": "ja",
- "description": "計測・CDIの書き換え・セッティング",
+ "description": "耐久レースのメーター・ピット・セッティング",
  "icons": [
   {
    "src": "icon-192.png",

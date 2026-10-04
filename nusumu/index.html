@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f10">
+<title>Mollet Xi データ盗む君</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+/* Mollet Xi シリーズ：データ盗む君。暗い配色、スマホは下にタブ */
+:root{
+  --bg:#0b0f10; --panel:#131a1c; --panel2:#1a2326; --panel3:#212c30; --line:#27363b; --ink:#e9f0f1; --ink2:#a3b3b7; --mute:#6f8287;
+  --acc:#b58cff; --acc-ink:#140a26; --acc-soft:#2a2040; --org:#f0a040;
+  --good:#62d26f; --warn:#f5c542; --bad:#ff5a4f; --info:#58c6d4;
+  --good-soft:#15301a; --warn-soft:#352c10; --bad-soft:#3a1715; --info-soft:#12303a;
+  --grid:#1f2b2f; --hdr:rgba(11,15,16,.94); --nav:#0e1416;
+  --f-ui:"BIZ UDPGothic","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,system-ui,sans-serif;
+  --f-num:"Barlow Condensed","Roboto Condensed","Arial Narrow","sans-serif-condensed",system-ui,sans-serif;
+  --r:12px; --tabh:60px; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.55;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.hint{color:var(--ink2);font-size:13.5px;margin:4px 0}
+.mute{color:var(--mute)} .good{color:var(--good)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+header.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:calc(6px + env(safe-area-inset-top,0px)) 12px 6px;background:var(--hdr);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);min-height:50px}
+.brand{display:flex;flex-direction:column;line-height:1.1;white-space:nowrap}
+.brand small{font-family:var(--f-num);font-size:12px;letter-spacing:.08em;color:var(--ink2);font-weight:600}
+.brand b{font-size:19px;font-weight:700;letter-spacing:.02em}
+.brand b i{font-style:normal;color:var(--acc)}
+.chips{display:flex;gap:6px;margin-left:auto;min-width:0;overflow-x:auto;scrollbar-width:none}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 11px;font-size:12.5px;white-space:nowrap}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--mute);flex:none}
+.chip.on i{background:var(--good);box-shadow:0 0 6px var(--good)} .chip.half i{background:var(--warn)} .chip.rec i{background:var(--bad);box-shadow:0 0 6px var(--bad);animation:bl 1s infinite}
+.chip.demo{border-color:var(--org);color:var(--org)}
+@keyframes bl{50%{opacity:.25}}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;display:grid;grid-template-columns:repeat(4,1fr);background:var(--nav);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs button{background:none;border:0;padding:8px 2px 7px;min-height:var(--tabh);display:grid;justify-items:center;gap:2px;color:var(--ink2);font-size:12px}
+nav.tabs button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button[aria-selected="true"]{color:var(--acc)}
+main{padding:12px 12px calc(var(--tabh) + 24px + env(safe-area-inset-bottom,0px));max-width:980px;margin:0 auto}
+@media (min-width:960px){nav.tabs{top:0;right:auto;width:92px;grid-template-columns:1fr;grid-auto-rows:min-content;padding-top:64px;border-top:0;border-right:1px solid var(--line)} header.top{padding-left:104px} main{padding:16px 20px 40px 112px}}
+h2.tt{font-size:18px;margin:4px 0 10px}
+h3{font-size:15.5px;margin:0 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h3 .sp{margin-left:auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;margin:0 0 12px;min-width:0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.end{justify-content:flex-end}
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:10px;padding:9px 14px;min-height:42px;font-weight:700}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.btn.red{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.ghost{background:transparent}
+.btn.sm{min-height:34px;padding:5px 11px;font-size:13.5px}
+.btn:disabled{opacity:.4;cursor:default}
+.big{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.gauge{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0;overflow:hidden}
+.gauge .lab{font-size:12.5px;color:var(--ink2);font-weight:700}
+.gauge .v{font-family:var(--f-num);font-size:clamp(34px,10vw,78px);white-space:nowrap;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.gauge .v small{font-size:.3em;color:var(--ink2);margin-left:3px}
+.gauge.ang .v{color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}
+.stat{background:var(--panel2);border-radius:9px;padding:6px 8px;min-width:0}
+.stat b{display:block;font-family:var(--f-num);font-size:22px;line-height:1.1}
+.stat span{font-size:11.5px;color:var(--ink2)}
+@media (max-width:420px){.stats{grid-template-columns:repeat(2,1fr)}}
+canvas.ch{display:block;width:100%;height:280px;background:var(--panel2);border-radius:10px;touch-action:pan-y}
+.leg{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--ink2);margin-top:6px}
+.leg i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+label.f{display:grid;gap:4px;font-size:13.5px;color:var(--ink2);font-weight:700}
+input[type=number],input[type=text]{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 10px;min-height:44px;width:100%;font-family:var(--f-num);font-size:20px}
+input[type=text]{font-family:var(--f-ui);font-size:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ol.st{margin:4px 0;padding-left:1.3em} ol.st li{margin:5px 0}
+.note{border-left:3px solid var(--acc);background:var(--acc-soft);padding:8px 12px;border-radius:0 8px 8px 0;margin:8px 0;font-size:14px}
+.note.warn{border-color:var(--warn);background:var(--warn-soft)} .note.bad{border-color:var(--bad);background:var(--bad-soft)}
+.list{display:grid;gap:8px}
+.item{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.item .nm{flex:1;min-width:0}
+.item .nm b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .nm small{color:var(--ink2)}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{font-size:12px;color:var(--ink2);background:var(--panel2);position:sticky;top:0}
+td:first-child,th:first-child{text-align:left}
+tr:last-child td{border-bottom:0}
+td.dim{color:var(--mute)}
+.pill{display:inline-block;font-size:11.5px;border-radius:999px;padding:1px 8px;background:var(--panel3);color:var(--ink2);font-weight:700}
+.pill.acc{background:var(--acc-soft);color:var(--acc)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55)}
+.sheet .in{background:var(--panel);border:1px solid var(--line);border-radius:16px 16px 0 0;width:100%;max-width:560px;max-height:86vh;overflow:auto;padding:14px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.sheet h3{font-size:17px}
+#toast{position:fixed;left:50%;bottom:calc(var(--tabh) + 18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:14px;z-index:50;max-width:90vw;text-align:center}
+.help h3{margin-top:14px}
+.help p,.help li{font-size:14.5px}
+code{font-family:ui-monospace,Consolas,monospace;background:var(--panel3);padding:1px 6px;border-radius:5px;font-size:13px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><small>MOLLET XI</small><b>データ<i>盗む</i>君</b></div>
+  <div class="chips"><span class="chip" id="cRec" hidden><i></i>記録中</span><span class="chip" id="cDev"><i></i><span>つながっていません</span></span></div>
+</header>
+<main>
+<!-- ================= 測る ================= -->
+<section class="tab" id="t-live">
+  <div class="card" id="connCard">
+    <h3>データ盗む君につなぐ</h3>
+    <p class="hint">データ盗む君（ESP32）にモバイルバッテリーをつないでから「つなぐ」。機械が無くても「デモ」で動きを見られます。</p>
+    <div class="row"><button class="btn pri" id="bConn">Bluetoothでつなぐ</button><button class="btn" id="bUsb" hidden>USBでつなぐ</button><button class="btn ghost" id="bDemo">デモ</button></div>
+  </div>
+  <div class="big">
+    <div class="gauge"><div class="lab">回転（パルサーから）</div><div class="v"><span id="vRpm">---</span><small>rpm</small></div></div>
+    <div class="gauge ang"><div class="lab" id="lAng">進角</div><div class="v"><span id="vAng">--.-</span><small id="uAng">°BTDC</small></div></div>
+  </div>
+  <div class="stats">
+    <div class="stat"><b class="num" id="sPul">-</b><span>パルサー /秒</span></div>
+    <div class="stat"><b class="num" id="sSpk">-</b><span>火花 /秒</span></div>
+    <div class="stat"><b class="num" id="sMis">0</b><span>火が飛ばない回転</span></div>
+    <div class="stat"><b class="num" id="sN">0</b><span>記録した点</span></div>
+  </div>
+  <div class="note warn" id="calWarn" hidden>まだ<b>基準合わせ</b>をしていません。今出ている角度は「最初の値からの差」です。記録はこのままできて、あとで基準を入れれば正しい角度に直ります。</div>
+  <div class="card" style="margin-top:12px">
+    <h3>回転と進角<span class="sp pill" id="chSrc">今の走り</span></h3>
+    <canvas class="ch" id="cvLive" aria-label="回転と進角のグラフ"></canvas>
+    <div class="leg"><span><i style="background:#b58cff"></i>1発ずつ</span><span><i style="background:#f0a040;height:4px"></i>まん中の値（記録中）</span></div>
+  </div>
+  <div class="card">
+    <h3>記録（点火マップを取る）</h3>
+    <p class="hint" id="recHint">走りながら、低い回転から高い回転まで何回か回すと、回転ごとの点火時期がたまっていきます。リミッターも拾います。</p>
+    <div class="row"><button class="btn pri" id="bRec">記録を始める</button><button class="btn" id="bRecStop" hidden>止めて保存</button><button class="btn ghost" id="bRecDrop" hidden>捨てる</button></div>
+  </div>
+</section>
+
+<!-- ================= 基準 ================= -->
+<section class="tab" id="t-cal" hidden>
+  <h2 class="tt">基準合わせ（アイドリングで1回）</h2>
+  <div class="card">
+    <ol class="st">
+      <li>エンジンをかけて、<b>アイドリング</b>で回転を落ち着かせる</li>
+      <li>タコメーターの回転数と、<b>タイミングライト</b>で読んだ進角（°BTDC）を下に入れる</li>
+      <li>下の「今の値」が落ち着いている時に <b>「この値で基準を決める」</b></li>
+    </ol>
+    <div class="grid2" style="margin-top:10px">
+      <label class="f">タコメーターの回転数<input type="number" id="iTach" inputmode="numeric" placeholder="1800"></label>
+      <label class="f">タイミングライトの進角（°BTDC）<input type="number" id="iAdv" inputmode="decimal" step="0.5" placeholder="15"></label>
+    </div>
+    <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat"><b class="num" id="cRpm">-</b><span>今の回転（3秒）</span></div>
+      <div class="stat"><b class="num" id="cPh">-</b><span>今の位相</span></div>
+      <div class="stat"><b class="num" id="cSd">-</b><span>ゆれ（°）</span></div>
+    </div>
+    <div class="note warn" id="calMsg" hidden></div>
+    <div class="row end" style="margin-top:10px"><button class="btn pri" id="bCal" disabled>この値で基準を決める</button></div>
+  </div>
+  <div class="card">
+    <h3>今の基準</h3>
+    <div id="calNow" class="hint">まだありません</div>
+    <div class="row end"><button class="btn ghost sm" id="bCalDel" hidden>基準を消す</button></div>
+  </div>
+  <div class="card help">
+    <h3>基準のしくみ</h3>
+    <p>データ盗む君は、パルサーの信号から火花までの時間を測って、「1回転のうちどこで火花が飛んだか（位相）」を出します。パルサーが上死点の何°前にあるかは車ごとに違うので、アイドリングの1点だけタイミングライトで角度を教えると、あとは全部の回転で角度に直せます。</p>
+    <p>基準は、あとから入れ直しても大丈夫です。記録したマップは、いつでも今の基準で計算し直します。</p>
+  </div>
+</section>
+
+<!-- ================= マップ ================= -->
+<section class="tab" id="t-map" hidden>
+  <h2 class="tt">盗んだマップ</h2>
+  <div class="list" id="mapList"></div>
+  <div id="mapView" hidden>
+    <div class="card">
+      <h3><span id="mvName"></span><span class="sp"><button class="btn ghost sm" id="mvBack">一覧へ</button></span></h3>
+      <p class="hint" id="mvSum"></p>
+      <canvas class="ch" id="cvMap" aria-label="盗んだマップのグラフ"></canvas>
+      <div class="leg"><span><i style="background:#f0a040;height:4px"></i>まん中の値</span><span><i style="background:rgba(181,140,255,.45);height:10px"></i>ばらつき（半分が入る幅）</span><span><i style="background:#ff5a4f"></i>リミッター</span></div>
+      <div class="tbl"><table><thead><tr><th>回転</th><th>進角 °BTDC</th><th>ばらつき</th><th>点の数</th></tr></thead><tbody id="mvTbl"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h3>使う</h3>
+      <div class="row"><button class="btn pri" id="mvMx">SHIRATAKI（Mollet Xi）に送る</button><button class="btn" id="mvCsv">CSVで保存</button><button class="btn ghost" id="mvRen">名前を変える</button><button class="btn ghost" id="mvDel">削除</button></div>
+      <p class="hint" id="mvMxHint"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 使い方 ================= -->
+<section class="tab help" id="t-help" hidden>
+  <h2 class="tt">使い方</h2>
+  <div class="card">
+    <h3>1. 車体につなぐ（3本だけ）</h3>
+    <ol class="st">
+      <li><b>パルサーの線</b>（今の CDI へ行っている線）に、データ盗む君の「パルサー」の線を<b>並べてつなぐ</b>（タップ）。CDI の線は切らない。カプラの後ろから細い針を差してワニ口でつまむか、ギボシの Y 分岐で</li>
+      <li><b>車体アース</b>の線を、フレームのボルトかアースの線にワニ口でつなぐ（パルサーが2本線の時は、パルサーのもう1本へ）</li>
+      <li>細い線を<b>プラグコードに 3〜5回</b>巻いて、両端を「巻線①②」へ</li>
+      <li>ESP32 の USB に<b>モバイルバッテリー</b></li>
+    </ol>
+    <p class="hint">「パルサー /秒」と「火花 /秒」が、どちらも回転÷60 くらいになれば OK。火花が0なら巻線①②を入れ替えます。</p>
+  </div>
+  <div class="card">
+    <h3>2. 基準合わせ（アイドリングで1回）</h3>
+    <p>「基準」のタブで、タコメーターの回転とタイミングライトの角度を入れて決めます。</p>
+  </div>
+  <div class="card">
+    <h3>3. 走って記録</h3>
+    <p>「記録を始める」を押して走ります。低い回転から上まで、何回か回してください。1000rpm ごとに数十点たまれば、その回転は信用できます。グラフの点が縦に広がる所は、CDI が回転以外（加速中など）でも角度を変えている所です。</p>
+  </div>
+  <div class="card">
+    <h3>4. 使う</h3>
+    <p>「マップ」のタブで見られます。盗んだマップは、同じスマホの <b>Mollet Xi</b> と <b>耐久がんこちゃん</b> の「CDI → アプリのプリセット → データ盗む君から」にそのまま出ます（ブラウザ版どうしも同じ）。別のスマホへは「SHIRATAKI（Mollet Xi）に送る」のリンクで。CSV で保存もできます。</p>
+    <p class="hint">SHIRATAKI の点火は 0〜25° の範囲なので、それを超える所は 0° か 25° にそろえて送ります。</p>
+  </div>
+  <div class="card">
+    <h3>この機械について</h3>
+    <p class="hint" id="devInfo">つながっていません</p>
+    <div class="row"><button class="btn ghost sm" id="bClr">全部のデータを消す</button></div>
+  </div>
+  <p class="hint" style="text-align:center">Mollet Xi シリーズ（Mollet Xi・耐久がんこちゃん・データ盗む君・SD測る君）／ 製作者 Naohisa Akiyama</p>
+</section>
+</main>
+
+<nav class="tabs" aria-label="画面">
+  <button data-t="live" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M4 16a8 8 0 1 1 16 0"/><path d="M12 16l4-5"/></svg>測る</button>
+  <button data-t="cal" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4v4M12 16v4M4 12h4M16 12h4"/></svg>基準</button>
+  <button data-t="map" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 19h18"/><path d="M4 16l4-6 4 3 4-7 4 4"/></svg>マップ</button>
+  <button data-t="help" aria-selected="false"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5V14"/><path d="M12 17h.01"/></svg>使い方</button>
+</nav>
+<div id="toast" hidden></div>
+<div class="sheet" id="sheet" hidden><div class="in" id="sheetIn"></div></div>
+
+<script>
+"use strict";
+/* ===MXS=== Mollet Xi シリーズのデータ共有
+   アプリ版：window.MXShare（同じ鍵で署名したアプリどうしでファイルを見せ合う）
+   ブラウザ版：同じサイト（noixi749.github.io）の localStorage に「mxs.アプリ.名前」で置く
+   アプリの呼び名：molletxi（Mollet Xi）・ganko（耐久がんこちゃん）・nusumu（データ盗む君）・sd（SD測る君） */
+const MXS = (() => {
+  const NAMES = { molletxi: "Mollet Xi", ganko: "耐久がんこちゃん", nusumu: "データ盗む君", sd: "SD測る君" };
+  let me = "";
+  const N = () => (typeof window !== "undefined" && window.MXShare) ? window.MXShare : null;
+  const wrap = d => JSON.stringify({ app: me, t: Date.now(), d });
+  return {
+    NAMES,
+    init(id) { me = id; },
+    get me() { return me; },
+    native() { return !!N(); },
+    put(name, d) { const s = wrap(d); try { if (N()) return N().put(name, s) === "ok"; localStorage.setItem(`mxs.${me}.${name}`, s); return true; } catch (e) { return false; } },
+    putRaw(name, text) { try { if (N()) return N().put(name, text) === "ok"; localStorage.setItem(`mxs.${me}.${name}`, text); return true; } catch (e) { return false; } },
+    append(name, text) { try { if (N()) return N().append(name, text) === "ok"; const k = `mxs.${me}.${name}`; localStorage.setItem(k, (localStorage.getItem(k) || "") + text); return true; } catch (e) { return false; } },
+    del(name) { try { if (N()) N().del(name); else localStorage.removeItem(`mxs.${me}.${name}`); } catch (e) { } },
+    raw(app, name) { try { return (N() ? N().get(app, name) : localStorage.getItem(`mxs.${app}.${name}`)) || ""; } catch (e) { return ""; } },
+    get(app, name) { const s = this.raw(app, name); if (!s) return null; try { return JSON.parse(s); } catch (e) { return null; } },
+    range(app, name, start, max) {
+      try { if (N()) return JSON.parse(N().range(app, name, start, max)); const s = localStorage.getItem(`mxs.${app}.${name}`) || ""; return { t: s.slice(start), next: s.length, eof: true }; }
+      catch (e) { return { t: "", next: start, eof: true, err: 1 }; } },
+    list(app) {
+      try { if (N()) return JSON.parse(N().list(app) || "[]");
+        const p = `mxs.${app}.`, out = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(p)) { const v = localStorage.getItem(k) || ""; let t = 0; try { t = JSON.parse(v).t || 0; } catch (e) { } out.push({ n: k.slice(p.length), t, s: v.length }); } } return out;
+      } catch (e) { return []; } },
+    has(app) { try { if (N()) return !!JSON.parse(N().apps())[app]; return this.list(app).length > 0; } catch (e) { return false; } },
+  };
+})();
+/* ===/MXS=== */
+MXS.init("nusumu");
+/* ============================================================
+   データ盗む君：今の CDI の点火時期を1発ずつ測って、点火マップにする
+   ESP32 は「パルサーの立ち上がりから火花まで ÷ 1回転」（位相）を送る。
+   角度 = 基準の角度 + 360 ×（基準の位相 − 位相）
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const isNum = x => typeof x === "number" && isFinite(x);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const now = () => Date.now();
+const wrap = u => { u = u % 1; if (u > 0.5) u -= 1; if (u <= -0.5) u += 1; return u; };   // −0.5〜0.5
+const LS = { get(k, d) { try { const v = localStorage.getItem("ns." + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("ns." + k, JSON.stringify(v)); return true; } catch (e) { toast("保存できませんでした（空きが足りない？）", 3500); return false; } } };
+const IS_APK = !!window.MXNative;
+let toastT = 0;
+function toast(t, ms) { const el = $("#toast"); el.textContent = t; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, ms || 2200); }
+const H = [];   // ネイティブからの知らせ
+window.__mxNative = o => { try { const x = typeof o === "string" ? JSON.parse(o) : o; H.forEach(f => f(x)); } catch (e) { } };
+
+/* ---------------- シート ---------------- */
+const SHEET = { open(title, html, onClick) { $("#sheetIn").innerHTML = `<h3>${esc(title)}</h3>${html}`; $("#sheet").hidden = false; this.onClick = onClick; },
+  close() { $("#sheet").hidden = true; this.onClick = null; if (SCAN.on) { SCAN.on = false; try { MXNative.bleStop(); } catch (e) { } } } };
+$("#sheet").addEventListener("click", e => { if (e.target.id === "sheet") { SHEET.close(); return; } if (SHEET.onClick) SHEET.onClick(e); });
+
+/* ---------------- タブ ---------------- */
+let TAB = "live";
+function showTab(t) { TAB = t; document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.t === t)); document.querySelectorAll("section.tab").forEach(s => s.hidden = s.id !== "t-" + t); if (t === "map") renderMaps(); if (t === "live") setTimeout(drawLive, 0); }
+document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => showTab(b.dataset.t));
+
+/* ============================================================
+   つなぐ（Bluetooth：アプリ／Chrome、USB：PC の Chrome、デモ）
+   ============================================================ */
+const NUS = { svc: "6e400001-b5a3-f393-e0a9-e50e24dcca9e", rx: "6e400002-b5a3-f393-e0a9-e50e24dcca9e", tx: "6e400003-b5a3-f393-e0a9-e50e24dcca9e" };
+const TE = new TextEncoder();
+const DEV = { link: null, hello: null, st: null, stAt: 0, lastRx: 0, demo: false };
+class Link {
+  constructor(type, name) { this.type = type; this.name = name; this.open = false; this.buf = ""; this.user = false; }
+  feed(t) { this.buf += t; let k; while ((k = this.buf.indexOf("\n")) >= 0) { const l = this.buf.slice(0, k).trim(); this.buf = this.buf.slice(k + 1); if (l) rx(l); } if (this.buf.length > 16384) this.buf = ""; }
+  set(v) { this.open = v; devUI(); if (v) setTimeout(() => this.write('{"c":"hi"}\n'), 200); }
+}
+class WebBle extends Link {
+  constructor(d) { super("ble", d.name || "Bluetooth"); this.d = d; this.dec = new TextDecoder(); d.addEventListener("gattserverdisconnected", () => { this.set(false); if (!this.user) setTimeout(() => this.connect().catch(() => { }), 1500); }); }
+  async connect() { const s = await this.d.gatt.connect(); const v = await s.getPrimaryService(NUS.svc); this.rxc = await v.getCharacteristic(NUS.rx); this.txc = await v.getCharacteristic(NUS.tx);
+    if (!this.bound) { this.txc.addEventListener("characteristicvaluechanged", e => this.feed(this.dec.decode(e.target.value, { stream: true }))); this.bound = true; } await this.txc.startNotifications(); this.set(true); }
+  async write(s) { if (!this.open) return; const b = TE.encode(s); for (let i = 0; i < b.length; i += 20) await this.rxc.writeValueWithoutResponse(b.slice(i, i + 20)).catch(() => { }); }
+  close() { this.user = true; try { this.d.gatt.disconnect(); } catch (e) { } this.set(false); }
+}
+class NatBle extends Link {
+  constructor(a, n) { super("ble", n || "Bluetooth"); this.a = a; }
+  connect() { return new Promise((res, rej) => { this.w = { res, rej }; this.to = setTimeout(() => this.settle(new Error("返事がありません")), 15000); try { MXNative.bleConnect(this.a); } catch (e) { this.settle(e); } }); }
+  settle(e) { const w = this.w; this.w = null; clearTimeout(this.to); if (!w) return; e ? w.rej(e) : w.res(); }
+  onNative(o) { if (o.ev === "open") { this.set(true); this.settle(null); } else if (o.ev === "close") { this.set(false); this.settle(new Error(o.msg || "切れました")); if (!this.user) setTimeout(() => { if (!this.open && !this.user && !this.w) this.connect().catch(() => { }); }, 2500); } else if (o.ev === "data" && o.d) this.feed(o.d); }
+  write(s) { if (this.open) { try { MXNative.bleWrite(this.a, s); } catch (e) { } } return Promise.resolve(); }
+  close() { this.user = true; try { MXNative.bleClose(this.a); } catch (e) { } this.set(false); }
+}
+class SerLink extends Link {
+  constructor(p) { super("usb", "USB"); this.p = p; }
+  async connect() { await this.p.open({ baudRate: 115200 }); this.wr = this.p.writable.getWriter(); this.set(true); this.loop(); }
+  async loop() { const dec = new TextDecoder(); while (this.open && this.p.readable) { const r = this.p.readable.getReader(); this.r = r; try { for (;;) { const { value, done } = await r.read(); if (done) break; this.feed(dec.decode(value, { stream: true })); } } catch (e) { } finally { try { r.releaseLock(); } catch (e) { } } if (!this.user) break; } this.set(false); }
+  async write(s) { if (this.open) await this.wr.write(TE.encode(s)).catch(() => { }); }
+  async close() { this.user = true; this.set(false); try { await this.r.cancel(); } catch (e) { } try { this.wr.releaseLock(); } catch (e) { } try { await this.p.close(); } catch (e) { } }
+}
+function useLink(l) { if (DEV.link && DEV.link !== l) { try { DEV.link.close(); } catch (e) { } } DEMO.stop(); DEV.link = l; DEV.hello = null; devUI(); }
+
+const SCAN = { on: false, found: new Map(), links: new Map() };
+H.push(o => {
+  if (!o || o.t !== "ble") return;
+  if (o.ev === "scan") { (o.list || []).forEach(d => d && d.a && SCAN.found.set(d.a, d)); scanList(); return; }
+  if (o.ev === "scanEnd") { SCAN.on = false; scanList(); return; }
+  if (o.ev === "error") { toast(o.msg || "Bluetoothが使えません", 3500); SCAN.on = false; scanList(); return; }
+  const l = SCAN.links.get(o.a); if (l) l.onNative(o);
+});
+function scanList() {
+  const b = $("#bleList"); if (!b) return;
+  const a = [...SCAN.found.values()].sort((x, y) => (/NSM/i.test(y.n || "") - /NSM/i.test(x.n || "")) || (y.r - x.r));
+  b.innerHTML = a.length ? a.map(d => `<div class="item"><span class="nm"><b>${esc(d.n || "名前なし")}</b><small>${d.r | 0}dBm</small></span><button class="btn sm ${/NSM/i.test(d.n || "") ? "pri" : "ghost"}" data-a="${esc(d.a)}">つなぐ</button></div>`).join("")
+    : `<p class="hint">${SCAN.on ? "探しています…（ESP32 にモバイルバッテリーをつないで、近くに）" : "見つかりませんでした。「もう一度探す」"}</p>`;
+}
+async function connNative(a, n) {
+  const l = new NatBle(a, n); SCAN.links.set(a, l); useLink(l); toast(`${n || "機器"} につないでいます…`);
+  try { await l.connect(); LS.set("bleAddr", { a, n }); } catch (e) { l.user = true; toast("つなげませんでした：" + (e.message || e), 3500); }
+}
+$("#bConn").onclick = async () => {
+  if (IS_APK) {
+    SCAN.found.clear(); SCAN.on = true;
+    SHEET.open("Bluetoothでつなぐ", `<div class="list" id="bleList"></div><p class="hint">「MolletXi-NSM」がデータ盗む君です。</p><div class="row end"><button class="btn ghost" id="bAgain">もう一度探す</button></div>`, e => {
+      const b = e.target.closest("[data-a]"); if (b) { const d = SCAN.found.get(b.dataset.a); try { MXNative.bleStop(); } catch (_) { } SCAN.on = false; SHEET.close(); if (d) connNative(d.a, d.n); return; }
+      if (e.target.id === "bAgain") { SCAN.found.clear(); SCAN.on = true; scanList(); try { MXNative.bleScan(8000); } catch (_) { } }
+    });
+    scanList(); try { MXNative.bleScan(8000); } catch (e) { toast("Bluetoothが使えません"); }
+    return;
+  }
+  if (!navigator.bluetooth) { toast("このブラウザは Bluetooth が使えません（Chrome か Edge で開くか、アプリ版で）", 4000); return; }
+  try { const d = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: "MolletXi-NSM" }, { services: [NUS.svc] }], optionalServices: [NUS.svc] });
+    const l = new WebBle(d); useLink(l); toast(`${d.name || "機器"} につないでいます…`); await l.connect(); }
+  catch (e) { if (e && e.name !== "NotFoundError") toast("つなげませんでした：" + (e.message || e), 3500); }
+};
+if (!IS_APK && navigator.serial) { $("#bUsb").hidden = false; $("#bUsb").onclick = async () => { try { const p = await navigator.serial.requestPort({}); const l = new SerLink(p); useLink(l); await l.connect(); } catch (e) { if (e && e.name !== "NotFoundError") toast("USBでつなげませんでした：" + (e.message || e)); } }; }
+$("#bDemo").onclick = () => { if (DEMO.on) { DEMO.stop(); DEV.link = null; devUI(); return; } useLink(null); DEMO.start(); };
+// アプリ版：前につないだ機器へ自動で
+if (IS_APK) { const d = LS.get("bleAddr", null); if (d && d.a) setTimeout(() => connNative(d.a, d.n), 600); }
+
+function devUI() {
+  const c = $("#cDev"), on = DEMO.on || (DEV.link && DEV.link.open);
+  c.className = "chip" + (DEMO.on ? " demo on" : on ? (now() - DEV.lastRx < 2500 ? " on" : " half") : "");
+  c.querySelector("span").textContent = DEMO.on ? "デモ" : on ? (DEV.link.name || "つながっています") : (DEV.link ? "つなぎ直しています" : "つながっていません");
+  $("#connCard").hidden = !!on && !DEMO.on;
+  $("#bDemo").textContent = DEMO.on ? "デモを止める" : "デモ";
+  const h = DEV.hello; $("#devInfo").textContent = DEMO.on ? "デモ（本物の機械ではありません）" : h ? `${h.name || "?"}・ファーム ${h.fw || "?"}` : (on ? "つながっています" : "つながっていません");
+}
+
+/* ============================================================
+   受け取る
+   ============================================================ */
+const LIVE = { pts: [], max: 4000, last: null, recent: [] };   // pts: [rpm, ph, t]
+function rx(line) {
+  let o; try { o = JSON.parse(line); } catch (e) { return; } if (!o || typeof o !== "object") return;
+  DEV.lastRx = now();
+  if (o.t === "hello") { DEV.hello = o; devUI(); return; }
+  if (o.t === "st") { DEV.st = o; DEV.stAt = now(); return; }
+  if (o.t === "ig") {
+    const t = now();
+    if (Array.isArray(o.s)) for (const s of o.s) { if (!Array.isArray(s) || !isNum(s[0]) || !isNum(s[1])) continue; const r = s[0], ph = s[1] / 10000; if (r < 300 || r > 20000) continue;
+      LIVE.pts.push([r, ph, t]); LIVE.recent.push([r, ph, t]); LIVE.last = [r, ph, t]; if (REC.on) REC.add(r, ph); }
+    if (LIVE.pts.length > LIVE.max) LIVE.pts.splice(0, LIVE.pts.length - LIVE.max);
+    const cut = t - 3000; while (LIVE.recent.length && LIVE.recent[0][2] < cut) LIVE.recent.shift();
+    if (o.mis && REC.on) REC.miss(o.mis);
+    MIS.add(o.mis || 0);
+  }
+}
+const MIS = { tot: 0, add(n) { this.tot += n; } };
+
+/* ============================================================
+   基準（アイドリング1点）
+   ============================================================ */
+let CAL = LS.get("cal", null);   // { a0: 角度, ph0: 位相, rpm: 測った回転, tach: タコメーター, at }
+const REFAUTO = { ph0: null };    // 基準が無い時の仮の基準（最初の値）
+function refPh() { return CAL ? CAL.ph0 : REFAUTO.ph0; }
+function angOf(ph, cal) { const c = cal || CAL; if (c) return c.a0 + 360 * wrap(c.ph0 - ph); if (REFAUTO.ph0 == null) REFAUTO.ph0 = ph; return 360 * wrap(REFAUTO.ph0 - ph); }
+function median(a) { if (!a.length) return NaN; const b = a.slice().sort((x, y) => x - y); const m = b.length >> 1; return b.length % 2 ? b[m] : (b[m - 1] + b[m]) / 2; }
+function circMedianPh(a) { if (!a.length) return NaN; const r = a[0], m = median(a.map(p => wrap(p - r))); return ((r + m) % 1 + 1) % 1; }
+function calLive() {
+  const R = LIVE.recent; const n = R.length;
+  if (!n) { $("#cRpm").textContent = "-"; $("#cPh").textContent = "-"; $("#cSd").textContent = "-"; $("#bCal").disabled = true; return null; }
+  const rpm = median(R.map(x => x[0])), ph = circMedianPh(R.map(x => x[1]));
+  const d = R.map(x => 360 * wrap(ph - x[1])); const sd = Math.sqrt(d.reduce((s, v) => s + v * v, 0) / n);
+  $("#cRpm").textContent = Math.round(rpm); $("#cPh").textContent = ph.toFixed(4); $("#cSd").textContent = "±" + sd.toFixed(1);
+  const adv = parseFloat($("#iAdv").value), tach = parseFloat($("#iTach").value);
+  const msgs = [];
+  if (n < 20) msgs.push("点が少ないです（3秒で20点以上いります）。エンジンがかかっているか、パルサーと火花の数を見てください。");
+  if (rpm > 3500) msgs.push("回転が高いです。アイドリングで合わせてください。");
+  if (sd > 2) msgs.push("ゆれが大きいです。回転が落ち着くのを待ってください。");
+  if (isNum(tach) && tach > 0 && Math.abs(rpm / tach - 1) > 0.15) msgs.push(rpm / tach > 1.7 && rpm / tach < 2.3 ? "測った回転がタコメーターの約2倍です。パルサーの信号が1回転に2回来ているかもしれません（線のつなぎ方を見直す）。" : `測った回転（${Math.round(rpm)}）とタコメーター（${tach}）が違います。タコメーターの読みか、つなぎ方を見直してください。`);
+  $("#calMsg").hidden = !msgs.length; $("#calMsg").innerHTML = msgs.map(esc).join("<br>");
+  $("#bCal").disabled = !(n >= 20 && isNum(adv) && adv > -20 && adv < 60);
+  return { rpm, ph, sd, n };
+}
+$("#bCal").onclick = () => {
+  const c = calLive(); const adv = parseFloat($("#iAdv").value), tach = parseFloat($("#iTach").value);
+  if (!c || !isNum(adv)) return;
+  CAL = { a0: adv, ph0: c.ph, rpm: Math.round(c.rpm), tach: isNum(tach) ? tach : null, at: now() };
+  LS.set("cal", CAL); calUI(); publishMaps(); toast(`基準を決めました：${adv}° @ ${Math.round(c.rpm)}rpm`);
+};
+$("#bCalDel").onclick = () => { if (!confirm("基準を消しますか？（記録したマップは消えません）")) return; CAL = null; LS.set("cal", null); calUI(); publishMaps(); };
+function calUI() {
+  $("#calNow").innerHTML = CAL ? `<b class="num" style="font-size:22px">${CAL.a0}°BTDC</b> ＠ ${CAL.rpm}rpm（タコメーター ${CAL.tach || "-"}）<br><span class="mute">${new Date(CAL.at).toLocaleString("ja-JP")}・位相 ${CAL.ph0.toFixed(4)}</span>` : "まだありません";
+  $("#bCalDel").hidden = !CAL; $("#calWarn").hidden = !!CAL;
+  $("#lAng").textContent = CAL ? "進角" : "進角（基準からの差）"; $("#uAng").textContent = CAL ? "°BTDC" : "°";
+}
+
+/* ============================================================
+   記録：100rpm ごとに、位相の差（基準からのずれ）を最大600点ずつ残す
+   ============================================================ */
+const BIN = 100;
+const REC = {
+  on: false, t0: 0, ref: null, bins: new Map(), cnt: new Map(), mis: new Map(), n: 0, lastR: 0,
+  start() { this.on = true; this.t0 = now(); this.ref = refPh(); this.bins.clear(); this.cnt.clear(); this.mis.clear(); this.n = 0; this.cal = CAL ? { ...CAL } : null; keepAwake(true); recUI(); },
+  add(r, ph) { if (this.ref == null) this.ref = ph; const k = Math.round(r / BIN), u = wrap(this.ref - ph); let a = this.bins.get(k); if (!a) { a = []; this.bins.set(k, a); }
+    const c = (this.cnt.get(k) || 0) + 1; this.cnt.set(k, c); if (a.length < 600) a.push(u); else { const j = Math.floor(Math.random() * c); if (j < 600) a[j] = u; } this.n++; this.lastR = r; },
+  miss(n) { const k = Math.round(this.lastR / BIN); this.mis.set(k, (this.mis.get(k) || 0) + n); },
+  stop() { this.on = false; keepAwake(false); recUI(); },
+  toSession(name) {
+    const bins = [...this.bins.entries()].sort((a, b) => a[0] - b[0]).map(([k, a]) => { const s = a.slice().sort((x, y) => x - y); const q = p => s[Math.min(s.length - 1, Math.floor(p * (s.length - 1) + 0.5))];
+      return { r: k * BIN, n: this.cnt.get(k), q: [q(.1), q(.25), q(.5), q(.75), q(.9)].map(x => Math.round(x * 1e5)) }; });
+    const mis = [...this.mis.entries()].map(([k, n]) => ({ r: k * BIN, n }));
+    return { id: "s" + now().toString(36), name, at: this.t0, dur: Math.round((now() - this.t0) / 1000), ref: this.ref, cal: this.cal, n: this.n, bins, mis };
+  },
+};
+function recUI() {
+  $("#cRec").hidden = !REC.on; $("#bRec").hidden = REC.on; $("#bRecStop").hidden = !REC.on; $("#bRecDrop").hidden = !REC.on;
+  $("#chSrc").textContent = REC.on ? "記録中" : "今の走り";
+}
+$("#bRec").onclick = () => { if (!(DEMO.on || (DEV.link && DEV.link.open))) { toast("先につないでください（デモでも試せます）"); return; } REC.start(); toast("記録を始めました。低い回転から上まで何回か回してください", 3000); };
+$("#bRecDrop").onclick = () => { if (!confirm("この記録を捨てますか？")) return; REC.stop(); };
+$("#bRecStop").onclick = () => {
+  if (REC.n < 50) { if (!confirm("点が少ない（" + REC.n + "点）ですが、保存しますか？")) return; }
+  const def = (DEMO.on ? "デモ " : "") + new Date(REC.t0).toLocaleDateString("ja-JP") + " の記録";
+  SHEET.open("記録を保存", `<label class="f">名前（CDI の名前など）<input type="text" id="sName" value="${esc(def)}" maxlength="40"></label><div class="row end" style="margin-top:12px"><button class="btn" id="sCancel">まだ続ける</button><button class="btn pri" id="sOk">保存</button></div>`, e => {
+    if (e.target.id === "sCancel") { SHEET.close(); return; }
+    if (e.target.id === "sOk") { const nm = ($("#sName").value || def).trim(); REC.stop(); const s = REC.toSession(nm); const L = LS.get("sess", []); L.unshift(s); if (LS.set("sess", L)) { publishMaps(); SHEET.close(); toast("保存しました"); showTab("map"); openMap(s.id); } }
+  });
+};
+let wakeLock = null;
+async function keepAwake(on) { if (IS_APK) { try { MXNative.keepScreenOn(!!on); } catch (e) { } return; } try { if (on && navigator.wakeLock && !wakeLock) wakeLock = await navigator.wakeLock.request("screen"); else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; } } catch (e) { } }
+
+/* ============================================================
+   マップ（保存した記録）
+   ============================================================ */
+function sessAng(s) {   // 各ビンの角度（今の基準か、記録した時の基準）
+  const c = s.cal || CAL; const base = c ? c.a0 + 360 * wrap(c.ph0 - s.ref) : 0;
+  return s.bins.map(b => ({ r: b.r, n: b.n, q: b.q.map(u => base + 360 * u / 1e5) }));
+}
+/* Mollet Xi・耐久がんこちゃんに、盗んだマップ（SHIRATAKI の16点）を見せる */
+function publishMaps() { try { const L = LS.get("sess", []); MXS.put("maps", L.map(s => { const m = mxMap(s); return m ? { id: s.id, name: s.name, at: s.at, a: m.a, rl: m.rl, n: s.n } : null; }).filter(Boolean)); } catch (e) { } }
+function limiterOf(s) {   // 火が飛ばない回転が目立つ一番低い回転
+  const cnt = new Map(s.bins.map(b => [b.r, b.n]));
+  const L = (s.mis || []).filter(m => m.n >= 5 && m.n / ((cnt.get(m.r) || 0) + m.n) > 0.15).map(m => m.r).sort((a, b) => a - b);
+  return L.length ? L[0] : null;
+}
+function curveOf(s, step) {   // step rpm ごとのまん中の値（点が 20 未満のビンは使わない）
+  const A = sessAng(s).filter(b => b.n >= 20); if (!A.length) return [];
+  const out = []; const lo = Math.floor(A[0].r / step) * step, hi = Math.ceil(A[A.length - 1].r / step) * step;
+  for (let r = lo; r <= hi; r += step) {
+    const near = A.filter(b => Math.abs(b.r - r) <= step / 2); if (!near.length) continue;
+    const w = near.reduce((t, b) => t + b.n, 0); const m = near.reduce((t, b) => t + b.q[2] * b.n, 0) / w;
+    const lo25 = near.reduce((t, b) => t + b.q[1] * b.n, 0) / w, hi75 = near.reduce((t, b) => t + b.q[3] * b.n, 0) / w;
+    out.push({ r, a: m, lo: Math.min(lo25, hi75), hi: Math.max(lo25, hi75), n: w });
+  }
+  return out;
+}
+let MAPID = null;
+function renderMaps() {
+  const L = LS.get("sess", []);
+  $("#mapList").hidden = !!MAPID; $("#mapView").hidden = !MAPID;
+  if (MAPID) { const s = L.find(x => x.id === MAPID); if (s) drawMapView(s); else { MAPID = null; renderMaps(); } return; }
+  $("#mapList").innerHTML = L.length ? L.map(s => { const c = curveOf(s, 1000); const rl = limiterOf(s);
+    return `<div class="item"><span class="nm"><b>${esc(s.name)}</b><small>${new Date(s.at).toLocaleString("ja-JP")}・${s.n}点${c.length ? `・${c[0].r}〜${c[c.length - 1].r}rpm` : ""}${rl ? `・リミッター ${rl}rpm` : ""}${!(s.cal || CAL) ? "・<span class='warn'>基準なし</span>" : ""}</small></span><button class="btn sm" data-open="${s.id}">見る</button></div>`; }).join("")
+    : `<div class="card"><p class="hint">まだありません。「測る」で記録を始めて、止めて保存するとここに出ます。</p></div>`;
+}
+$("#mapList").addEventListener("click", e => { const b = e.target.closest("[data-open]"); if (b) openMap(b.dataset.open); });
+function openMap(id) { MAPID = id; renderMaps(); }
+$("#mvBack").onclick = () => { MAPID = null; renderMaps(); };
+function drawMapView(s) {
+  const c = curveOf(s, 500), rl = limiterOf(s);
+  $("#mvName").textContent = s.name;
+  $("#mvSum").innerHTML = `${new Date(s.at).toLocaleString("ja-JP")}・${Math.round(s.dur / 60)}分・${s.n}点${rl ? `・<b class="bad">リミッター ${rl}rpm あたり</b>` : ""}<br>${s.cal ? `基準：記録した時（${s.cal.a0}° @ ${s.cal.rpm}rpm）` : CAL ? `基準：今の基準（${CAL.a0}° @ ${CAL.rpm}rpm）` : "<span class='warn'>基準がありません。角度は最初の値からの差です。「基準」で入れると直ります。</span>"}`;
+  $("#mvTbl").innerHTML = c.map(p => `<tr><td class="num">${p.r}</td><td class="num"><b>${p.a.toFixed(1)}</b></td><td class="num ${p.hi - p.lo > 2 ? "warn" : ""}">±${((p.hi - p.lo) / 2).toFixed(1)}</td><td class="num ${p.n < 50 ? "dim" : ""}">${p.n}</td></tr>`).join("") || `<tr><td colspan="4" class="dim">点が足りません</td></tr>`;
+  const m = mxMap(s);
+  $("#mvMxHint").innerHTML = m ? `SHIRATAKI の16点：${m.a.map((x, i) => `${AX[i] / 1000}k=${x}`).join("・")}${m.fill.length ? `<br><span class="warn">点が無いので近くの値でうめた回転：${m.fill.map(r => r / 1000 + "k").join("・")}</span>` : ""}${m.clip ? `<br><span class="warn">0〜25° を超えた所をそろえました</span>` : ""}` : "点が足りないので送れません";
+  $("#mvMx").disabled = !m;
+  requestAnimationFrame(() => drawChart($("#cvMap"), { curve: c, rl }));
+}
+/* SHIRATAKI（Mollet Xi）のマップ：16点・0〜25°・0.25° 刻み */
+const AX = [1000, 2000, 3000, 4000, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, 9500, 10000, 11000];
+function mxMap(s) {
+  const c = curveOf(s, 250); if (c.length < 2) return null;
+  const fill = []; let clip = false;
+  const at = r => { if (r <= c[0].r) { if (c[0].r - r > 300) fill.push(r); return c[0].a; } if (r >= c[c.length - 1].r) { if (r - c[c.length - 1].r > 300) fill.push(r); return c[c.length - 1].a; }
+    for (let i = 1; i < c.length; i++) if (r <= c[i].r) { const p = c[i - 1], q = c[i]; if (q.r - p.r > 1000) fill.push(r); return p.a + (q.a - p.a) * (r - p.r) / (q.r - p.r); } return c[c.length - 1].a; };
+  const a = AX.map(r => { let v = at(r); if (v < 0 || v > 25) clip = true; v = clamp(Math.round(v * 4) / 4, 0, 25); return v; });
+  const rl = limiterOf(s);
+  return { a, fill: [...new Set(fill)], clip, rl: rl ? clamp(Math.round(rl / 100) * 100, 6000, 14000) : 10500 };
+}
+const b64u = s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+$("#mvMx").onclick = () => {
+  const s = LS.get("sess", []).find(x => x.id === MAPID); if (!s) return; const m = mxMap(s); if (!m) return;
+  const url = "https://noixi749.github.io/mollet-xi/#map=MXM1." + b64u(JSON.stringify({ v: 1, name: s.name.slice(0, 18), a: m.a, rl: m.rl, src: "nusumu" }));
+  SHEET.open("SHIRATAKI（Mollet Xi）に送る", `<p class="hint">Mollet Xi のアプリが開いて、プリセットとして受け取れます。LINE で送ったり、コピーして Mollet Xi に貼ることもできます。</p><div class="row"><button class="btn pri" id="xOpen">Mollet Xi で開く</button><button class="btn" id="xCopy">リンクをコピー</button>${navigator.share ? `<button class="btn ghost" id="xShare">送る</button>` : ""}</div>`, e => {
+    if (e.target.id === "xOpen") { if (IS_APK) { try { MXNative.openUrl(url); } catch (_) { } } else window.open(url, "_blank", "noopener"); SHEET.close(); }
+    if (e.target.id === "xCopy") { (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast("コピーしました"), () => { prompt("このリンクをコピーしてください", url); }); }
+    if (e.target.id === "xShare") navigator.share({ title: "盗んだマップ " + s.name, url }).catch(() => { });
+  });
+};
+$("#mvCsv").onclick = () => {
+  const s = LS.get("sess", []).find(x => x.id === MAPID); if (!s) return;
+  const A = sessAng(s);
+  const txt = "rpm,count,deg_p10,deg_p25,deg_median,deg_p75,deg_p90\n" + A.map(b => [b.r, b.n, ...b.q.map(x => x.toFixed(2))].join(",")).join("\n") + "\n";
+  const name = `nusumu_${s.name.replace(/[\\/:*?"<>|\s]+/g, "_")}.csv`;
+  if (IS_APK) { let r = "error"; try { r = String(MXNative.saveText(name, txt, "text/csv")); } catch (e) { } toast(r === "ok" ? `「ダウンロード」に ${name} を保存しました` : "保存できませんでした", 3500); return; }
+  const b = new Blob([txt], { type: "text/csv" }); const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+};
+$("#mvRen").onclick = () => { const L = LS.get("sess", []); const s = L.find(x => x.id === MAPID); if (!s) return; const n = prompt("新しい名前", s.name); if (!n) return; s.name = n.trim().slice(0, 40); LS.set("sess", L); publishMaps(); renderMaps(); };
+$("#mvDel").onclick = () => { if (!confirm("このマップを削除しますか？")) return; LS.set("sess", LS.get("sess", []).filter(x => x.id !== MAPID)); MAPID = null; publishMaps(); renderMaps(); };
+$("#bClr").onclick = () => { if (!confirm("基準と盗んだマップを全部消しますか？")) return; ["cal", "sess", "bleAddr"].forEach(k => { try { localStorage.removeItem("ns." + k); } catch (e) { } }); CAL = null; calUI(); renderMaps(); publishMaps(); toast("消しました"); };
+
+/* ============================================================
+   グラフ（canvas）
+   ============================================================ */
+function drawChart(cv, o) {
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, Hh = cv.clientHeight; if (!W) return;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(Hh * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(Hh * dpr); }
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, Hh);
+  const ys = []; (o.pts || []).forEach(p => ys.push(p[1])); (o.curve || []).forEach(p => { ys.push(p.lo, p.hi); });
+  let y0 = 0, y1 = 35; if (ys.length) { const s = ys.slice().sort((a, b) => a - b); y0 = Math.floor(Math.min(0, s[Math.floor(s.length * .01)] - 2) / 5) * 5; y1 = Math.ceil(Math.max(25, s[Math.floor(s.length * .99)] + 2) / 5) * 5; }
+  const xs = []; (o.pts || []).forEach(p => xs.push(p[0])); (o.curve || []).forEach(p => xs.push(p.r));
+  let x0 = 1000, x1 = 11000; if (xs.length) { x1 = Math.max(6000, Math.ceil((Math.max(...xs) + 300) / 1000) * 1000); x0 = Math.max(0, Math.min(1000, Math.floor(Math.min(...xs) / 1000) * 1000)); }
+  const L = 40, R = 10, T = 10, B = 26, X = r => L + (r - x0) / (x1 - x0) * (W - L - R), Y = a => T + (y1 - a) / (y1 - y0) * (Hh - T - B);
+  g.font = "11px system-ui,sans-serif"; g.fillStyle = "#6f8287"; g.strokeStyle = "#1f2b2f"; g.lineWidth = 1;
+  for (let a = y0; a <= y1; a += 5) { g.beginPath(); g.moveTo(L, Y(a)); g.lineTo(W - R, Y(a)); g.stroke(); g.textAlign = "right"; g.fillText(a + "°", L - 5, Y(a) + 4); }
+  const st = (x1 - x0) > 8000 ? 2000 : 1000;
+  for (let r = x0; r <= x1; r += st) { g.beginPath(); g.moveTo(X(r), T); g.lineTo(X(r), Hh - B); g.stroke(); g.textAlign = "center"; g.fillText(r / 1000 + "k", X(r), Hh - 8); }
+  if (o.rl) { g.fillStyle = "rgba(255,90,79,.12)"; g.fillRect(X(o.rl), T, W - R - X(o.rl), Hh - T - B); g.strokeStyle = "#ff5a4f"; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(X(o.rl), T); g.lineTo(X(o.rl), Hh - B); g.stroke(); g.setLineDash([]); }
+  if (o.pts) { g.fillStyle = "rgba(181,140,255,.45)"; for (const p of o.pts) { const x = X(p[0]), y = Y(p[1]); if (y < T || y > Hh - B) continue; g.fillRect(x - 1, y - 1, 2.2, 2.2); } }
+  const c = o.curve || [];
+  if (c.length && o.band !== false) { g.fillStyle = "rgba(181,140,255,.28)"; g.beginPath(); c.forEach((p, i) => i ? g.lineTo(X(p.r), Y(p.hi)) : g.moveTo(X(p.r), Y(p.hi))); for (let i = c.length - 1; i >= 0; i--) g.lineTo(X(c[i].r), Y(c[i].lo)); g.closePath(); g.fill(); }
+  if (c.length) { g.strokeStyle = "#f0a040"; g.lineWidth = 3; g.beginPath(); c.forEach((p, i) => i ? g.lineTo(X(p.r), Y(p.a)) : g.moveTo(X(p.r), Y(p.a))); g.stroke(); g.fillStyle = "#f0a040"; c.forEach(p => { g.beginPath(); g.arc(X(p.r), Y(p.a), 2.6, 0, 7); g.fill(); }); }
+  if (o.mark) { g.fillStyle = "#fff"; g.beginPath(); g.arc(X(o.mark[0]), Y(o.mark[1]), 5, 0, 7); g.fill(); }
+}
+let liveDrawAt = 0;
+function drawLive() {
+  if (TAB !== "live") return;
+  const P = LIVE.pts.slice(-3000).map(p => [p[0], angOf(p[1])]);
+  let curve = null;
+  if (REC.on && REC.n > 30) curve = curveOf({ bins: [...REC.bins.entries()].map(([k, a]) => { const s = a.slice().sort((x, y) => x - y); const q = p => s[Math.floor(p * (s.length - 1))]; return { r: k * BIN, n: REC.cnt.get(k), q: [q(.1), q(.25), q(.5), q(.75), q(.9)].map(x => x * 1e5) }; }), ref: REC.ref, cal: REC.cal }, 500).map(x => ({ ...x }));
+  const L = LIVE.last;
+  drawChart($("#cvLive"), { pts: P, curve, band: false, mark: L ? [L[0], angOf(L[1])] : null });
+}
+
+/* ============================================================
+   画面の更新（10回/秒）
+   ============================================================ */
+setInterval(() => {
+  const L = LIVE.last, fresh = L && now() - L[2] < 800;
+  $("#vRpm").textContent = fresh ? Math.round(median(LIVE.recent.slice(-8).map(x => x[0]))) : "---";
+  $("#vAng").textContent = fresh ? angOf(circMedianPh(LIVE.recent.slice(-8).map(x => x[1]))).toFixed(1) : "--.-";
+  const st = DEV.st && now() - DEV.stAt < 2500 ? DEV.st : null;
+  $("#sPul").textContent = st ? st.pul : "-"; $("#sSpk").textContent = st ? st.spk : "-";
+  $("#sMis").textContent = MIS.tot; $("#sN").textContent = REC.on ? REC.n : "-";
+  if (TAB === "cal") calLive();
+  if (now() - liveDrawAt > 400) { liveDrawAt = now(); drawLive(); }
+  devUI();
+}, 100);
+window.addEventListener("resize", () => { drawLive(); if (MAPID) renderMaps(); });
+
+/* ============================================================
+   デモ：よくある社外 CDI のカーブを、走っているように作る
+   ============================================================ */
+const DEMO = {
+  on: false, t: 0, it: 0, rpm: 1700, ph: 0,
+  curve(r) { const P = [[1000, 12], [2500, 12], [4000, 17], [5500, 24], [6500, 27], [7500, 24], [8500, 19], [9500, 16], [10500, 15]]; if (r <= P[0][0]) return P[0][1]; for (let i = 1; i < P.length; i++) if (r <= P[i][0]) return P[i - 1][1] + (P[i][1] - P[i - 1][1]) * (r - P[i - 1][0]) / (P[i][0] - P[i - 1][0]); return 15; },
+  start() { this.on = true; this.t = 0; DEV.hello = { name: "デモ", fw: "-" }; this.it = setInterval(() => this.tick(), 50); devUI(); toast("デモ：アイドリング 1700rpm・15° から走り出します。基準は 15° で合わせてみてください", 4000); },
+  stop() { if (!this.on) return; this.on = false; clearInterval(this.it); devUI(); },
+  tick() {
+    this.t += 0.05; const t = this.t;
+    // 最初の12秒はアイドリング、そのあと 加速→リミッター→減速 をくり返す
+    let target; if (t < 12) target = 1700 + Math.sin(t * 3) * 40; else { const c = (t - 12) % 14; target = c < 7 ? 2500 + c / 7 * 8600 : c < 8.5 ? 10900 : Math.max(2500, 10900 - (c - 8.5) / 5.5 * 8000); }
+    this.rpm += (target - this.rpm) * 0.35; const r = this.rpm;
+    const revs = Math.max(1, Math.round(r / 60 * 0.05)); const s = []; let mis = 0;
+    const thp = 32;   // パルサーは上死点前 32°
+    for (let i = 0; i < revs; i++) { const rr = r * (1 + (Math.random() - .5) * 0.01); const lim = rr > 10600 && Math.random() < 0.4; if (lim) { mis++; continue; }
+      const adv = t < 12 ? 15 + (Math.random() - .5) * 0.8 : this.curve(rr) + (Math.random() - .5) * 0.9;
+      let ph = (thp - adv) / 360; ph = ((ph % 1) + 1) % 1; s.push([Math.round(rr), Math.round(ph * 10000), 222]); }
+    rx(JSON.stringify({ t: "ig", ms: Math.round(t * 1000), s, mis }));
+    if (Math.round(t * 20) % 20 === 0) rx(JSON.stringify({ t: "st", pul: Math.round(r / 60), spk: Math.round(r / 60) - mis * 20 }));
+  },
+};
+
+calUI(); recUI(); devUI(); publishMaps();
+</script>
+</body>
+</html>

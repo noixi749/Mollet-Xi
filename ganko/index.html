@@ -7,8 +7,8 @@
 <meta name="theme-color" content="#0b0f10">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="description" content="Mollet Xi：CATロガーの計測・SHIRATAKI（自作CDI）の点火マップの書き換え・セッティング。Mollet Xi シリーズのメインツール">
-<title>Mollet Xi</title>
+<meta name="description" content="耐久がんこちゃん（Mollet Xi シリーズ）：耐久レースの走行メーター・車両の仕様・セッティング・走者とピット（子機・親機）">
+<title>耐久がんこちゃん</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -310,7 +310,7 @@ details summary{cursor:pointer}
 </head>
 <body>
 <header class="top">
-  <div class="brand" aria-label="Mollet Xi"><b>Mollet <i>Xi</i></b><span>CATロガー・SHIRATAKI</span></div>
+  <div class="brand" aria-label="耐久がんこちゃん"><b class="jp">耐久<i>がんこ</i>ちゃん</b><span>Mollet Xi</span></div>
   <div class="chips" role="status">
     <button type="button" class="chip" id="chCdi" data-go="cdi"><i></i>CDI</button>
     <button type="button" class="chip" id="chLog" data-go="set"><i></i>ロガー</button>
@@ -344,7 +344,7 @@ details summary{cursor:pointer}
 <div id="toast" hidden></div>
 
 <script>
-const APP_ID = "molletxi";
+const APP_ID = "ganko";
 /* ===MXS=== Mollet Xi シリーズのデータ共有
    アプリ版：window.MXShare（同じ鍵で署名したアプリどうしでファイルを見せ合う）
    ブラウザ版：同じサイト（noixi749.github.io）の localStorage に「mxs.アプリ.名前」で置く
