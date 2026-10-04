@@ -6,9 +6,9 @@
 
 | アプリ | 役目 | ブラウザ版 | Android（APK） |
 |---|---|---|---|
-| Mollet Xi | 計測・CDI（SHIRATAKI）の書き換え・解析・セッティング | https://noixi749.github.io/mollet-xi/ | [MolletXi.apk](https://noixi749.github.io/mollet-xi/apk/MolletXi.apk)（1.2.0） |
-| 耐久がんこちゃん | 耐久レース用。メーター・レースメーター・ピット（子機・親機） | https://noixi749.github.io/mollet-xi/ganko/ | [Ganko.apk](https://noixi749.github.io/mollet-xi/apk/Ganko.apk)（1.0.0） |
-| Mollet Xi データ盗む君 | 今のCDIの点火マップを読み取る | https://noixi749.github.io/mollet-xi/nusumu/ | [DataNusumu.apk](https://noixi749.github.io/mollet-xi/apk/DataNusumu.apk)（1.0.0） |
+| Mollet Xi | 計測・CDI（SHIRATAKI）の書き換え・解析・セッティング | https://noixi749.github.io/Mollet-Xi/ | [MolletXi.apk](https://noixi749.github.io/Mollet-Xi/apk/MolletXi.apk)（1.2.0） |
+| 耐久がんこちゃん | 耐久レース用。メーター・レースメーター・ピット（子機・親機） | https://noixi749.github.io/Mollet-Xi/ganko/ | [Ganko.apk](https://noixi749.github.io/Mollet-Xi/apk/Ganko.apk)（1.0.0） |
+| Mollet Xi データ盗む君 | 今のCDIの点火マップを読み取る | https://noixi749.github.io/Mollet-Xi/nusumu/ | [DataNusumu.apk](https://noixi749.github.io/Mollet-Xi/apk/DataNusumu.apk)（1.0.0） |
 | Mollet Xi SD測る君 | 最高速・CVT計算機 | https://noixi749.github.io/scooter-topspeed/ | [SDhakarukun.apk](https://noixi749.github.io/scooter-topspeed/SDhakarukun.apk)（2.2.0） |
 
 - APK は4つとも同じ鍵で署名しているので、入れるとアプリどうしでデータ（プリセット・マイバイク・設定・走行記録・盗んだマップ）を見せ合えます。

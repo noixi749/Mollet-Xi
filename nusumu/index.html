@@ -537,7 +537,7 @@ function mxMap(s) {
 const b64u = s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 $("#mvMx").onclick = () => {
   const s = LS.get("sess", []).find(x => x.id === MAPID); if (!s) return; const m = mxMap(s); if (!m) return;
-  const url = "https://noixi749.github.io/mollet-xi/#map=MXM1." + b64u(JSON.stringify({ v: 1, name: s.name.slice(0, 18), a: m.a, rl: m.rl, src: "nusumu" }));
+  const url = "https://noixi749.github.io/Mollet-Xi/#map=MXM1." + b64u(JSON.stringify({ v: 1, name: s.name.slice(0, 18), a: m.a, rl: m.rl, src: "nusumu" }));
   SHEET.open("SHIRATAKI（Mollet Xi）に送る", `<p class="hint">Mollet Xi のアプリが開いて、プリセットとして受け取れます。LINE で送ったり、コピーして Mollet Xi に貼ることもできます。</p><div class="row"><button class="btn pri" id="xOpen">Mollet Xi で開く</button><button class="btn" id="xCopy">リンクをコピー</button>${navigator.share ? `<button class="btn ghost" id="xShare">送る</button>` : ""}</div>`, e => {
     if (e.target.id === "xOpen") { if (IS_APK) { try { MXNative.openUrl(url); } catch (_) { } } else window.open(url, "_blank", "noopener"); SHEET.close(); }
     if (e.target.id === "xCopy") { (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => toast("コピーしました"), () => { prompt("このリンクをコピーしてください", url); }); }
