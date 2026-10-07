@@ -345,8 +345,8 @@ H.push(o => {
 });
 function scanList() {
   const b = $("#bleList"); if (!b) return;
-  const a = [...SCAN.found.values()].sort((x, y) => (/NSM/i.test(y.n || "") - /NSM/i.test(x.n || "")) || (y.r - x.r));
-  b.innerHTML = a.length ? a.map(d => `<div class="item"><span class="nm"><b>${esc(d.n || "名前なし")}</b><small>${d.r | 0}dBm</small></span><button class="btn sm ${/NSM/i.test(d.n || "") ? "pri" : "ghost"}" data-a="${esc(d.a)}">つなぐ</button></div>`).join("")
+  const a = [...SCAN.found.values()].sort((x, y) => (/NSM|LOG/i.test(y.n || "") - /NSM|LOG/i.test(x.n || "")) || (y.r - x.r));
+  b.innerHTML = a.length ? a.map(d => `<div class="item"><span class="nm"><b>${esc(d.n || "名前なし")}</b><small>${d.r | 0}dBm</small></span><button class="btn sm ${/NSM|LOG/i.test(d.n || "") ? "pri" : "ghost"}" data-a="${esc(d.a)}">つなぐ</button></div>`).join("")
     : `<p class="hint">${SCAN.on ? "探しています…（ESP32 にモバイルバッテリーをつないで、近くに）" : "見つかりませんでした。「もう一度探す」"}</p>`;
 }
 async function connNative(a, n) {
@@ -356,7 +356,7 @@ async function connNative(a, n) {
 $("#bConn").onclick = async () => {
   if (IS_APK) {
     SCAN.found.clear(); SCAN.on = true;
-    SHEET.open("Bluetoothでつなぐ", `<div class="list" id="bleList"></div><p class="hint">「MolletXi-NSM」がデータ盗む君です。</p><div class="row end"><button class="btn ghost" id="bAgain">もう一度探す</button></div>`, e => {
+    SHEET.open("Bluetoothでつなぐ", `<div class="list" id="bleList"></div><p class="hint">「MolletXi-NSM」がデータ盗む君、「MolletXi-LOG」が金ロガー（子基板つきのロガー）です。</p><div class="row end"><button class="btn ghost" id="bAgain">もう一度探す</button></div>`, e => {
       const b = e.target.closest("[data-a]"); if (b) { const d = SCAN.found.get(b.dataset.a); try { MXNative.bleStop(); } catch (_) { } SCAN.on = false; SHEET.close(); if (d) connNative(d.a, d.n); return; }
       if (e.target.id === "bAgain") { SCAN.found.clear(); SCAN.on = true; scanList(); try { MXNative.bleScan(8000); } catch (_) { } }
     });
@@ -364,7 +364,7 @@ $("#bConn").onclick = async () => {
     return;
   }
   if (!navigator.bluetooth) { toast("このブラウザは Bluetooth が使えません（Chrome か Edge で開くか、アプリ版で）", 4000); return; }
-  try { const d = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: "MolletXi-NSM" }, { services: [NUS.svc] }], optionalServices: [NUS.svc] });
+  try { const d = await navigator.bluetooth.requestDevice({ filters: [{ namePrefix: "MolletXi-NSM" }, { namePrefix: "MolletXi-LOG" }, { services: [NUS.svc] }], optionalServices: [NUS.svc] });
     const l = new WebBle(d); useLink(l); toast(`${d.name || "機器"} につないでいます…`); await l.connect(); }
   catch (e) { if (e && e.name !== "NotFoundError") toast("つなげませんでした：" + (e.message || e), 3500); }
 };

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mollet Xi 書き込みページ</title>
+<meta name="description" content="Mollet Xi のロガー（CATロガー・金ロガー）のファームを、ブラウザから書き込む">
+<link rel="icon" href="../icon-192.png">
+<script type="module">
+// 書き込みの部品（ESP Web Tools）。unpkg がだめなら jsDelivr から
+const SRC = ["https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module", "https://cdn.jsdelivr.net/npm/esp-web-tools@10/dist/web/install-button.js"];
+(async () => {
+  for (const u of SRC) { try { await import(u); document.documentElement.classList.add("ewt-ok"); return; } catch (e) { } }
+  document.getElementById("loadErr").hidden = false; document.getElementById("loading").hidden = true;
+})();
+</script>
+<style>
+:root { --g: #0f6b52; --ink: #1f2a26; --mute: #5b6762; --line: #d4dad7; --bg: #f4f6f5; --warn: #c62828; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", sans-serif; color: var(--ink); background: var(--bg); line-height: 1.7; }
+main { max-width: 760px; margin: 0 auto; padding: 22px 16px 60px; }
+header { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+header img { width: 44px; height: 44px; border-radius: 10px; }
+h1 { font-size: 22px; margin: 0; }
+.sub { color: var(--mute); margin: 2px 0 16px; font-size: 14px; }
+.card { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin: 14px 0; }
+h2 { font-size: 18px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ver { font-size: 12px; font-weight: 700; color: var(--g); border: 1.5px solid var(--g); border-radius: 999px; padding: 0 9px; }
+h3 { font-size: 15.5px; margin: 16px 0 4px; }
+ol { padding-left: 1.4em; margin: 6px 0; }
+li { margin: 3px 0; }
+.btn { display: inline-block; font: inherit; font-weight: 700; font-size: 16px; color: #fff; background: var(--g); border: 0; border-radius: 10px; padding: 12px 20px; cursor: pointer; text-decoration: none; }
+.btn.ghost { background: #fff; color: var(--g); border: 1.6px solid var(--g); }
+.act { margin: 12px 0 4px; }
+.note { color: var(--mute); font-size: 14px; }
+.warn { background: #fde4e4; border-left: 4px solid var(--warn); border-radius: 8px; padding: 8px 12px; margin: 10px 0; font-size: 14.5px; }
+.ok { background: #e7f3ee; border-left: 4px solid var(--g); border-radius: 8px; padding: 8px 12px; margin: 10px 0; font-size: 14.5px; }
+code, .k { font-family: ui-monospace, "DejaVu Sans Mono", monospace; background: #eef2f0; border-radius: 4px; padding: 0 5px; font-weight: 700; }
+.en { font-family: ui-monospace, monospace; font-weight: 700; color: var(--g); white-space: nowrap; }
+a { color: var(--g); }
+footer { color: var(--mute); font-size: 13px; margin-top: 24px; }
+esp-web-install-button:not(:defined) [slot] { display: none; }
+.ewt-ok #loading { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <header><img src="../icon-192.png" alt=""><div><h1>Mollet Xi 書き込みページ</h1></div></header>
+  <p class="sub">ロガーの ESP32 に、ブラウザからファームを書き込みます。Arduino IDE はいりません。</p>
+
+  <section class="card">
+    <h2>CATロガー <span class="ver">1.1.0</span></h2>
+    <p>金ロガー・銀ロガー共通。子基板（パルサー入力）をつなぐと、データ盗む君の計測もします。銀ロガーのままでも、そのまま使えます。</p>
+
+    <h3>パソコンで書き込む（最初の1回）</h3>
+    <ol>
+      <li><b>パソコンの Chrome か Edge</b> でこのページを開く（スマホからはできません）</li>
+      <li>ロガーのマキタを外す。ESP32 とパソコンを USB ケーブルでつなぐ（充電専用のケーブルはだめ）</li>
+      <li>下の緑のボタンを押す → 出てきた一覧から <span class="en">USB Serial</span> や <span class="en">CP210x</span>・<span class="en">CH340</span> を選んで「接続」</li>
+      <li>英語の画面が出たら <span class="en">INSTALL Mollet Xi CATロガー</span> → <span class="en">INSTALL</span> を押す</li>
+      <li>1〜2分待つ。<span class="en">Installation complete!</span> が出たら <span class="en">CLOSE</span> を押して、USB を抜く</li>
+      <li>アプリの「設定」→「ロガー」で、<b>「ロガーに送る」</b>と<b>「IMUの取り付け校正」</b>をやり直す（書き込むと、ロガーに入っていた設定が消えるので）</li>
+    </ol>
+    <div class="act">
+      <p class="note" id="loading">書き込みの準備中…</p>
+      <div class="warn" id="loadErr" hidden>書き込みの部品が読み込めませんでした。ネットにつながっているか見て、ページを読み込み直してください。</div>
+      <esp-web-install-button manifest="logger/manifest.json">
+        <button slot="activate" class="btn">パソコンにつないで書き込む</button>
+        <div slot="unsupported" class="warn">このブラウザでは書き込めません。<b>パソコンの Chrome か Edge</b> でこのページを開いてください。</div>
+        <div slot="not-allowed" class="warn">このページは https で開いてください。</div>
+      </esp-web-install-button>
+    </div>
+    <div class="note">
+      <b>一覧に何も出ない時</b>：USB のドライバを入れる。ESP32 の USB の横の黒い小さいチップに書いてある方。
+      CH340 → <a href="https://www.wch-ic.com/downloads/CH341SER_EXE.html" target="_blank" rel="noopener">WCH のページ</a>、
+      CP2102 → <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers" target="_blank" rel="noopener">Silicon Labs のページ</a>。
+      入れたら USB を差し直す。<br>
+      <b>途中で止まる時</b>：ESP32 の <b>BOOT</b> ボタンを押したまま、もう一度。
+    </div>
+
+    <h3>スマホで更新する（2回目から・パソコンなし）</h3>
+    <ol>
+      <li>ネットがある所で、下の「ファームをダウンロード」を押して、スマホに <code>MolletXi_Logger.bin</code> を保存する</li>
+      <li>アプリ（ブラウザ版）の「設定」→「ロガー」→ <b>「ファームを更新」</b>を押す。<br>アプリにボタンが無い時は、ロガーの ESP32 の <b>BOOT ボタンを2秒</b>押す。青い LED が速く点滅したら OK</li>
+      <li>スマホの Wi-Fi で <code>MolletXi-LOG-UPDATE</code> につなぐ（パスワード <code>molletxi</code>）。「インターネットに接続されていません」と出たら「接続を維持」</li>
+      <li>自動で開くページ（開かなければ Chrome で <code>192.168.4.1</code>）で、ファイルを選んで「書き込む」</li>
+      <li>「できました」が出たら終わり。ロガーは自動で再起動します。スマホの Wi-Fi はもとに戻す</li>
+    </ol>
+    <div class="act"><a class="btn ghost" href="logger/MolletXi_Logger.bin" download="MolletXi_Logger.bin">ファームをダウンロード（MolletXi_Logger.bin）</a></div>
+    <div class="ok">CATロガー以外の .bin（CDI 用など）を選んでも、ロガーは書き込みません。10分なにもしなければ、ふつうのロガーに戻ります。</div>
+    <div class="warn">1.0.1 以前のファームには、スマホで更新する仕組みが入っていません。<b>最初の1回は、上の「パソコンで書き込む」で。</b></div>
+  </section>
+
+  <footer>Mollet Xi ∕ 製作者 Naohisa Akiyama ・ <a href="../">Mollet Xi アプリへ</a> ・ <a href="../nusumu/">データ盗む君</a></footer>
+</main>
+</body>
+</html>

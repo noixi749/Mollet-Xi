@@ -3139,12 +3139,13 @@ RENDER.set = function () {
   <div class="card" id="bikeCard">${bikeCardHtml()}</div>
 
   <div class="card"><h3>ロガー</h3>
-    ${lh && lh.sens ? `<p class="hint">センサー：${[["gps", "GPS"], ["imu", "IMU"], ["aht", "温湿度"], ["bmp", "気圧"], ["tc", "シリンダ温度"]].map(([k, n]) => `<span class="pill ${lh.sens[k] ? "fix" : "fb"}">${n}${lh.sens[k] ? "" : " なし"}</span>`).join(" ")}</p>` : '<p class="hint">つなぐとセンサーの有無が出ます。</p>'}
+    ${lh && lh.sens ? `<p class="hint">センサー：${[["gps", "GPS"], ["imu", "IMU"], ["aht", "温湿度"], ["bmp", "気圧"], ["tc", "シリンダ温度"]].concat(lh.nsm ? [["pul", "盗む君のパルサー"]] : []).map(([k, n]) => `<span class="pill ${lh.sens[k] ? "fix" : "fb"}">${n}${lh.sens[k] ? "" : " なし"}</span>`).join(" ")}</p>` : '<p class="hint">つなぐとセンサーの有無が出ます。</p>'}
     <div class="flds"><label class="fld"><span>後輪の磁石の数</span><input type="number" id="sWp" min="1" max="16" value="${SET.lg.wp}"></label>
     <label class="fld"><span>回転パルス／1回転</span><input type="number" id="sRp" min="1" max="4" value="${SET.lg.rp}"></label></div>
     <label class="sw"><input type="checkbox" id="sVs"${SET.lg.vs ? " checked" : ""}><span>電源電圧の線をつないでいる</span></label>
-    <div class="row"><button type="button" class="btn sm" id="sLgSave">ロガーに送る</button><button type="button" class="btn sm" id="sImu">IMUの取り付け校正</button></div>
-    <p class="hint">IMUの校正：バイクをまっすぐ立てて止めたまま押す（2秒）。バンク角と横Gの基準になります。</p></div>
+    <div class="row"><button type="button" class="btn sm" id="sLgSave">ロガーに送る</button><button type="button" class="btn sm" id="sImu">IMUの取り付け校正</button><button type="button" class="btn sm ghost" id="sOta">ファームを更新</button></div>
+    <p class="hint">IMUの校正：バイクをまっすぐ立てて止めたまま押す（2秒）。バンク角と横Gの基準になります。</p>
+    <p class="hint">ファームの更新：先に <a href="https://noixi749.github.io/Mollet-Xi/flash/" target="_blank" rel="noopener">書き込みページ</a> で MolletXi_Logger.bin をスマホにダウンロードしておく。${lh && lh.fw ? `今のファーム：${esc(String(lh.fw))}` : ""}</p></div>
 
   <div class="card"><h3>燃料計</h3>
     <div class="tiles"><div class="tile"><span>センサーの値</span><b id="sFuRaw">--</b></div><div class="tile"><span>残り</span><b id="sFuPct">--</b></div><div class="tile"><span>推定消費（給油から）</span><b id="sFuUse">--</b></div><div class="tile"><span>1周あたり</span><b id="sFuLap">--</b></div></div>
@@ -3228,6 +3229,13 @@ function bindSet() {
   $("#tab-set").querySelectorAll("[data-cn]").forEach(b => b.onclick = () => { const k = b.dataset.cn; if (k === "cdi-ble") connectBle("cdi"); if (k === "cdi-usb") connectUsb("cdi"); if (k === "lg-ble") connectBle("logger"); if (k === "lg-usb") connectUsb("logger"); if (k === "off") { CDI_DEV.detachAll(); LOG_DEV.detachAll(); } });
   $("#sLgSave").onclick = async () => { SET.lg.wp = clamp(+$("#sWp").value | 0, 1, 16); SET.lg.rp = clamp(+$("#sRp").value | 0, 1, 4); SET.lg.vs = $("#sVs").checked ? 1 : 0; saveSet(); if (!LOG_DEV.on) { toast("保存しました（ロガーにはつないだ時に送ります）"); return; } LOG_DEV.send({ c: "cfg", wp: SET.lg.wp, rp: SET.lg.rp, vs: SET.lg.vs }); toast("ロガーに送りました"); };
   $("#sImu").onclick = () => { if (!LOG_DEV.on) { toast("ロガーがつながっていません"); return; } LOG_DEV.send({ c: "imucal" }); toast("校正中…2秒動かさないでください"); };
+  $("#sOta").onclick = () => {
+    if (!LOG_DEV.on) { toast("ロガーがつながっていません"); return; }
+    const h = LOG_DEV.hello;
+    if (!h || !h.upd) { toast("このロガーのファームは古いので、最初の1回はパソコンで書き込んでください（書き込みページ）", 6000); return; }
+    if (!confirm("ロガーを更新モードにします（そのあいだ記録は止まります）。\n\n先に、書き込みページから MolletXi_Logger.bin をスマホにダウンロードしておいてください。\n\nこのあと：スマホの Wi-Fi で「MolletXi-LOG-UPDATE」（パスワード molletxi）につなぎ、開いたページ（開かなければ Chrome で 192.168.4.1）でファイルを選んで「書き込む」。\n\n更新モードにしますか？")) return;
+    LOG_DEV.send({ c: "ota" }); toast("更新モードにしました。Wi-Fi「MolletXi-LOG-UPDATE」（パスワード molletxi）につないでください", 8000);
+  };
   $("#tab-set").querySelectorAll("[data-fc]").forEach(b => b.onclick = () => fuelCapture(b.dataset.fc));
   $("#sFuSave").onclick = () => { const cap = +$("#sCap").value; SET.fuel.cap = cap > 0 ? cap : 0; SET.fuel.filt = clamp(+$("#sFilt").value || 20, 2, 120); SET.fuel.k = clamp(+$("#sK").value || 0.22, 0.05, 1.5); saveSet(); FUEL.buf = []; FUEL.pctF = null; toast(FUEL.calOk() ? "燃料計を保存しました" : "保存しました（満タンと空を記録すると動きます）"); };
   $("#sRefuel").onclick = () => ACT("refuel");
