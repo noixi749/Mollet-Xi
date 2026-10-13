@@ -15,6 +15,16 @@
 - ブラウザ版も全部 noixi749.github.io の下にあるので、同じブラウザならデータを見せ合えます。
 - ブラウザ版は Chrome か Edge で開いて、メニューの「アプリをインストール」でホーム画面に置けます。一度開けば、電波の弱いサーキットでも開けます（地図とピット通信はネットが要ります）。
 
+## そのほかのアプリ
+
+| アプリ | 役目 | ブラウザ版 | Android（APK） |
+|---|---|---|---|
+| 切り貼り君 | YouTube用の動画編集。カット・テロップ・BGM・Claudeに頼んで編集 | https://noixi749.github.io/Mollet-Xi/kirihari/ | [Kirihari.apk](https://noixi749.github.io/Mollet-Xi/apk/Kirihari.apk)（1.1） |
+
+- 切り貼り君の APK は Mollet Xi シリーズとは別の鍵で署名しています（シリーズのアプリとはデータを共有しません）。
+- アプリ版とこのブラウザ版で Claude に頼むときは、Anthropic の API キーを入れて使います（Claude の月額プランとは別に、使った分だけ料金がかかります）。
+- 書き出した動画は、アプリ版はスマホの「ムービー／切り貼り君」フォルダ、ブラウザ版はダウンロードに保存されます。
+
 ## ロガーの書き込みページ
 
 https://noixi749.github.io/Mollet-Xi/flash/
