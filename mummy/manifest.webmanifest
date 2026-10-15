@@ -1,0 +1,16 @@
+{
+  "name": "マミー会ローリング・ストーンズ",
+  "short_name": "マミー会RS",
+  "description": "身内の顔を積み上げる対戦ゲーム",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
+  "lang": "ja",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
