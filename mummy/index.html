@@ -261,8 +261,11 @@ async function srvSyncChars(){ // download new characters, upload local ones the
 }
 async function srvSyncPlayers(){
   if(!Srv.on())return false;
-  try{const all=(await Srv.get('players'))||{};for(const k in all)if(k!==me.id)mergeRec(all[k]);saveTable();return true;}catch(e){return false;}
+  try{mergePlayers((await Srv.get('players'))||{});return true;}catch(e){return false;}
 }
+function mergePlayers(all){if(!all||typeof all!=='object')return;for(const k in all)mergeRec(all[k]);lsSet('mrs-table',table);}
+// write finished-game records straight to the server (every player in the game writes the same values)
+function pushRecs(pids){if(!Srv.on())return;for(const pid of pids){const r=table[pid];if(validRec(r))Srv.put('players/'+pid,cleanRec(r)).catch(()=>sleep(1500).then(()=>Srv.put('players/'+pid,cleanRec(table[pid]))).catch(()=>{}));}}
 let pushTimer=null;
 function pushMyRec(){if(!Srv.on())return;clearTimeout(pushTimer);pushTimer=setTimeout(()=>{Srv.put('players/'+me.id,cleanRec(myRec())).catch(()=>{});},800);}
 
@@ -287,10 +290,10 @@ function iconSrc(cid){const c=cid&&CH.get(cid);return c?c.img:(CH.get('b00')||{}
 function avatar(cid,cls){const im=document.createElement('img');im.className='av'+(cls?' '+cls:'');im.alt='';im.src=iconSrc(cid);return im;}
 function defaultRec(pid,name){return {id:pid,name:name||'ななし',rating:RATE0,w:0,l:0,best:0,v:0,at:0};}
 // One loser, everyone else wins. Each winner plays a match against the loser, worth K/(n-1).
-function applyElo(recs,loser){
+function applyElo(recs,loser,at){
   const n=recs.length,k=ELO_K/(n-1),L=recs[loser],d=recs.map(()=>0);
   recs.forEach((w,i)=>{if(i===loser)return;const ew=1/(1+Math.pow(10,(L.rating-w.rating)/400));const g=Math.round(k*(1-ew));d[i]+=g;d[loser]-=g;});
-  const now=Date.now();
+  const now=at||Date.now();
   recs.forEach((r,i)=>mergeRec(Object.assign({},r,{rating:r.rating+d[i],w:r.w+(i===loser?0:1),l:r.l+(i===loser?1:0),v:r.v+1,at:now})));
   saveTable();return d;
 }
@@ -467,7 +470,7 @@ function gameOver(loser){
     const iWin=loser!==G.me;
     big.textContent=iWin?WIN_TXT:LOSE_TXT;big.className=iWin?'win':'lose';
     let t=(iWin?G.players[loser].name+'の負け':'あなたの負け')+'（'+n+'個）';
-    if(G.recs&&!G.rated){G.rated=true;const before=G.recs[G.me].rating;const d=applyElo(G.recs,loser)[G.me];
+    if(G.recs&&!G.rated){G.rated=true;const before=G.recs[G.me].rating;const d=applyElo(G.recs,loser,G.startAt)[G.me];pushRecs(G.recs.map(r=>r.id));
       t+='\nレート '+before+' → '+(before+d)+'（'+(d>=0?'+':'')+d+'）';}
     sub.textContent=t;
   }
@@ -567,7 +570,9 @@ function flushMove(){moveDirty=false;if(G&&G.phase==='aim'&&G.mode==='online')Ro
 
 /* ================= screens ================= */
 const SCREENS=['loading','sTitle','sLobby','sGame','sCreate','sRank','sProfile'];
-function show(id){for(const s of SCREENS)$('#'+s).hidden=s!==id;if(id==='sGame')requestAnimationFrame(resize);}
+let rankUnlisten=null;
+function show(id){for(const s of SCREENS)$('#'+s).hidden=s!==id;if(id==='sGame')requestAnimationFrame(resize);
+  if(id!=='sRank'&&rankUnlisten){rankUnlisten();rankUnlisten=null;}}
 function toTitle(){G=null;Room.leave();$('#charCount').textContent='キャラ '+allIds().length+'体';
   const r=myRec();$('#meIcon').src=iconSrc(me.icon);$('#meName').textContent=me.name||'ななし';
   $('#meLine').textContent=(me.word?me.word+'　':'')+'レート '+r.rating+'　'+r.w+'勝'+r.l+'敗';
@@ -619,7 +624,8 @@ $('#bProfSave').onclick=()=>{
   if(!n){$('#profOut').textContent='名前を入れてな';return;}
   setMyProfile(n,profPick,$('#profWord').value);toTitle();
 };
-$('#bRank').onclick=async()=>{rkMode='rate';renderRank();show('sRank');if(await srvSyncPlayers())renderRank();};
+$('#bRank').onclick=()=>{rkMode='rate';renderRank();show('sRank');
+  if(Srv.on()&&!rankUnlisten)rankUnlisten=Srv.listen('players',all=>{mergePlayers(all);if(!$('#sRank').hidden)renderRank();});};
 $('#rkRate').onclick=()=>{rkMode='rate';renderRank();};
 $('#rkSolo').onclick=()=>{rkMode='solo';renderRank();};
 $('#bRankBack').onclick=toTitle;
@@ -775,7 +781,7 @@ function hostStart(){
   for(const p of players){if(p.sid===Room.sid)continue;const s=new Set(Room.ready[p.sid]);common=common?new Set([...common].filter(x=>s.has(x))):s;}
   const pool=[...CH.values()].filter(c=>c.builtin||(common&&common.has(c.id)&&!blocked.has(c.id))).map(c=>c.id).sort();
   const recs=players.map(p=>cleanRec(validRec(table[p.pid])?table[p.pid]:defaultRec(p.pid,p.name)));
-  const m={t:'start',seed:(Math.random()*1e9)|0,pool,players:players.map(p=>({sid:p.sid,pid:p.pid,name:p.name})),first:Room.gameNo%players.length,no:Room.gameNo,recs};
+  const m={t:'start',seed:(Math.random()*1e9)|0,pool,players:players.map(p=>({sid:p.sid,pid:p.pid,name:p.name})),first:Room.gameNo%players.length,no:Room.gameNo,recs,at:Date.now()};
   Room.gameNo++;
   Room.bcast(m);beginOnline(m);
 }
@@ -789,7 +795,7 @@ function beginOnline(m){
   const players=m.players.map(p=>({sid:String(p.sid),pid:String(p.pid||''),name:String(p.name||'ななし').slice(0,12)}));
   const recs=Array.isArray(m.recs)&&m.recs.length===players.length&&m.recs.every(validRec)?m.recs:null;
   startGame({mode:'online',pool,seed:m.seed|0,n:players.length,first:(m.first|0)%players.length,me:idx,players});
-  G.recs=recs;G.rated=false;
+  G.recs=recs;G.rated=false;G.startAt=isFinite(m.at)?+m.at:Date.now();
   $('#hint').textContent=players.length+'人で対戦。'+playerLabel(curPlayer())+'から';
   if(Room.tr&&Room.tr.prune)Room.tr.prune();
 }

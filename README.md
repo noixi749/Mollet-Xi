@@ -21,7 +21,7 @@
 |---|---|---|---|
 | 切り貼り君 | YouTube用の動画編集。カット・テロップ・BGM・Claudeに頼んで編集 | https://noixi749.github.io/Mollet-Xi/kirihari/ | [Kirihari.apk](https://noixi749.github.io/Mollet-Xi/apk/Kirihari.apk)（1.1） |
 | イツキくんち | 登録した行き先までの直線距離と方向（コンパス）をリアルタイムで表示。ナビ起動、到着するとお祝い（90m以内で「到着！」ボタン） | https://noixi749.github.io/Mollet-Xi/itsuki/ | [Itsuki.apk](https://noixi749.github.io/Mollet-Xi/apk/Itsuki.apk)（1.4） |
-| マミー会ローリング・ストーンズ | 顔を積み上げて、落とした人の負け。合言葉で2〜8人のオンライン対戦・プロフィール・キャラ作成・レートとランキング | https://noixi749.github.io/Mollet-Xi/mummy/ | [MummyRS.apk](https://noixi749.github.io/Mollet-Xi/apk/MummyRS.apk)（1.1） |
+| マミー会ローリング・ストーンズ | 顔を積み上げて、落とした人の負け。合言葉で2〜8人のオンライン対戦・プロフィール・キャラ作成・レートとランキング | https://noixi749.github.io/Mollet-Xi/mummy/ | [MummyRS.apk](https://noixi749.github.io/Mollet-Xi/apk/MummyRS.apk)（1.2） |
 
 - 切り貼り君の APK は Mollet Xi シリーズとは別の鍵で署名しています（シリーズのアプリとはデータを共有しません）。
 - アプリ版とこのブラウザ版で Claude に頼むときは、Anthropic の API キーを入れて使います（Claude の月額プランとは別に、使った分だけ料金がかかります）。
