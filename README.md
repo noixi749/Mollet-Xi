@@ -20,10 +20,13 @@
 | アプリ | 役目 | ブラウザ版 | Android（APK） |
 |---|---|---|---|
 | 切り貼り君 | YouTube用の動画編集。カット・テロップ・BGM・Claudeに頼んで編集 | https://noixi749.github.io/Mollet-Xi/kirihari/ | [Kirihari.apk](https://noixi749.github.io/Mollet-Xi/apk/Kirihari.apk)（1.1） |
+| イツキくんち | 登録した行き先までの直線距離と方向（コンパス）をリアルタイムで表示。ナビ起動、到着するとお祝い | https://noixi749.github.io/Mollet-Xi/itsuki/ | [Itsuki.apk](https://noixi749.github.io/Mollet-Xi/apk/Itsuki.apk)（1.2） |
 
 - 切り貼り君の APK は Mollet Xi シリーズとは別の鍵で署名しています（シリーズのアプリとはデータを共有しません）。
 - アプリ版とこのブラウザ版で Claude に頼むときは、Anthropic の API キーを入れて使います（Claude の月額プランとは別に、使った分だけ料金がかかります）。
 - 書き出した動画は、アプリ版はスマホの「ムービー／切り貼り君」フォルダ、ブラウザ版はダウンロードに保存されます。
+- イツキくんちの行き先（名前・住所・位置）は、初めて開いたときに登録します。登録した内容はそのスマホ（ブラウザ）の中だけに保存され、ここには入っていません。
+- イツキくんちの APK も、ほかのアプリとは別の鍵で署名しています。
 
 ## ロガーの書き込みページ
 
