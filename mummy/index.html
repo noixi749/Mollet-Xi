@@ -53,6 +53,21 @@ label.file{display:block}
 label.file input{display:none}
 label.file span{display:block;text-align:center;background:var(--btn);border:1px solid var(--line);border-radius:6px;padding:12px}
 input[type=range]{width:100%}
+.row{display:flex;gap:8px}.row button{flex:1;min-width:0}
+select{font:inherit;color:var(--fg);padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
+#memberList{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+#memberList li{display:flex;gap:10px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+#memberList .nm{flex:1;min-width:0;word-break:break-all}
+#memberList .tag{font-size:12px;color:var(--sub)}
+#memberList li.me .nm{font-weight:bold}
+.av{width:40px;height:40px;object-fit:contain;flex:none;border-radius:6px;background:#f4f4f4}
+.av.big{width:72px;height:72px}
+.av.sm{width:28px;height:28px;vertical-align:middle;margin-right:6px}
+.meRow{display:flex;gap:12px;align-items:center}
+.meTxt{min-width:0;word-break:break-all}
+.cell.pick{cursor:pointer}
+.cell.on{border-color:#111;box-shadow:0 0 0 2px #111 inset}
+#memberList .word{display:block;font-size:12px;color:var(--sub);font-weight:normal}
 .tblWrap{overflow-x:auto}
 #rkTable{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
 #rkTable th,#rkTable td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
@@ -71,11 +86,13 @@ input[type=range]{width:100%}
     <h1>マミー会ローリング・ストーンズ</h1>
     <div class="sub">顔面を積んで、落とした方の負け</div>
     <div class="sub" id="charCount"></div>
-    <div class="sub" id="meLine"></div>
+    <div class="meRow"><img id="meIcon" class="av" alt=""><div class="meTxt"><b id="meName"></b><div class="sub" id="meLine"></div></div></div>
     <button id="bSolo">ひとりで</button>
-    <button id="bLocal">ふたりで（1台を交代で）</button>
-    <button id="bOnline">合言葉で対戦</button>
+    <div class="row"><button id="bLocal">みんなで（1台を交代で）</button>
+      <select id="localN" aria-label="人数"><option value="2">2人</option><option value="3">3人</option><option value="4">4人</option><option value="5">5人</option><option value="6">6人</option><option value="7">7人</option><option value="8">8人</option></select></div>
+    <button id="bOnline">合言葉で対戦（2〜8人）</button>
     <button id="bRank">ランキング</button>
+    <button id="bProfile">プロフィール</button>
     <button id="bCreate">キャラ作成</button>
     <details id="srvBox" class="sub">
       <summary id="srvState">サーバー</summary>
@@ -91,14 +108,21 @@ input[type=range]{width:100%}
 
 <!-- online lobby -->
 <div id="sLobby" class="screen pad" hidden>
-  <div class="col">
+  <div class="col" id="lobbyForm">
     <h1>合言葉で対戦</h1>
-    <div class="sub">友達と同じ合言葉を入れたら対戦開始。お互いの作ったキャラとランキングも自動で共有されるで。</div>
-    <input type="text" id="pname" maxlength="12" placeholder="あなたの名前（ランキングに出る）" autocomplete="off">
+    <div class="sub">みんなで同じ合言葉を入れたら同じ部屋に入れる（8人まで）。そろったらホストがスタート。</div>
+    <div class="sub" id="lobbyMe"></div>
     <input type="text" id="word" maxlength="40" placeholder="合言葉（例：まみー）" autocomplete="off">
     <button id="bJoin">入る</button>
     <div class="msg" id="lobbyMsg"></div>
     <button id="bLobbyBack">戻る</button>
+  </div>
+  <div class="col" id="lobbyRoom" hidden>
+    <h1 id="roomTitle">部屋</h1>
+    <ul id="memberList"></ul>
+    <div class="msg" id="roomMsg"></div>
+    <button id="bStart" hidden>スタート</button>
+    <button id="bLeave">部屋を出る</button>
   </div>
 </div>
 
@@ -111,10 +135,26 @@ input[type=range]{width:100%}
     <div id="result" hidden><div class="box">
       <div id="resBig"></div><div id="resSub"></div>
       <button id="bAgain">もう一回</button>
+      <div class="sub" id="resWait" hidden>ホストの「もう一回」待ち</div>
       <button id="bToTitle">タイトルへ</button>
     </div></div>
   </div>
   <div id="ctl"><button id="bRot">↻ 回転</button><button id="bDrop">落とす</button></div>
+</div>
+
+<!-- profile -->
+<div id="sProfile" class="screen pad" hidden>
+  <div class="col">
+    <h1>プロフィール</h1>
+    <div class="sub" id="profIntro"></div>
+    <div class="meRow"><img id="profIcon" class="av big" alt=""><div class="meTxt sub">アイコンは下のキャラから選んでな</div></div>
+    <input type="text" id="profName" maxlength="12" placeholder="名前（ランキングや部屋に出る）" autocomplete="off">
+    <input type="text" id="profWord" maxlength="20" placeholder="ひとこと（なくてもOK）" autocomplete="off">
+    <div class="grid" id="iconGrid"></div>
+    <button id="bProfSave">保存</button>
+    <div class="msg" id="profOut"></div>
+    <button id="bProfBack">戻る</button>
+  </div>
 </div>
 
 <!-- ranking -->
@@ -184,6 +224,7 @@ const Srv={
   get(p,q){return this.req('GET',p,undefined,q);},
   put(p,v){return this.req('PUT',p,v);},
   del(p){return this.req('DELETE',p);},
+  patch(p,v){return this.req('PATCH',p,v);},
   listen(p,cb){ // cb(mirror) on every change
     let mirror=null;const es=new EventSource(this.url(p));
     const h=merge=>e=>{let d;try{d=JSON.parse(e.data);}catch(_){return;}if(!d||typeof d.path!=='string')return;mirror=applyAt(mirror,d.path,d.data,merge);cb(mirror);};
@@ -234,14 +275,23 @@ function myRec(){let r=table[me.id];if(!r){r={id:me.id,name:me.name||'ななし'
 function saveTable(){lsSet('mrs-table',table);pushMyRec();}
 function bump(r){r.v=(r.v|0)+1;r.at=Date.now();}
 function validRec(r){return r&&typeof r.id==='string'&&/^p[a-z0-9]{4,30}$/.test(r.id)&&typeof r.name==='string'&&r.name.length<=16&&isFinite(r.rating)&&Math.abs(r.rating)<1e5&&Number.isInteger(r.w)&&r.w>=0&&Number.isInteger(r.l)&&r.l>=0&&Number.isInteger(r.best)&&r.best>=0&&Number.isInteger(r.v)&&r.v>=0&&isFinite(r.at);}
-function cleanRec(r){return {id:r.id,name:r.name,rating:Math.round(r.rating),w:r.w,l:r.l,best:r.best,v:r.v,at:r.at};}
+function cleanRec(r){const o={id:r.id,name:r.name,rating:Math.round(r.rating),w:r.w,l:r.l,best:r.best,v:r.v,at:r.at};
+  if(typeof r.icon==='string'&&/^[a-z0-9_-]{2,40}$/i.test(r.icon))o.icon=r.icon;if(typeof r.word==='string')o.word=r.word.slice(0,20);return o;}
 function mergeRec(r){if(!validRec(r))return;const c=table[r.id];if(!c||r.v>c.v||(r.v===c.v&&r.at>c.at))table[r.id]=cleanRec(r);}
-function setMyName(n){n=(n||'').trim().slice(0,12)||'ななし';me.name=n;lsSet('mrs-me',me);const r=myRec();if(r.name!==n){r.name=n;bump(r);saveTable();}}
-function applyElo(recs,loser){ // recs: [player0 rec, player1 rec] as of game start
-  const [a,b]=recs;const ea=1/(1+Math.pow(10,(b.rating-a.rating)/400));const sa=loser===0?0:1;
-  const d=Math.round(ELO_K*(sa-ea));const now=Date.now();
-  mergeRec(Object.assign({},a,{rating:a.rating+d,w:a.w+sa,l:a.l+(1-sa),v:a.v+1,at:now}));
-  mergeRec(Object.assign({},b,{rating:b.rating-d,w:b.w+(1-sa),l:b.l+sa,v:b.v+1,at:now}));
+function setMyProfile(n,icon,word){
+  n=(n||'').trim().slice(0,12)||'ななし';word=(word||'').trim().slice(0,20);
+  me.name=n;me.icon=icon||'';me.word=word;lsSet('mrs-me',me);
+  const r=myRec();if(r.name!==n||(r.icon||'')!==me.icon||(r.word||'')!==word){r.name=n;if(me.icon)r.icon=me.icon;else delete r.icon;r.word=word;bump(r);saveTable();}
+}
+function iconSrc(cid){const c=cid&&CH.get(cid);return c?c.img:(CH.get('b00')||{}).img||'';}
+function avatar(cid,cls){const im=document.createElement('img');im.className='av'+(cls?' '+cls:'');im.alt='';im.src=iconSrc(cid);return im;}
+function defaultRec(pid,name){return {id:pid,name:name||'ななし',rating:RATE0,w:0,l:0,best:0,v:0,at:0};}
+// One loser, everyone else wins. Each winner plays a match against the loser, worth K/(n-1).
+function applyElo(recs,loser){
+  const n=recs.length,k=ELO_K/(n-1),L=recs[loser],d=recs.map(()=>0);
+  recs.forEach((w,i)=>{if(i===loser)return;const ew=1/(1+Math.pow(10,(L.rating-w.rating)/400));const g=Math.round(k*(1-ew));d[i]+=g;d[loser]-=g;});
+  const now=Date.now();
+  recs.forEach((r,i)=>mergeRec(Object.assign({},r,{rating:r.rating+d[i],w:r.w+(i===loser?0:1),l:r.l+(i===loser?1:0),v:r.v+1,at:now})));
   saveTable();return d;
 }
 
@@ -291,16 +341,21 @@ const SHAPES=(()=>{const s={};
 
 /* ================= physics world ================= */
 const WW=420, STAGE_L=85, STAGE_R=335, STAGE_H=60, FALL_Y=300, STEP=1000/60;
+const GROUND_GRIP=0.55, ROLL_DAMP=0.95; // per step: speed kept while on the stage / spin kept everywhere
 let engine, stageBody;
 function newEngine(){
   engine=Engine.create({positionIterations:10,velocityIterations:8,enableSleeping:false});
   engine.gravity.y=1;
-  stageBody=Bodies.rectangle((STAGE_L+STAGE_R)/2,STAGE_H/2,STAGE_R-STAGE_L,STAGE_H,{isStatic:true,friction:1,frictionStatic:2});
+  stageBody=Bodies.rectangle((STAGE_L+STAGE_R)/2,STAGE_H/2,STAGE_R-STAGE_L,STAGE_H,{isStatic:true,friction:1,frictionStatic:20});
   Composite.add(engine.world,stageBody);
+  // the stage grips: anything touching it loses most of its sliding and spinning
+  Matter.Events.on(engine,'collisionActive',e=>{for(const p of e.pairs){
+    const o=p.bodyA===stageBody?p.bodyB.parent:p.bodyB===stageBody?p.bodyA.parent:null;if(!o||o.isStatic)continue;
+    Body.setVelocity(o,{x:o.velocity.x*GROUND_GRIP,y:o.velocity.y});Body.setAngularVelocity(o,o.angularVelocity*GROUND_GRIP);}});
 }
 function makeBody(cid,x,y,a){
   const c=CH.get(cid);const s=c.scale;
-  const opt={friction:0.9,frictionStatic:1.6,restitution:0.02,density:0.0015,frictionAir:0.012};
+  const opt={friction:1,frictionStatic:4,restitution:0,density:0.0015,frictionAir:0.015};
   const parts=c.parts.map(p=>{let v=p.map(q=>({x:q[0]*s,y:q[1]*s}));v=Vertices.clockwiseSort(v);return Body.create(Object.assign({position:Vertices.centre(v),vertices:v},opt));});
   const b=parts.length===1?parts[0]:Body.create(Object.assign({parts},opt));
   b.plugin={cid,off:{x:b.position.x,y:b.position.y}};
@@ -321,16 +376,18 @@ function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a
 function makeSeq(pool,seed){const r=mulberry32(seed);const seq=[];return t=>{while(seq.length<=t){const bag=pool.slice();for(let i=bag.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[bag[i],bag[j]]=[bag[j],bag[i]];}seq.push(...bag);}return seq[t];};}
 
 function startGame(o){
-  // o: {mode:'solo'|'local'|'online', pool, seed, first, me}
-  G={mode:o.mode,pool:o.pool,seq:makeSeq(o.pool,o.seed),t:0,first:o.first||0,me:o.me||0,phase:'aim',
+  // o: {mode:'solo'|'local'|'online', pool, seed, n (players), first, me, players (online)}
+  G={mode:o.mode,pool:o.pool,seq:makeSeq(o.pool,o.seed),t:0,n:o.n||1,first:o.first||0,me:o.me||0,players:o.players||null,phase:'aim',
      aimX:WW/2,aimA:0,dispA:0,spawnY:-220,cur:null,dropAt:0,calm:0,fell:false,fellAt:0,auth:true,waitSettle:false};
   newEngine();
-  show('sGame');$('#result').hidden=true;$('#hint').hidden=false;
+  show('sGame');$('#result').hidden=true;$('#hint').hidden=false;$('#hint').textContent='左右にドラッグで移動';
+  $('#bToTitle').textContent=G.mode==='online'?'部屋を出る':'タイトルへ';
   camTop=null;resize();
   setupAim();
 }
-function curPlayer(){return (G.t+G.first)%2;}
+function curPlayer(){return (G.t+G.first)%G.n;}
 function myTurn(){return G.mode!=='online'||curPlayer()===G.me;}
+function playerLabel(i){return G.mode==='online'?(i===G.me?'あなた':G.players[i].name):(i+1)+'P';}
 function setupAim(){
   G.phase='aim';G.cur=G.seq(G.t);G.aimX=WW/2;G.aimA=0;G.dispA=0;G.fell=false;G.waitSettle=false;
   const c=CH.get(G.cur);
@@ -342,8 +399,8 @@ function updateHud(){
   $('#count').textContent=n+'個';
   let t='';
   if(G.mode==='solo')t='ひとりで';
-  else if(G.mode==='local')t=(curPlayer()===0?'1P':'2P')+'の番';
-  else t=myTurn()?'あなたの番':'相手の番';
+  else if(G.phase==='over')t='';
+  else t=playerLabel(curPlayer())+'の番';
   $('#turn').textContent=t;
   const can=G.phase==='aim'&&myTurn();
   $('#bRot').disabled=!can;$('#bDrop').disabled=!can;
@@ -353,7 +410,7 @@ function moveAim(x){G.aimX=Math.max(15,Math.min(WW-15,x));sendMove(false);}
 function drop(){
   if(!G||G.phase!=='aim'||!myTurn())return;
   $('#hint').hidden=true;
-  if(G.mode==='online')Net.send({t:'drop',n:G.t,x:G.aimX,y:G.spawnY,a:G.aimA});
+  if(G.mode==='online')Room.bcast({t:'drop',n:G.t,x:G.aimX,y:G.spawnY,a:G.aimA});
   doDrop(G.aimX,G.spawnY,G.aimA,true);
 }
 function doDrop(x,y,a,auth){
@@ -366,6 +423,7 @@ let simTime=0;
 function afterStep(){
   if(!G||G.phase!=='fall')return;
   const ps=pieces();
+  for(const b of ps)Body.setAngularVelocity(b,b.angularVelocity*ROLL_DAMP); // rolling resistance
   if(G.auth&&!G.fell&&ps.some(b=>b.position.y>FALL_Y)){G.fell=true;G.fellAt=simTime;}
   if(G.fell){if(simTime-G.fellAt>900)finishTurn(true);return;}
   const calm=ps.every(b=>b.speed<0.09&&b.angularSpeed<0.005);
@@ -378,12 +436,12 @@ function afterStep(){
 }
 function finishTurn(fell){
   if(fell){
-    if(G.mode==='online')Net.send({t:'settled',n:G.t,fell:true,snap:[]});
+    if(G.mode==='online')Room.bcast({t:'settled',n:G.t,fell:true,snap:[]});
     gameOver(curPlayer());
     return;
   }
   const snap=snapshot();
-  if(G.mode==='online')Net.send({t:'settled',n:G.t,fell:false,snap});
+  if(G.mode==='online')Room.bcast({t:'settled',n:G.t,fell:false,snap});
   applySnapshot(snap);
   G.t++;setupAim();
 }
@@ -402,18 +460,35 @@ function gameOver(loser){
     if(n>best){r.best=n;bump(r);saveTable();big.textContent=WIN_TXT;big.className='win';sub.textContent='新記録 '+n+'個';}
     else{big.textContent=LOSE_TXT;big.className='lose';sub.textContent=n+'個（最高 '+best+'個）';}
   }else if(G.mode==='local'){
-    const w=loser===0?'2P':'1P',l=loser===0?'1P':'2P';
-    big.textContent=w+' '+WIN_TXT;big.className='win';sub.textContent=l+' '+LOSE_TXT+'（'+n+'個）';
+    const l=playerLabel(loser);
+    if(G.n===2){big.textContent=playerLabel(1-loser)+' '+WIN_TXT;big.className='win';sub.textContent=l+' '+LOSE_TXT+'（'+n+'個）';}
+    else{big.textContent=l+' '+LOSE_TXT;big.className='lose';sub.textContent='ほかのみんな '+WIN_TXT+'（'+n+'個）';}
   }else{
     const iWin=loser!==G.me;
     big.textContent=iWin?WIN_TXT:LOSE_TXT;big.className=iWin?'win':'lose';
-    let t=(iWin?'あなたの勝ち':'あなたの負け')+'（'+n+'個）';
-    if(G.recs&&!G.rated){G.rated=true;const before=G.recs[G.me].rating;const d=applyElo(G.recs,loser);const mine=G.me===0?d:-d;
-      t+='\nレート '+before+' → '+(before+mine)+'（'+(mine>=0?'+':'')+mine+'）';}
+    let t=(iWin?G.players[loser].name+'の負け':'あなたの負け')+'（'+n+'個）';
+    if(G.recs&&!G.rated){G.rated=true;const before=G.recs[G.me].rating;const d=applyElo(G.recs,loser)[G.me];
+      t+='\nレート '+before+' → '+(before+d)+'（'+(d>=0?'+':'')+d+'）';}
     sub.textContent=t;
   }
-  $('#bAgain').disabled=false;
+  showResult();
+}
+function abortGame(name){
+  if(!G||G.phase==='over')return;
+  G.phase='over';updateHud();
+  $('#resBig').textContent='中断';$('#resBig').className='';
+  $('#resSub').textContent=name+'が抜けたから、この試合はなし';
+  showResult();
+}
+function showResult(){
+  refreshResultButtons();
   setTimeout(()=>{if(G&&G.phase==='over')$('#result').hidden=false;},300);
+}
+function refreshResultButtons(){
+  if(!G)return;
+  const online=G.mode==='online',host=online&&Room.isHost();
+  $('#bAgain').hidden=online&&!host;$('#bAgain').disabled=online&&Room.members.length<2;
+  $('#resWait').hidden=!online||host;
 }
 
 /* ================= rendering ================= */
@@ -488,14 +563,15 @@ function sendMove(now){
   moveDirty=true;
   if(now||!moveTimer){flushMove();clearTimeout(moveTimer);moveTimer=setTimeout(()=>{moveTimer=null;if(moveDirty)flushMove();},150);}
 }
-function flushMove(){moveDirty=false;if(G&&G.phase==='aim')Net.send({t:'move',n:G.t,x:G.aimX,a:G.aimA});}
+function flushMove(){moveDirty=false;if(G&&G.phase==='aim'&&G.mode==='online')Room.bcast({t:'move',n:G.t,x:G.aimX,a:G.aimA});}
 
 /* ================= screens ================= */
-const SCREENS=['loading','sTitle','sLobby','sGame','sCreate','sRank'];
+const SCREENS=['loading','sTitle','sLobby','sGame','sCreate','sRank','sProfile'];
 function show(id){for(const s of SCREENS)$('#'+s).hidden=s!==id;if(id==='sGame')requestAnimationFrame(resize);}
-function toTitle(){G=null;Net.leave();$('#charCount').textContent='キャラ '+allIds().length+'体';
-  const r=myRec();$('#meLine').textContent=(me.name||'ななし')+'　レート '+r.rating+'　'+r.w+'勝'+r.l+'敗';
-  $('#srvState').textContent=Srv.on()?'サーバー：設定済み':'サーバー：未設定（直接つなぐモード）';$('#srvUrl').value=SERVER;
+function toTitle(){G=null;Room.leave();$('#charCount').textContent='キャラ '+allIds().length+'体';
+  const r=myRec();$('#meIcon').src=iconSrc(me.icon);$('#meName').textContent=me.name||'ななし';
+  $('#meLine').textContent=(me.word?me.word+'　':'')+'レート '+r.rating+'　'+r.w+'勝'+r.l+'敗';
+  $('#srvState').textContent=Srv.on()?'サーバー：設定済み':'サーバー：未設定（オンライン対戦は使えへん）';$('#srvUrl').value=SERVER;
   show('sTitle');}
 $('#bSrvSave').onclick=async()=>{
   const raw=$('#srvUrl').value.trim();const u=normServer(raw);
@@ -503,7 +579,7 @@ $('#bSrvSave').onclick=async()=>{
   if(u){$('#srvMsg').textContent='確認中…';
     try{const r=await fetch(u+'/.json?shallow=true');if(!r.ok)throw 0;}catch(e){$('#srvMsg').textContent='そのURLにつながらへん。ルールの公開とURLを確認してな';return;}}
   SERVER=u;lsSet('mrs-server',u);$('#srvMsg').textContent=u?'保存した！':'サーバーなしにした';
-  $('#srvState').textContent=Srv.on()?'サーバー：設定済み':'サーバー：未設定（直接つなぐモード）';
+  $('#srvState').textContent=Srv.on()?'サーバー：設定済み':'サーバー：未設定（オンライン対戦は使えへん）';
   if(u){srvSyncChars();srvSyncPlayers();pushMyRec();}
 };
 let rkMode='rate';
@@ -519,208 +595,233 @@ function renderRank(){
   tb.appendChild(head);
   rows.forEach((r,i)=>{const tr=document.createElement('tr');if(r.id===me.id)tr.className='me';
     const cells=rkMode==='rate'?[[i+1,'num'],[r.name+(r.id===me.id?'（あなた）':''),'nm'],[r.rating,'num'],[r.w+'勝'+r.l+'敗','num']]:[[i+1,'num'],[r.name+(r.id===me.id?'（あなた）':''),'nm'],[r.best+'個','num']];
-    for(const [v,c] of cells){const td=document.createElement('td');td.className=c;td.textContent=v;tr.appendChild(td);}
+    for(const [v,c] of cells){const td=document.createElement('td');td.className=c;if(c==='nm')td.appendChild(avatar(r.icon,'sm'));td.appendChild(document.createTextNode(v));tr.appendChild(td);}
     tb.appendChild(tr);});
 }
+let profPick='';
+function openProfile(first){
+  profPick=me.icon||'b00';
+  $('#profIntro').textContent=first?'はじめに名前とアイコンを決めてな。あとからタイトルの「プロフィール」で変えられる。':'名前・アイコン・ひとことを変えられる。';
+  $('#profName').value=me.name||'';$('#profWord').value=me.word||'';$('#profOut').textContent='';$('#bProfBack').hidden=!!first;
+  renderIconGrid();show('sProfile');
+}
+function renderIconGrid(){
+  $('#profIcon').src=iconSrc(profPick);
+  const g=$('#iconGrid');g.innerHTML='';
+  for(const id of allIds()){const c=CH.get(id);const d=document.createElement('div');d.className='cell pick'+(id===profPick?' on':'');
+    const im=document.createElement('img');im.src=c.img;im.alt='';d.appendChild(im);
+    d.onclick=()=>{profPick=id;renderIconGrid();};g.appendChild(d);}
+}
+$('#bProfile').onclick=()=>openProfile(false);
+$('#bProfBack').onclick=toTitle;
+$('#bProfSave').onclick=()=>{
+  const n=$('#profName').value.trim();
+  if(!n){$('#profOut').textContent='名前を入れてな';return;}
+  setMyProfile(n,profPick,$('#profWord').value);toTitle();
+};
 $('#bRank').onclick=async()=>{rkMode='rate';renderRank();show('sRank');if(await srvSyncPlayers())renderRank();};
 $('#rkRate').onclick=()=>{rkMode='rate';renderRank();};
 $('#rkSolo').onclick=()=>{rkMode='solo';renderRank();};
 $('#bRankBack').onclick=toTitle;
 $('#bSolo').onclick=()=>startGame({mode:'solo',pool:allIds(),seed:(Math.random()*1e9)|0});
-$('#bLocal').onclick=()=>startGame({mode:'local',pool:allIds(),seed:(Math.random()*1e9)|0,first:0});
-$('#bOnline').onclick=()=>{$('#lobbyMsg').textContent='';$('#bJoin').disabled=false;show('sLobby');$('#word').value=lsGet('mrs-word','');$('#pname').value=me.name||'';};
+$('#bLocal').onclick=()=>{const n=+$('#localN').value||2;lsSet('mrs-localn',n);startGame({mode:'local',pool:allIds(),seed:(Math.random()*1e9)|0,n,first:0});};
+$('#bOnline').onclick=()=>{$('#lobbyMsg').textContent=Srv.on()?'':'サーバーが未設定やから対戦できへん。タイトルの「サーバー」で設定してな';$('#bJoin').disabled=!Srv.on();
+  $('#lobbyForm').hidden=false;$('#lobbyRoom').hidden=true;show('sLobby');$('#word').value=lsGet('mrs-word','');$('#lobbyMe').textContent='名前：'+(me.name||'ななし')+'（タイトルの「プロフィール」で変えられる）';};
 $('#bLobbyBack').onclick=toTitle;
 // Android back button: go back to the title; on the title, let the app close
-window.androidBack=()=>{if(!$('#sTitle').hidden||!$('#loading').hidden)return false;toTitle();return true;};
+window.androidBack=()=>{if(!$('#sTitle').hidden||!$('#loading').hidden)return false;if(!$('#sProfile').hidden&&!me.name)return false;toTitle();return true;};
 $('#bQuit').onclick=toTitle;$('#bToTitle').onclick=toTitle;
 $('#bAgain').onclick=()=>{
   if(!G)return;
-  if(G.mode==='online'){
-    if(Net.role==='host')hostNewGame();
-    else{Net.send({t:'rematch'});$('#bAgain').disabled=true;$('#resSub').textContent='相手を待ってる…';}
-  }else startGame({mode:G.mode,pool:allIds(),seed:(Math.random()*1e9)|0,first:G.mode==='local'?1-G.first:0});
+  if(G.mode==='online'){if(Room.isHost())hostStart();}
+  else startGame({mode:G.mode,pool:allIds(),seed:(Math.random()*1e9)|0,n:G.n,first:G.mode==='local'?(G.first+1)%G.n:0});
 };
 
-/* ================= network ================= */
-const PEER_URLS=['https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js','https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js','https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js'];
-function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
-async function loadPeer(){if(window.peerjs||window.Peer)return true;for(const u of PEER_URLS){try{await loadScript(u);if(window.peerjs||window.Peer)return true;}catch(e){}}return false;}
+/* ================= network (rooms on the server, up to 8 players) ================= */
+const MAXP=8;
 function hashHex(str){const b=new TextEncoder().encode(str.trim());let h1=0x811c9dc5,h2=0x01000193^0x5bd1e995;for(const x of b){h1=Math.imul(h1^x,16777619);h2=Math.imul(h2^x,0x5bd1e995)^(h2>>>13);}return (h1>>>0).toString(16).padStart(8,'0')+(h2>>>0).toString(16).padStart(8,'0');}
-
-const Net={role:null,conn:null,peer:null,tr:null,gen:0,
-  send(m){try{this.tr&&this.tr.send(m);}catch(e){}},
-  leave(){this.gen++;try{this.tr&&this.tr.close();}catch(e){}this.tr=null;this.role=null;Sync.reset();}
+const pad8=n=>String(n).padStart(8,'0');
+const Room={tr:null,gen:0,sid:null,word:'',members:[],ready:{},pending:new Set(),pendTotal:0,announced:false,gameNo:0,inGame:false,
+  isHost(){return !!this.members.length&&this.members[0].sid===this.sid;},
+  member(sid){return this.members.find(m=>m.sid===sid)||null;},
+  send(to,m){try{this.tr&&this.tr.send(to,m);}catch(e){}},
+  bcast(m){try{this.tr&&this.tr.bcast(m);}catch(e){}},
+  leave(){this.gen++;try{this.tr&&this.tr.close();}catch(e){}this.tr=null;this.sid=null;this.members=[];this.ready={};this.pending=new Set();this.pendTotal=0;this.announced=false;}
 };
-// transport: PeerJS (or a local test channel when the page is opened with #bctest-host / #bctest-guest)
-async function makeTransport(word,h){
-  const tm=/^#bctest-(host|guest)$/.exec(location.hash);
-  if(tm)return bcTransport(tm[1],h);
-  if(Srv.on())return srvTransport(word,h);
-  h.status('接続中…');
-  if(!await loadPeer()){h.error('通信の部品が読み込めへんかった。電波を確認してな');return null;}
-  const PeerC=(window.peerjs&&window.peerjs.Peer)||window.Peer;
-  const roomId='mummyrs-'+hashHex(word);
-  let peer=null,conn=null,closed=false,tries=0,opened=false;
-  const tr={send(m){if(conn&&conn.open)conn.send(m);},close(){closed=true;try{conn&&conn.close();}catch(e){}try{peer&&peer.destroy();}catch(e){}}};
-  function hookConn(c,role){
-    c.on('open',()=>{if(closed)return;if(conn&&conn!==c){c.close();return;}conn=c;opened=true;h.open(role);});
-    c.on('data',d=>{if(!closed&&c===conn)h.data(d);});
-    c.on('close',()=>{if(!closed&&c===conn)h.close();});
-    c.on('error',()=>{});
-  }
-  function asHost(){
-    if(closed)return;
-    peer=new PeerC(roomId,{debug:0});
-    peer.on('open',()=>{if(!opened)h.status('相手を待ってる…（同じ合言葉で入ってもらってな）');});
-    peer.on('connection',c=>{if(conn){c.on('open',()=>{c.send({t:'full'});setTimeout(()=>c.close(),400);});return;}hookConn(c,'host');});
-    peer.on('error',e=>{if(closed)return;
-      if(e.type==='unavailable-id'&&!opened){try{peer.destroy();}catch(_){ }asGuest();}
-      else if(!opened)h.error('つながらへんかった（'+e.type+'）');});
-  }
-  function asGuest(){
-    if(closed)return;
-    h.status('部屋に入ってる…');
-    peer=new PeerC({debug:0});
-    peer.on('open',()=>{const c=peer.connect(roomId,{reliable:true});hookConn(c,'guest');
-      setTimeout(()=>{if(!opened&&!closed&&peer&&!peer.destroyed&&tries<3){tries++;try{peer.destroy();}catch(_){ }asHost();}},12000);});
-    peer.on('error',e=>{if(closed)return;
-      if(e.type==='peer-unavailable'&&!opened&&tries<3){tries++;try{peer.destroy();}catch(_){ }setTimeout(asHost,800+Math.random()*800);}
-      else if(!opened)h.error('つながらへんかった（'+e.type+'）');});
-  }
-  asHost();
-  return tr;
-}
-// Room on the server: two slots (a = host, b = guest). Each slot holds {info:{sid,at}, msgs:{<toSid>_<seq>: msg}}.
-async function srvTransport(word,h){
-  const room='rooms/'+hashHex(word);
+// Room layout on the server: rooms8/<hash>/<slot 0..7> = {info:{sid,at,name,pid}, msgs:{...}}
+//   msgs/<toSid>_<seq>  one-to-one (per receiver, in order)   msgs/all_<seq>  to everyone (in order)
+async function srvRoom(word,h){
+  const room='rooms8/'+hashHex(word);
   const sid='s'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
   const STALE=45000,TS={'.sv':'timestamp'};
-  let slot=null,other=null,opp=null,closed=false,opened=false,off=0,seq=0,next=0,unlisten=null,hb=null,watch=null,mirror=null;
+  let slot=-1,closed=false,off=0,unlisten=null,hb=null,watch=null,mirror=null,seqAll=0,sigPrev='';
+  const seqTo={},nextFrom={},nextAll={},known=new Map();
   const now=()=>Date.now()+off;
   const fresh=i=>i&&typeof i.sid==='string'&&typeof i.at==='number'&&now()-i.at<STALE;
   h.status('サーバーに接続中…');
   try{
     await Srv.put(room+'/t/'+sid,TS);const ts=await Srv.get(room+'/t/'+sid);if(typeof ts==='number')off=ts-Date.now();Srv.del(room+'/t/'+sid).catch(()=>{});
-    for(const sl of ['a','b']){
-      if(fresh(await Srv.get(room+'/'+sl+'/info')))continue;
-      await Srv.put(room+'/'+sl,{info:{sid,at:TS}});
+    for(let i=0;i<MAXP&&slot<0;i++){
+      if(fresh(await Srv.get(room+'/'+i+'/info')))continue;
+      await Srv.put(room+'/'+i,{info:{sid,at:TS,name:me.name||'ななし',pid:me.id,icon:me.icon||'',word:me.word||''}});
       await sleep(500+Math.random()*300);
-      const chk=await Srv.get(room+'/'+sl+'/info');
-      if(chk&&chk.sid===sid){slot=sl;break;}
+      const chk=await Srv.get(room+'/'+i+'/info');
+      if(chk&&chk.sid===sid)slot=i;
     }
   }catch(e){h.error('サーバーにつながらへんかった。電波かサーバー設定を確認してな');return null;}
-  if(!slot){h.error('その合言葉の部屋はもう2人おるで。別の合言葉にしてな');return null;}
-  other=slot==='a'?'b':'a';
-  h.status('相手を待ってる…（同じ合言葉で入ってもらってな）');
+  if(slot<0){h.error('その部屋はもう8人おるで。別の合言葉にしてな');return null;}
   const shut=()=>{if(closed)return;closed=true;unlisten&&unlisten();clearInterval(hb);clearInterval(watch);Srv.del(room+'/'+slot).catch(()=>{});};
-  const lost=()=>{if(closed)return;shut();h.close();};
-  unlisten=Srv.listen(room,m=>{
-    if(closed)return;mirror=m||{};
+  const lost=t=>{if(closed)return;shut();h.lost(t);};
+  const maxAll=box=>{let m=-1;for(const k in box||{})if(k.startsWith('all_'))m=Math.max(m,parseInt(k.slice(4),10));return m;};
+  function update(){
+    if(closed||!mirror)return;
     const mine=mirror[slot]&&mirror[slot].info;
-    if(mine&&mine.sid!==sid){lost();return;}           // someone took our slot
-    const o=mirror[other]||{};const oi=o.info;
-    if(!opened){
-      if(fresh(oi)&&oi.sid!==sid){opp=oi.sid;opened=true;h.open(slot==='a'?'host':'guest');}
-      else return;
-    }else if(!oi||oi.sid!==opp){lost();return;}       // opponent left
-    const box=o.msgs||{};const pre=sid+'_';
-    while(!closed){const k=pre+String(next).padStart(8,'0');if(!(k in box))break;next++;try{h.data(box[k]);}catch(e){console.error(e);}}
-  });
+    if(mine&&mine.sid!==sid){lost('部屋から外れた。入り直してな');return;}
+    const list=[];
+    for(let i=0;i<MAXP;i++){const s=mirror[i];const inf=s&&s.info;
+      if(i===slot)list.push({slot:i,sid,name:me.name||'ななし',pid:me.id,icon:me.icon||'',word:me.word||''});
+      else if(fresh(inf)&&inf.sid!==sid)list.push({slot:i,sid:inf.sid,name:String(inf.name||'ななし').slice(0,12),pid:String(inf.pid||''),icon:String(inf.icon||''),word:String(inf.word||'').slice(0,20)});}
+    for(const m of list)if(m.sid!==sid&&!known.has(m.sid)){known.set(m.sid,m.slot);nextFrom[m.sid]=0;nextAll[m.sid]=maxAll(mirror[m.slot].msgs)+1;}
+    for(const k of [...known.keys()])if(!list.some(m=>m.sid===k))known.delete(k);
+    const sig=list.map(m=>m.sid).join(',');
+    if(sig!==sigPrev){sigPrev=sig;h.members(list);}
+    for(const m of list){if(m.sid===sid)continue;const box=(mirror[m.slot]&&mirror[m.slot].msgs)||{};
+      for(;;){if(closed||!known.has(m.sid))return;const k=sid+'_'+pad8(nextFrom[m.sid]);if(!(k in box))break;nextFrom[m.sid]++;try{h.data(m.sid,box[k]);}catch(e){console.error(e);}}
+      for(;;){if(closed||!known.has(m.sid))return;const k='all_'+pad8(nextAll[m.sid]);if(!(k in box))break;nextAll[m.sid]++;try{h.data(m.sid,box[k]);}catch(e){console.error(e);}}
+    }
+  }
+  unlisten=Srv.listen(room,m=>{mirror=m||{};update();});
   hb=setInterval(()=>{Srv.put(room+'/'+slot+'/info/at',TS).catch(()=>{});},8000);
-  watch=setInterval(()=>{if(opened&&mirror){const oi=mirror[other]&&mirror[other].info;if(!fresh(oi))lost();}},5000);
-  return {send(m){if(closed||!opened)return;const p=room+'/'+slot+'/msgs/'+opp+'_'+String(seq++).padStart(8,'0');
-    Srv.put(p,m).catch(()=>sleep(700).then(()=>Srv.put(p,m)).catch(()=>sleep(2000).then(()=>Srv.put(p,m)).catch(()=>{})));},close:shut};
-}
-function bcTransport(role,h){
-  const bc=new BroadcastChannel('mrs-test');let open=false,closed=false;
-  bc.onmessage=e=>{const d=e.data;if(closed||d.from===role)return;
-    if(d.k==='hi'){if(!open){open=true;bc.postMessage({from:role,k:'hi'});h.open(role);}}
-    else if(d.k==='m'&&open)h.data(d.m);else if(d.k==='bye'&&open)h.close();};
-  h.status('相手を待ってる…');
-  bc.postMessage({from:role,k:'hi'});
-  return {send(m){bc.postMessage({from:role,k:'m',m});},close(){closed=true;bc.postMessage({from:role,k:'bye'});bc.close();}};
+  watch=setInterval(update,4000);
+  const put=(p,m)=>Srv.put(p,m).catch(()=>sleep(700).then(()=>Srv.put(p,m)).catch(()=>sleep(2000).then(()=>Srv.put(p,m)).catch(()=>{})));
+  h.joined(sid);
+  return {
+    send(to,m){if(closed)return;seqTo[to]=seqTo[to]||0;put(room+'/'+slot+'/msgs/'+to+'_'+pad8(seqTo[to]++),m);},
+    bcast(m){if(closed)return;put(room+'/'+slot+'/msgs/all_'+pad8(seqAll++),m);},
+    prune(){ // drop my old broadcast messages (keep the last few so newcomers know where the stream is)
+      if(closed||seqAll<12)return;const box=(mirror&&mirror[slot]&&mirror[slot].msgs)||{};const del={};
+      for(const k in box)if(k.startsWith('all_')&&parseInt(k.slice(4),10)<seqAll-4)del[k]=null;
+      if(Object.keys(del).length)Srv.patch(room+'/'+slot+'/msgs',del).catch(()=>{});},
+    close:shut};
 }
 
-/* ---- lobby / character sync ---- */
-const Sync={pending:new Set(),total:0,peerReady:null,selfReady:false,
-  reset(){this.pending=new Set();this.total=0;this.peerReady=null;this.selfReady=false;}};
-let gameNo=0;
+/* ---- lobby, members, character sync ---- */
 $('#bJoin').onclick=async()=>{
   const word=$('#word').value.trim();
-  if(!$('#pname').value.trim()){$('#lobbyMsg').textContent='名前を入れてな';return;}
+  if(!Srv.on()){$('#lobbyMsg').textContent='サーバーが未設定やから対戦できへん';return;}
   if(!word){$('#lobbyMsg').textContent='合言葉を入れてな';return;}
-  lsSet('mrs-word',word);setMyName($('#pname').value);
-  if(Srv.on())srvSyncChars();
-  Net.leave();const gen=Net.gen;gameNo=0;
+  lsSet('mrs-word',word);
+  srvSyncChars();
+  Room.leave();const gen=Room.gen;Room.word=word;Room.gameNo=0;
   $('#bJoin').disabled=true;
-  const msg=t=>{if(gen===Net.gen)$('#lobbyMsg').textContent=t;};
-  const tr=await makeTransport(word,{
-    status:msg,
-    error:t=>{msg(t);$('#bJoin').disabled=false;},
-    open:role=>{if(gen!==Net.gen)return;Net.role=role;msg('つながった！キャラを共有中…');
-      Net.send({t:'hello',v:1,ids:customIds(),me:me.id,table:Object.values(table).filter(validRec)});},
-    data:m=>{if(gen===Net.gen)onNet(m);},
-    close:()=>{if(gen!==Net.gen)return;
-      if(!$('#sGame').hidden||!$('#sLobby').hidden){G=null;Net.leave();show('sLobby');$('#bJoin').disabled=false;$('#lobbyMsg').textContent='相手が抜けたで';}}
+  const live=()=>gen===Room.gen;
+  const tr=await srvRoom(word,{
+    status:t=>{if(live())$('#lobbyMsg').textContent=t;},
+    error:t=>{if(live()){$('#lobbyMsg').textContent=t;$('#bJoin').disabled=false;}},
+    joined:sid=>{if(!live())return;Room.sid=sid;$('#lobbyForm').hidden=true;$('#lobbyRoom').hidden=false;$('#roomMsg').textContent='';renderRoom();},
+    members:list=>{if(live())onMembers(list);},
+    data:(from,m)=>{if(live())onRoomMsg(from,m);},
+    lost:t=>{if(!live())return;Room.leave();G=null;show('sLobby');$('#lobbyForm').hidden=false;$('#lobbyRoom').hidden=true;$('#bJoin').disabled=false;$('#lobbyMsg').textContent=t;}
   });
-  if(gen!==Net.gen){try{tr&&tr.close();}catch(e){}return;}
-  Net.tr=tr;
+  if(!live()){try{tr&&tr.close();}catch(e){}return;}
+  Room.tr=tr;
 };
-function lobbyProgress(){
-  if(!$('#sLobby').hidden){const got=Sync.total-Sync.pending.size;$('#lobbyMsg').textContent=Sync.total?('キャラ受け取り中… '+got+'/'+Sync.total):'準備中…';}
+$('#bLeave').onclick=toTitle;
+function onMembers(list){
+  const before=Room.members;Room.members=list;
+  for(const m of list)if(m.sid!==Room.sid&&!before.some(b=>b.sid===m.sid))
+    Room.send(m.sid,{t:'hello',v:2,pid:me.id,ids:customIds(),table:Object.values(table).filter(validRec)});
+  for(const b of before)if(!list.some(m=>m.sid===b.sid)){
+    delete Room.ready[b.sid];
+    if(G&&G.mode==='online'&&G.phase!=='over'&&G.players.some(p=>p.sid===b.sid))abortGame(b.name);
+  }
+  Room.announced=false;checkReady();
+  renderRoom();refreshResultButtons();
 }
 function checkReady(){
-  if(Sync.pending.size)return;
-  if(!Sync.selfReady){Sync.selfReady=true;Net.send({t:'ready',ids:customIds()});}
-  if(Net.role==='host'&&Sync.peerReady&&gameNo===0)hostNewGame();
+  if(Room.pending.size||Room.announced||!Room.tr)return;
+  Room.announced=true;Room.bcast({t:'ready',ids:customIds()});renderRoom();
 }
-function hostNewGame(){
-  const theirs=new Set(Sync.peerReady||[]);
-  const pool=[...CH.values()].filter(c=>c.builtin||(theirs.has(c.id)&&!blocked.has(c.id))).map(c=>c.id).sort();
-  const opp=table[Net.oppId]||{id:Net.oppId,name:'ななし',rating:RATE0,w:0,l:0,best:0,v:0,at:0};
-  const m={t:'start',seed:(Math.random()*1e9)|0,pool,first:gameNo%2,no:gameNo,recs:[cleanRec(myRec()),cleanRec(opp)]};
-  gameNo++;
-  Net.send(m);beginOnline(m);
+function renderRoom(){
+  if($('#lobbyRoom').hidden)return;
+  $('#roomTitle').textContent='部屋「'+Room.word+'」 '+Room.members.length+'/'+MAXP+'人';
+  const ul=$('#memberList');ul.innerHTML='';
+  Room.members.forEach((m,i)=>{
+    const li=document.createElement('li');if(m.sid===Room.sid)li.className='me';
+    const nm=document.createElement('span');nm.className='nm';nm.textContent=m.name+(m.sid===Room.sid?'（あなた）':'');
+    if(m.word){const w=document.createElement('span');w.className='word';w.textContent=m.word;nm.appendChild(w);}
+    const r=document.createElement('span');r.textContent=(table[m.pid]?table[m.pid].rating:RATE0);
+    const tg=document.createElement('span');tg.className='tag';
+    tg.textContent=i===0?'ホスト':(m.sid===Room.sid?(Room.pending.size?'準備中':''):(Room.ready[m.sid]?'':'準備中'));
+    li.append(avatar(m.icon),nm,r,tg);ul.appendChild(li);});
+  const host=Room.isHost(),others=Room.members.filter(m=>m.sid!==Room.sid);
+  const allReady=others.every(m=>Room.ready[m.sid])&&!Room.pending.size;
+  $('#bStart').hidden=!host;
+  $('#bStart').disabled=others.length<1||!allReady;
+  $('#bStart').textContent='スタート（'+Room.members.length+'人）';
+  let msg='';
+  if(Room.pendTotal&&Room.pending.size)msg='キャラ受け取り中… '+(Room.pendTotal-Room.pending.size)+'/'+Room.pendTotal;
+  else if(others.length<1)msg='ほかの人を待ってる…（同じ合言葉で入ってもらってな）';
+  else if(!allReady)msg='みんなの準備待ち…';
+  else if(!host)msg='ホストがスタートするのを待ってな';
+  if(Room.inGame&&!(G&&G.mode==='online'))msg='いま試合中。次の試合から入れるで';
+  $('#roomMsg').textContent=msg;
+}
+$('#bStart').onclick=()=>{if(Room.isHost())hostStart();};
+function hostStart(){
+  const players=Room.members.filter(m=>m.sid===Room.sid||Room.ready[m.sid]);
+  if(players.length<2)return;
+  let common=null;
+  for(const p of players){if(p.sid===Room.sid)continue;const s=new Set(Room.ready[p.sid]);common=common?new Set([...common].filter(x=>s.has(x))):s;}
+  const pool=[...CH.values()].filter(c=>c.builtin||(common&&common.has(c.id)&&!blocked.has(c.id))).map(c=>c.id).sort();
+  const recs=players.map(p=>cleanRec(validRec(table[p.pid])?table[p.pid]:defaultRec(p.pid,p.name)));
+  const m={t:'start',seed:(Math.random()*1e9)|0,pool,players:players.map(p=>({sid:p.sid,pid:p.pid,name:p.name})),first:Room.gameNo%players.length,no:Room.gameNo,recs};
+  Room.gameNo++;
+  Room.bcast(m);beginOnline(m);
 }
 function beginOnline(m){
+  if(!Array.isArray(m.players)||m.players.length<2||m.players.length>MAXP||!Array.isArray(m.pool))return;
+  Room.inGame=true;
+  const idx=m.players.findIndex(p=>p&&p.sid===Room.sid);
+  if(idx<0){renderRoom();return;}                       // started without us: wait for the next one
   const pool=m.pool.filter(id=>CH.has(id));
-  if(pool.length!==m.pool.length){$('#lobbyMsg').textContent='キャラがそろってへん。入り直してな';return;}
-  const recs=Array.isArray(m.recs)&&m.recs.length===2&&m.recs.every(validRec)?m.recs:null;
-  startGame({mode:'online',pool,seed:m.seed,first:m.first,me:Net.role==='host'?0:1});
+  if(pool.length!==m.pool.length){$('#roomMsg').textContent='キャラがそろってへん。入り直してな';return;}
+  const players=m.players.map(p=>({sid:String(p.sid),pid:String(p.pid||''),name:String(p.name||'ななし').slice(0,12)}));
+  const recs=Array.isArray(m.recs)&&m.recs.length===players.length&&m.recs.every(validRec)?m.recs:null;
+  startGame({mode:'online',pool,seed:m.seed|0,n:players.length,first:(m.first|0)%players.length,me:idx,players});
   G.recs=recs;G.rated=false;
-  if(recs){const o=recs[1-G.me];$('#hint').textContent='相手：'+o.name+'（レート '+o.rating+'）';}
+  $('#hint').textContent=players.length+'人で対戦。'+playerLabel(curPlayer())+'から';
+  if(Room.tr&&Room.tr.prune)Room.tr.prune();
 }
-async function onNet(m){
+async function onRoomMsg(from,m){
   if(!m||typeof m.t!=='string')return;
+  const sender=Room.member(from);
   switch(m.t){
-    case 'full':$('#lobbyMsg').textContent='その合言葉の部屋はもう2人おるで。別の合言葉にしてな';Net.leave();$('#bJoin').disabled=false;break;
     case 'hello':{
-      if(typeof m.me==='string')Net.oppId=m.me;
-      if(Array.isArray(m.table)){for(const r of m.table.slice(0,2000))if(!r||r.id!==me.id)mergeRec(r);saveTable();}
+      if(Array.isArray(m.table)){for(const r of m.table.slice(0,2000))if(r&&r.id!==me.id)mergeRec(r);saveTable();}
       const ids=Array.isArray(m.ids)?m.ids.filter(x=>typeof x==='string'):[];
-      const need=ids.filter(id=>!CH.has(id)&&!blocked.has(id));
-      Sync.pending=new Set(need);Sync.total=need.length;lobbyProgress();
-      if(need.length)Net.send({t:'need',ids:need});
-      checkReady();break;}
+      const need=ids.filter(id=>!CH.has(id)&&!blocked.has(id)&&!Room.pending.has(id));
+      if(need.length){for(const id of need)Room.pending.add(id);Room.pendTotal+=need.length;Room.announced=false;Room.send(from,{t:'need',ids:need});}
+      renderRoom();checkReady();break;}
     case 'need':
-      for(const id of (m.ids||[])){const c=CH.get(id);Net.send(c?{t:'char',c:sendable(c)}:{t:'char',miss:id});}
+      for(const id of (Array.isArray(m.ids)?m.ids:[])){const c=CH.get(id);Room.send(from,c?{t:'char',c:sendable(c)}:{t:'char',miss:id});}
       break;
     case 'char':{
-      if(m.miss){Sync.pending.delete(m.miss);}
-      else if(validChar(m.c)&&!CH.has(m.c.id)){
-        const c=Object.assign({},sendable(m.c),{from:'friend'});
-        if(await registerChar(c,false))await Store.put(c);
-        Sync.pending.delete(m.c.id);
-      }else if(m.c&&m.c.id)Sync.pending.delete(m.c.id);
-      lobbyProgress();checkReady();break;}
-    case 'ready':Sync.peerReady=Array.isArray(m.ids)?m.ids:[];checkReady();break;
-    case 'start':if(Net.role==='guest')beginOnline(m);break;
-    case 'rematch':if(Net.role==='host'&&G&&G.phase==='over')hostNewGame();break;
-    case 'move':if(G&&G.phase==='aim'&&!myTurn()&&m.n===G.t){G.aimX=+m.x||WW/2;G.aimA=+m.a||0;}break;
-    case 'drop':if(G&&G.phase==='aim'&&!myTurn()&&m.n===G.t){$('#hint').hidden=true;G.spawnY=+m.y;doDrop(+m.x,+m.y,+m.a,false);}break;
-    case 'settled':if(G&&!myTurn())remoteSettled(m);break;
+      if(m.miss){Room.pending.delete(m.miss);}
+      else if(m.c&&validChar(m.c)){
+        if(!CH.has(m.c.id)){const c=Object.assign({},sendable(m.c));if(await registerChar(c,false))await Store.put(c);}
+        Room.pending.delete(m.c.id);
+      }else if(m.c&&m.c.id)Room.pending.delete(m.c.id);
+      if(!Room.pending.size)Room.pendTotal=0;
+      renderRoom();checkReady();break;}
+    case 'ready':Room.ready[from]=Array.isArray(m.ids)?m.ids:[];renderRoom();break;
+    case 'start':if(sender&&Room.members[0]&&Room.members[0].sid===from)beginOnline(m);break;
+    case 'move':if(G&&G.mode==='online'&&G.phase==='aim'&&!myTurn()&&m.n===G.t&&G.players[curPlayer()].sid===from){G.aimX=+m.x||WW/2;G.aimA=+m.a||0;}break;
+    case 'drop':if(G&&G.mode==='online'&&G.phase==='aim'&&!myTurn()&&m.n===G.t&&G.players[curPlayer()].sid===from){$('#hint').hidden=true;G.spawnY=+m.y;doDrop(+m.x,+m.y,+m.a,false);}break;
+    case 'settled':if(G&&G.mode==='online'&&!myTurn()&&G.players[curPlayer()].sid===from)remoteSettled(m);break;
   }
 }
+
 
 /* ================= creator ================= */
 const ed=$('#ed'),ectx=ed.getContext('2d');
@@ -809,7 +910,7 @@ $('#bCreateBack').onclick=toTitle;
   await Store.open();
   for(const c of await Store.all())if(!blocked.has(c.id)&&validChar(c))await registerChar(c,false);
   requestAnimationFrame(loop);
-  toTitle();
+  if(me.name)toTitle();else openProfile(true);
   if(Srv.on()){srvSyncChars();srvSyncPlayers();if(me.name)pushMyRec();}
 })();
 </script>
