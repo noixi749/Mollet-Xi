@@ -53,6 +53,9 @@ label.file{display:block}
 label.file input{display:none}
 label.file span{display:block;text-align:center;background:var(--btn);border:1px solid var(--line);border-radius:6px;padding:12px}
 input[type=range]{width:100%}
+.rules{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 12px;align-items:center}
+.rules select{width:100%;padding:8px 10px}
+.rules select:disabled{opacity:1;color:var(--fg);background:#f6f6f6}
 .row{display:flex;gap:8px}.row button{flex:1;min-width:0}
 select{font:inherit;color:var(--fg);padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg)}
 #memberList{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
@@ -91,7 +94,9 @@ select{font:inherit;color:var(--fg);padding:0 10px;border:1px solid var(--line);
     <div class="row"><button id="bLocal">みんなで（1台を交代で）</button>
       <select id="localN" aria-label="人数"><option value="2">2人</option><option value="3">3人</option><option value="4">4人</option><option value="5">5人</option><option value="6">6人</option><option value="7">7人</option><option value="8">8人</option></select></div>
     <button id="bOnline">合言葉で対戦（2〜8人）</button>
+    <div class="sub" id="rulesLine"></div>
     <button id="bRank">ランキング</button>
+    <button id="bRules">ルール設定</button>
     <button id="bProfile">プロフィール</button>
     <button id="bCreate">キャラ作成</button>
     <details id="srvBox" class="sub">
@@ -121,6 +126,9 @@ select{font:inherit;color:var(--fg);padding:0 10px;border:1px solid var(--line);
     <h1 id="roomTitle">部屋</h1>
     <ul id="memberList"></ul>
     <div class="msg" id="roomMsg"></div>
+    <button id="bWatch" hidden>観戦する</button>
+    <div class="sub" id="rulesHead">ルール</div>
+    <div class="rules" id="roomRules"></div>
     <button id="bStart" hidden>スタート</button>
     <button id="bLeave">部屋を出る</button>
   </div>
@@ -136,6 +144,7 @@ select{font:inherit;color:var(--fg);padding:0 10px;border:1px solid var(--line);
       <div id="resBig"></div><div id="resSub"></div>
       <button id="bAgain">もう一回</button>
       <div class="sub" id="resWait" hidden>ホストの「もう一回」待ち</div>
+      <button id="bToRoom" hidden>部屋に戻る</button>
       <button id="bToTitle">タイトルへ</button>
     </div></div>
   </div>
@@ -154,6 +163,17 @@ select{font:inherit;color:var(--fg);padding:0 10px;border:1px solid var(--line);
     <button id="bProfSave">保存</button>
     <div class="msg" id="profOut"></div>
     <button id="bProfBack">戻る</button>
+  </div>
+</div>
+
+<!-- rules (one-device modes) -->
+<div id="sRules" class="screen pad" hidden>
+  <div class="col">
+    <h1>ルール設定</h1>
+    <div class="sub">ひとりで・1台で遊ぶ時のルール。合言葉の部屋では、ホストのルールで遊ぶ（ホストになったらこのルールが使われる）。</div>
+    <div class="rules" id="rulesLocal"></div>
+    <button id="bRulesReset" type="button">ふつうに戻す</button>
+    <button id="bRulesBack">戻る</button>
   </div>
 </div>
 
@@ -342,34 +362,88 @@ const SHAPES=(()=>{const s={};
   add('hex','六角',regPoly(6,0));
   return s;})();
 
+/* ================= rules ================= */
+const RULE_DEFS=[
+  {k:'grip',label:'グリップ',opts:[['normal','ふつう'],['high','ハイグリップ'],['ice','ツルツル']]},
+  {k:'stage',label:'ステージ',opts:[['normal','ふつう'],['slope','ななめ'],['bumpy','でこぼこ'],['twin','ふたつの台'],['seesaw','シーソー']]},
+  {k:'ssize',label:'台の大きさ',opts:[['s','ちいさい'],['m','ふつう'],['l','おおきい'],['xl','でかい']]},
+  {k:'grav',label:'重力',opts:[['normal','ふつう'],['low','かるい'],['high','おもい']]},
+  {k:'size',label:'顔の大きさ',opts:[['normal','ふつう'],['big','でかい'],['small','ちいさい'],['mix','バラバラ']]},
+  {k:'rot',label:'回転の角度',opts:[['45','45°'],['15','15°'],['90','90°']]},
+  {k:'timer',label:'持ち時間',opts:[['0','なし'],['15','15秒'],['8','8秒']]},
+  {k:'chars',label:'出てくるキャラ',opts:[['all','ぜんぶ'],['builtin','最初からいる顔だけ'],['custom','追加したキャラだけ']]},
+];
+const RULE_DEFAULT={grip:'normal',stage:'normal',ssize:'m',grav:'normal',size:'normal',rot:'45',timer:'0',chars:'all'};
+function cleanRules(r){const o={};for(const d of RULE_DEFS){const v=r&&r[d.k]!=null?String(r[d.k]):'';o[d.k]=d.opts.some(x=>x[0]===v)?v:RULE_DEFAULT[d.k];}return o;}
+function rulesSummary(r){const t=[];for(const d of RULE_DEFS)if(r[d.k]!==RULE_DEFAULT[d.k])t.push(d.label+'：'+d.opts.find(x=>x[0]===r[d.k])[1]);return t.join('　');}
+let myRules=cleanRules(lsGet('mrs-rules',null));
+let RULES=Object.assign({},RULE_DEFAULT);   // rules of the game on screen
+const GRIP={ // f/fs: friction, roll: spin kept per step, ground: speed kept on the stage, pp: speed kept face-on-face
+  normal:{f:1,fs:4,roll:0.95,ground:0.55,pp:1},
+  high:{f:1,fs:12,roll:0.82,ground:0.2,pp:0.75},
+  ice:{f:0.06,fs:0.15,roll:0.995,ground:1,pp:1}};
+const GRAV={normal:1,low:0.55,high:1.6};
+const SSIZE={s:0.65,m:1,l:1.3,xl:1.55};
+function rulePool(ids,r){let p=ids;if(r.chars==='builtin')p=ids.filter(id=>CH.get(id)&&CH.get(id).builtin);else if(r.chars==='custom')p=ids.filter(id=>CH.get(id)&&!CH.get(id).builtin);return p.length?p:ids;}
+function sizeMul(t){const z=RULES.size;if(z==='big')return 1.25;if(z==='small')return 0.8;
+  if(z==='mix')return 0.7+0.7*mulberry32(((G?G.seed:0)^Math.imul(t+1,0x9E3779B1))>>>0)();return 1;}
+function renderRulesPanel(el,r,editable,onChange){
+  el.innerHTML='';
+  for(const d of RULE_DEFS){
+    const lb=document.createElement('label');lb.textContent=d.label;lb.htmlFor='r_'+el.id+'_'+d.k;
+    const se=document.createElement('select');se.id='r_'+el.id+'_'+d.k;se.disabled=!editable;
+    for(const [v,t] of d.opts){const o=document.createElement('option');o.value=v;o.textContent=t;se.appendChild(o);}
+    se.value=r[d.k];se.onchange=()=>{const n=Object.assign({},r,{[d.k]:se.value});onChange&&onChange(cleanRules(n));};
+    el.append(lb,se);
+  }
+}
+
 /* ================= physics world ================= */
-const WW=420, STAGE_L=85, STAGE_R=335, STAGE_H=60, FALL_Y=300, STEP=1000/60;
-const GROUND_GRIP=0.55, ROLL_DAMP=0.95; // per step: speed kept while on the stage / spin kept everywhere
-let engine, stageBody;
+const WW=420, FALL_Y=300, STEP=1000/60;
+let engine, plank=null;
 function newEngine(){
   engine=Engine.create({positionIterations:10,velocityIterations:8,enableSleeping:false});
-  engine.gravity.y=1;
-  stageBody=Bodies.rectangle((STAGE_L+STAGE_R)/2,STAGE_H/2,STAGE_R-STAGE_L,STAGE_H,{isStatic:true,friction:1,frictionStatic:20});
-  Composite.add(engine.world,stageBody);
-  // the stage grips: anything touching it loses most of its sliding and spinning
+  engine.gravity.y=GRAV[RULES.grav]||1;plank=null;
+  const so={isStatic:true,friction:1,frictionStatic:20,label:'stage'},cx=WW/2,st=RULES.stage,k=SSIZE[RULES.ssize]||1;
+  const add=x=>Composite.add(engine.world,x);
+  if(st==='twin'){const w=Math.min(104*k,150);add(Bodies.rectangle(cx-88*k,30,w,60,so));add(Bodies.rectangle(cx+88*k,30,w,60,so));}
+  else if(st==='slope'){const b=Bodies.rectangle(cx,30,Math.min(270*k,400),60,so);Body.setAngle(b,-0.11);add(b);}
+  else if(st==='bumpy'){add(Bodies.rectangle(cx,30,Math.min(260*k,400),60,so));for(const dx of [-85,0,85])add(Bodies.circle(cx+dx*k,4,20,Object.assign({},so,{label:'bump'})));}
+  else if(st==='seesaw'){
+    const L=Math.min(310*k,400);
+    add(Bodies.rectangle(cx,58,26,80,Object.assign({},so,{label:'post'})));
+    add(Bodies.rectangle(cx-L*0.45,70,40,30,Object.assign({},so,{label:'stop'})));add(Bodies.rectangle(cx+L*0.45,70,40,30,Object.assign({},so,{label:'stop'})));
+    plank=Bodies.rectangle(cx,10,L,14,{friction:1,frictionStatic:20,density:0.003,frictionAir:0.02,label:'plank'});
+    plank.plugin={plank:true};add(plank);
+    add(Matter.Constraint.create({pointA:{x:cx,y:10},bodyB:plank,pointB:{x:0,y:0},stiffness:1,length:0}));
+  }
+  else add(Bodies.rectangle(cx,30,Math.min(250*k,400),60,so));
+  const g=GRIP[RULES.grip]||GRIP.normal;
   Matter.Events.on(engine,'collisionActive',e=>{for(const p of e.pairs){
-    const o=p.bodyA===stageBody?p.bodyB.parent:p.bodyB===stageBody?p.bodyA.parent:null;if(!o||o.isStatic)continue;
-    Body.setVelocity(o,{x:o.velocity.x*GROUND_GRIP,y:o.velocity.y});Body.setAngularVelocity(o,o.angularVelocity*GROUND_GRIP);}});
+    const A=p.bodyA.parent,B=p.bodyB.parent,ga=A.isStatic||A===plank,gb=B.isStatic||B===plank;
+    if(ga!==gb){const o=ga?B:A;if(o.plugin&&o.plugin.cid&&g.ground<1)damp(o,g.ground);}
+    else if(!ga&&!gb&&g.pp<1){damp(A,g.pp);damp(B,g.pp);}
+  }});
 }
-function makeBody(cid,x,y,a){
-  const c=CH.get(cid);const s=c.scale;
-  const opt={friction:1,frictionStatic:4,restitution:0,density:0.0015,frictionAir:0.015};
+function damp(o,k){Body.setVelocity(o,{x:o.velocity.x*k,y:o.velocity.y});Body.setAngularVelocity(o,o.angularVelocity*k);}
+function makeBody(cid,x,y,a,sm){
+  const c=CH.get(cid);sm=sm||1;const s=c.scale*sm;const g=GRIP[RULES.grip]||GRIP.normal;
+  const opt={friction:g.f,frictionStatic:g.fs,restitution:0,density:0.0015,frictionAir:0.015};
   const parts=c.parts.map(p=>{let v=p.map(q=>({x:q[0]*s,y:q[1]*s}));v=Vertices.clockwiseSort(v);return Body.create(Object.assign({position:Vertices.centre(v),vertices:v},opt));});
   const b=parts.length===1?parts[0]:Body.create(Object.assign({parts},opt));
-  b.plugin={cid,off:{x:b.position.x,y:b.position.y}};
+  b.plugin={cid,sm,off:{x:b.position.x,y:b.position.y}};
   Body.setPosition(b,{x,y});Body.setAngle(b,a);
   return b;
 }
 function pieces(){return Composite.allBodies(engine.world).filter(b=>b.plugin&&b.plugin.cid);}
-function snapshot(){return pieces().map(b=>[b.plugin.cid,b.position.x,b.position.y,b.angle]);}
+function movers(){return Composite.allBodies(engine.world).filter(b=>!b.isStatic);}
+function snapshot(){const l=pieces().map(b=>[b.plugin.cid,b.position.x,b.position.y,b.angle,b.plugin.sm||1]);if(plank)l.push(['#plank',plank.position.x,plank.position.y,plank.angle,1]);return l;}
 function applySnapshot(list){
   newEngine();
-  for(const [cid,x,y,a] of list){if(CH.has(cid))Composite.add(engine.world,makeBody(cid,x,y,a));}
+  for(const e of list||[]){
+    if(e[0]==='#plank'){if(plank){Body.setPosition(plank,{x:+e[1],y:+e[2]});Body.setAngle(plank,+e[3]);}continue;}
+    if(CH.has(e[0]))Composite.add(engine.world,makeBody(e[0],+e[1],+e[2],+e[3],+e[4]||1));
+  }
 }
 function towerTop(){let t=0;for(const b of pieces())if(b.position.y<FALL_Y-100)t=Math.min(t,b.bounds.min.y);return t;}
 
@@ -380,11 +454,13 @@ function makeSeq(pool,seed){const r=mulberry32(seed);const seq=[];return t=>{whi
 
 function startGame(o){
   // o: {mode:'solo'|'local'|'online', pool, seed, n (players), first, me, players (online)}
-  G={mode:o.mode,pool:o.pool,seq:makeSeq(o.pool,o.seed),t:0,n:o.n||1,first:o.first||0,me:o.me||0,players:o.players||null,phase:'aim',
+  RULES=cleanRules(o.rules||myRules);
+  G={mode:o.mode,watch:!!o.watch,seed:o.seed|0,pool:o.pool,seq:makeSeq(o.pool,o.seed),t:0,n:o.n||1,first:o.first||0,me:o.me==null?0:o.me,players:o.players||null,phase:'aim',
      aimX:WW/2,aimA:0,dispA:0,spawnY:-220,cur:null,dropAt:0,calm:0,fell:false,fellAt:0,auth:true,waitSettle:false};
   newEngine();
   show('sGame');$('#result').hidden=true;$('#hint').hidden=false;$('#hint').textContent='左右にドラッグで移動';
-  $('#bToTitle').textContent=G.mode==='online'?'部屋を出る':'タイトルへ';
+  $('#bToTitle').textContent=G.mode==='online'?'部屋を出る':'タイトルへ';$('#bToRoom').hidden=G.mode!=='online';
+  $('#ctl').hidden=G.watch;
   camTop=null;resize();
   setupAim();
 }
@@ -392,9 +468,10 @@ function curPlayer(){return (G.t+G.first)%G.n;}
 function myTurn(){return G.mode!=='online'||curPlayer()===G.me;}
 function playerLabel(i){return G.mode==='online'?(i===G.me?'あなた':G.players[i].name):(i+1)+'P';}
 function setupAim(){
-  G.phase='aim';G.cur=G.seq(G.t);G.aimX=WW/2;G.aimA=0;G.dispA=0;G.fell=false;G.waitSettle=false;
+  G.phase='aim';G.cur=G.seq(G.t);G.curSm=sizeMul(G.t);G.aimX=WW/2;G.aimA=0;G.dispA=0;G.fell=false;G.waitSettle=false;
+  G.aimStart=performance.now();G.timedOut=false;G.left=null;
   const c=CH.get(G.cur);
-  G.spawnY=Math.min(-200,towerTop()-c.radius-45);
+  G.spawnY=Math.min(-200,towerTop()-c.radius*G.curSm-45);
   updateHud();
 }
 function updateHud(){
@@ -403,12 +480,13 @@ function updateHud(){
   let t='';
   if(G.mode==='solo')t='ひとりで';
   else if(G.phase==='over')t='';
-  else t=playerLabel(curPlayer())+'の番';
+  else t=(G.watch?'観戦：':'')+playerLabel(curPlayer())+'の番';
+  if(G.phase==='aim'&&+RULES.timer>0&&G.left!=null)t+='　'+Math.max(0,G.left)+'秒';
   $('#turn').textContent=t;
   const can=G.phase==='aim'&&myTurn();
   $('#bRot').disabled=!can;$('#bDrop').disabled=!can;
 }
-function rotate(){if(!G||G.phase!=='aim'||!myTurn())return;G.aimA+=Math.PI/4;sendMove(true);}
+function rotate(){if(!G||G.phase!=='aim'||!myTurn())return;G.aimA+=(+RULES.rot||45)*Math.PI/180;sendMove(true);}
 function moveAim(x){G.aimX=Math.max(15,Math.min(WW-15,x));sendMove(false);}
 function drop(){
   if(!G||G.phase!=='aim'||!myTurn())return;
@@ -417,7 +495,7 @@ function drop(){
   doDrop(G.aimX,G.spawnY,G.aimA,true);
 }
 function doDrop(x,y,a,auth){
-  const b=makeBody(G.cur,x,y,a);
+  const b=makeBody(G.cur,x,y,a,G.curSm);
   Composite.add(engine.world,b);
   G.phase='fall';G.auth=auth;G.dropAt=simTime;G.calm=0;G.dispA=a;
   updateHud();
@@ -425,11 +503,11 @@ function doDrop(x,y,a,auth){
 let simTime=0;
 function afterStep(){
   if(!G||G.phase!=='fall')return;
-  const ps=pieces();
-  for(const b of ps)Body.setAngularVelocity(b,b.angularVelocity*ROLL_DAMP); // rolling resistance
+  const ps=pieces(),g=GRIP[RULES.grip]||GRIP.normal;
+  for(const b of ps)Body.setAngularVelocity(b,b.angularVelocity*g.roll); // rolling resistance
   if(G.auth&&!G.fell&&ps.some(b=>b.position.y>FALL_Y)){G.fell=true;G.fellAt=simTime;}
   if(G.fell){if(simTime-G.fellAt>900)finishTurn(true);return;}
-  const calm=ps.every(b=>b.speed<0.09&&b.angularSpeed<0.005);
+  const calm=movers().every(b=>b.speed<0.09&&b.angularSpeed<0.005);
   G.calm=calm?G.calm+1:0;
   const el=simTime-G.dropAt;
   if((el>450&&G.calm>=30)||el>7000){
@@ -439,17 +517,19 @@ function afterStep(){
 }
 function finishTurn(fell){
   if(fell){
-    if(G.mode==='online')Room.bcast({t:'settled',n:G.t,fell:true,snap:[]});
+    if(G.mode==='online'){Room.bcast({t:'settled',n:G.t,fell:true,snap:[]});liveSettled(G.t,[],true);}
     gameOver(curPlayer());
     return;
   }
   const snap=snapshot();
-  if(G.mode==='online')Room.bcast({t:'settled',n:G.t,fell:false,snap});
+  if(G.mode==='online'){Room.bcast({t:'settled',n:G.t,fell:false,snap});liveSettled(G.t,snap,false);}
   applySnapshot(snap);
   G.t++;setupAim();
 }
 function remoteSettled(m){
-  if(!G||m.n!==G.t)return;
+  if(!G)return;
+  if(G.watch&&(m.n|0)>G.t)G.t=m.n|0;      // spectators may have missed a turn: jump ahead
+  if(m.n!==G.t)return;
   if(m.fell){gameOver(curPlayer());return;}
   applySnapshot(m.snap);
   G.t++;setupAim();
@@ -466,6 +546,8 @@ function gameOver(loser){
     const l=playerLabel(loser);
     if(G.n===2){big.textContent=playerLabel(1-loser)+' '+WIN_TXT;big.className='win';sub.textContent=l+' '+LOSE_TXT+'（'+n+'個）';}
     else{big.textContent=l+' '+LOSE_TXT;big.className='lose';sub.textContent='ほかのみんな '+WIN_TXT+'（'+n+'個）';}
+  }else if(G.watch){
+    big.textContent=G.players[loser].name+' '+LOSE_TXT;big.className='lose';sub.textContent='ほかのみんな '+WIN_TXT+'（'+n+'個）';
   }else{
     const iWin=loser!==G.me;
     big.textContent=iWin?WIN_TXT:LOSE_TXT;big.className=iWin?'win':'lose';
@@ -489,9 +571,9 @@ function showResult(){
 }
 function refreshResultButtons(){
   if(!G)return;
-  const online=G.mode==='online',host=online&&Room.isHost();
+  const online=G.mode==='online',host=online&&!G.watch&&Room.isHost();
   $('#bAgain').hidden=online&&!host;$('#bAgain').disabled=online&&Room.members.length<2;
-  $('#resWait').hidden=!online||host;
+  $('#resWait').hidden=!online||host;$('#resWait').textContent=G.watch?'次の試合から参加できるで':'ホストの「もう一回」待ち';
 }
 
 /* ================= rendering ================= */
@@ -506,15 +588,15 @@ function resize(){
 window.addEventListener('resize',resize);
 function camTarget(){
   if(!G)return -viewH+110;
-  const c=CH.get(G.cur);const rr=c?c.radius:60;
+  const c=CH.get(G.cur);const rr=c?c.radius*(G.curSm||1):60;
   return Math.min(G.spawnY-rr-50,110-viewH);
 }
-function drawChar(cid,x,y,a,alpha){
-  const c=CH.get(cid);if(!c)return;
-  // local centroid offset: compute once per char lazily
-  if(!c.off){const tmp=makeBody(cid,0,0,0);c.off=tmp.plugin.off;}
-  ctx.save();ctx.translate(x,y);ctx.rotate(a);if(alpha!=null)ctx.globalAlpha=alpha;
-  ctx.drawImage(c.image,-c.off.x,-c.off.y,c.w*c.scale,c.h*c.scale);
+function drawChar(cid,x,y,a,sm){
+  const c=CH.get(cid);if(!c)return;sm=sm||1;
+  // local centroid offset: compute once per char lazily (it scales with the size)
+  if(!c.off){const tmp=makeBody(cid,0,0,0,1);c.off=tmp.plugin.off;}
+  ctx.save();ctx.translate(x,y);ctx.rotate(a);
+  ctx.drawImage(c.image,-c.off.x*sm,-c.off.y*sm,c.w*c.scale*sm,c.h*c.scale*sm);
   ctx.restore();
 }
 function draw(){
@@ -522,18 +604,22 @@ function draw(){
   if(!G||!engine)return;
   const tgt=camTarget();camTop=camTop==null?tgt:camTop+(tgt-camTop)*0.08;
   ctx.setTransform(K*DPR,0,0,K*DPR,0,-camTop*K*DPR);
-  // stage
-  ctx.fillStyle='#555';ctx.fillRect(STAGE_L,0,STAGE_R-STAGE_L,STAGE_H);
-  ctx.fillRect(STAGE_L+30,STAGE_H,STAGE_R-STAGE_L-60,400);
-  for(const b of pieces()){const c=CH.get(b.plugin.cid);if(!c)continue;
+  // stage: every fixed body (and the seesaw plank), with a pillar under the big blocks
+  ctx.fillStyle='#555';
+  for(const b of Composite.allBodies(engine.world)){if(!b.isStatic&&b!==plank)continue;
+    const w=b.bounds.max.x-b.bounds.min.x;
+    if(b.label==='stage'&&w>90)ctx.fillRect(b.bounds.min.x+w*0.15,b.bounds.max.y-2,w*0.7,500);
+    for(const part of (b.parts.length>1?b.parts.slice(1):[b])){const v=part.vertices;ctx.beginPath();ctx.moveTo(v[0].x,v[0].y);for(let i=1;i<v.length;i++)ctx.lineTo(v[i].x,v[i].y);ctx.closePath();ctx.fill();}
+  }
+  for(const b of pieces()){const c=CH.get(b.plugin.cid);if(!c)continue;const sm=b.plugin.sm||1;
     ctx.save();ctx.translate(b.position.x,b.position.y);ctx.rotate(b.angle);
-    ctx.drawImage(c.image,-b.plugin.off.x,-b.plugin.off.y,c.w*c.scale,c.h*c.scale);ctx.restore();}
+    ctx.drawImage(c.image,-b.plugin.off.x,-b.plugin.off.y,c.w*c.scale*sm,c.h*c.scale*sm);ctx.restore();}
   if(G.phase==='aim'&&G.cur){
     G.dispA+=(G.aimA-G.dispA)*0.35;
     // guide line
     ctx.strokeStyle='#bbb';ctx.lineWidth=1/K;ctx.setLineDash([4/K,4/K]);
     ctx.beginPath();ctx.moveTo(G.aimX,G.spawnY);ctx.lineTo(G.aimX,camTop+viewH);ctx.stroke();ctx.setLineDash([]);
-    drawChar(G.cur,G.aimX,G.spawnY,G.dispA);
+    drawChar(G.cur,G.aimX,G.spawnY,G.dispA,G.curSm);
   }
 }
 function loop(now){
@@ -544,6 +630,11 @@ function loop(now){
     while(loop.acc>=STEP&&n<6){Engine.update(engine,STEP);simTime+=STEP;afterStep();loop.acc-=STEP;n++;if(!G||G.phase!=='fall')break;}
     if(n>=6)loop.acc=0;
   }else loop.acc=0;
+  if(G&&G.phase==='aim'&&+RULES.timer>0){   // turn timer: when it runs out the piece drops where it is
+    const left=Math.ceil(+RULES.timer-(now-G.aimStart)/1000);
+    if(left!==G.left){G.left=left;updateHud();}
+    if(left<=0&&myTurn()&&!G.timedOut){G.timedOut=true;drop();}
+  }
   draw();
   requestAnimationFrame(loop);
 }
@@ -569,13 +660,14 @@ function sendMove(now){
 function flushMove(){moveDirty=false;if(G&&G.phase==='aim'&&G.mode==='online')Room.bcast({t:'move',n:G.t,x:G.aimX,a:G.aimA});}
 
 /* ================= screens ================= */
-const SCREENS=['loading','sTitle','sLobby','sGame','sCreate','sRank','sProfile'];
+const SCREENS=['loading','sTitle','sLobby','sGame','sCreate','sRank','sProfile','sRules'];
 let rankUnlisten=null;
 function show(id){for(const s of SCREENS)$('#'+s).hidden=s!==id;if(id==='sGame')requestAnimationFrame(resize);
   if(id!=='sRank'&&rankUnlisten){rankUnlisten();rankUnlisten=null;}}
 function toTitle(){G=null;Room.leave();$('#charCount').textContent='キャラ '+allIds().length+'体';
   const r=myRec();$('#meIcon').src=iconSrc(me.icon);$('#meName').textContent=me.name||'ななし';
   $('#meLine').textContent=(me.word?me.word+'　':'')+'レート '+r.rating+'　'+r.w+'勝'+r.l+'敗';
+  const rs=rulesSummary(myRules);$('#rulesLine').textContent=rs?'ルール　'+rs:'';$('#rulesLine').hidden=!rs;
   $('#srvState').textContent=Srv.on()?'サーバー：設定済み':'サーバー：未設定（オンライン対戦は使えへん）';$('#srvUrl').value=SERVER;
   show('sTitle');}
 $('#bSrvSave').onclick=async()=>{
@@ -629,30 +721,34 @@ $('#bRank').onclick=()=>{rkMode='rate';renderRank();show('sRank');
 $('#rkRate').onclick=()=>{rkMode='rate';renderRank();};
 $('#rkSolo').onclick=()=>{rkMode='solo';renderRank();};
 $('#bRankBack').onclick=toTitle;
-$('#bSolo').onclick=()=>startGame({mode:'solo',pool:allIds(),seed:(Math.random()*1e9)|0});
-$('#bLocal').onclick=()=>{const n=+$('#localN').value||2;lsSet('mrs-localn',n);startGame({mode:'local',pool:allIds(),seed:(Math.random()*1e9)|0,n,first:0});};
+$('#bSolo').onclick=()=>startGame({mode:'solo',pool:rulePool(allIds(),myRules),seed:(Math.random()*1e9)|0});
+$('#bLocal').onclick=()=>{const n=+$('#localN').value||2;lsSet('mrs-localn',n);startGame({mode:'local',pool:rulePool(allIds(),myRules),seed:(Math.random()*1e9)|0,n,first:0});};
+$('#bRules').onclick=()=>{const draw=()=>renderRulesPanel($('#rulesLocal'),myRules,true,r=>{myRules=r;lsSet('mrs-rules',r);draw();});draw();show('sRules');};
+$('#bRulesBack').onclick=toTitle;
+$('#bRulesReset').onclick=()=>{myRules=Object.assign({},RULE_DEFAULT);lsSet('mrs-rules',myRules);$('#bRules').onclick();};
 $('#bOnline').onclick=()=>{$('#lobbyMsg').textContent=Srv.on()?'':'サーバーが未設定やから対戦できへん。タイトルの「サーバー」で設定してな';$('#bJoin').disabled=!Srv.on();
   $('#lobbyForm').hidden=false;$('#lobbyRoom').hidden=true;show('sLobby');$('#word').value=lsGet('mrs-word','');$('#lobbyMe').textContent='名前：'+(me.name||'ななし')+'（タイトルの「プロフィール」で変えられる）';};
 $('#bLobbyBack').onclick=toTitle;
 // Android back button: go back to the title; on the title, let the app close
-window.androidBack=()=>{if(!$('#sTitle').hidden||!$('#loading').hidden)return false;if(!$('#sProfile').hidden&&!me.name)return false;toTitle();return true;};
-$('#bQuit').onclick=toTitle;$('#bToTitle').onclick=toTitle;
+window.androidBack=()=>{if(!$('#sTitle').hidden||!$('#loading').hidden)return false;if(G&&G.mode==='online'){if(G.watch||G.phase==='over')backToRoom();return true;}if(!$('#sProfile').hidden&&!me.name)return false;toTitle();return true;};
+$('#bQuit').onclick=()=>{if(G&&G.watch)backToRoom();else toTitle();};$('#bToTitle').onclick=toTitle;$('#bToRoom').onclick=()=>backToRoom();
+function backToRoom(){G=null;show('sLobby');$('#lobbyForm').hidden=true;$('#lobbyRoom').hidden=false;renderRoom();}
 $('#bAgain').onclick=()=>{
   if(!G)return;
   if(G.mode==='online'){if(Room.isHost())hostStart();}
-  else startGame({mode:G.mode,pool:allIds(),seed:(Math.random()*1e9)|0,n:G.n,first:G.mode==='local'?(G.first+1)%G.n:0});
+  else startGame({mode:G.mode,pool:rulePool(allIds(),myRules),seed:(Math.random()*1e9)|0,n:G.n,first:G.mode==='local'?(G.first+1)%G.n:0});
 };
 
 /* ================= network (rooms on the server, up to 8 players) ================= */
 const MAXP=8;
 function hashHex(str){const b=new TextEncoder().encode(str.trim());let h1=0x811c9dc5,h2=0x01000193^0x5bd1e995;for(const x of b){h1=Math.imul(h1^x,16777619);h2=Math.imul(h2^x,0x5bd1e995)^(h2>>>13);}return (h1>>>0).toString(16).padStart(8,'0')+(h2>>>0).toString(16).padStart(8,'0');}
 const pad8=n=>String(n).padStart(8,'0');
-const Room={tr:null,gen:0,sid:null,word:'',members:[],ready:{},pending:new Set(),pendTotal:0,announced:false,gameNo:0,inGame:false,
+const Room={tr:null,gen:0,sid:null,word:'',members:[],ready:{},pending:new Set(),pendTotal:0,announced:false,gameNo:0,rules:null,live:null,watchWant:false,
   isHost(){return !!this.members.length&&this.members[0].sid===this.sid;},
   member(sid){return this.members.find(m=>m.sid===sid)||null;},
   send(to,m){try{this.tr&&this.tr.send(to,m);}catch(e){}},
   bcast(m){try{this.tr&&this.tr.bcast(m);}catch(e){}},
-  leave(){this.gen++;try{this.tr&&this.tr.close();}catch(e){}this.tr=null;this.sid=null;this.members=[];this.ready={};this.pending=new Set();this.pendTotal=0;this.announced=false;}
+  leave(){this.gen++;try{this.tr&&this.tr.close();}catch(e){}this.tr=null;this.sid=null;this.members=[];this.ready={};this.pending=new Set();this.pendTotal=0;this.announced=false;this.rules=null;this.live=null;this.watchWant=false;}
 };
 // Room layout on the server: rooms8/<hash>/<slot 0..7> = {info:{sid,at,name,pid}, msgs:{...}}
 //   msgs/<toSid>_<seq>  one-to-one (per receiver, in order)   msgs/all_<seq>  to everyone (in order)
@@ -735,12 +831,16 @@ $('#bJoin').onclick=async()=>{
 $('#bLeave').onclick=toTitle;
 function onMembers(list){
   const before=Room.members;Room.members=list;
-  for(const m of list)if(m.sid!==Room.sid&&!before.some(b=>b.sid===m.sid))
+  for(const m of list)if(m.sid!==Room.sid&&!before.some(b=>b.sid===m.sid)){
     Room.send(m.sid,{t:'hello',v:2,pid:me.id,ids:customIds(),table:Object.values(table).filter(validRec)});
+    if(Room.isHost()&&Room.live&&!Room.live.over)Room.send(m.sid,{t:'live',live:Room.live});
+  }
   for(const b of before)if(!list.some(m=>m.sid===b.sid)){
     delete Room.ready[b.sid];
+    if(Room.live&&!Room.live.over&&Room.live.m.players.some(p=>p.sid===b.sid))Room.live.over=true;
     if(G&&G.mode==='online'&&G.phase!=='over'&&G.players.some(p=>p.sid===b.sid))abortGame(b.name);
   }
+  if(Room.isHost())Room.bcast({t:'rules',r:myRules});
   Room.announced=false;checkReady();
   renderRoom();refreshResultButtons();
 }
@@ -762,6 +862,11 @@ function renderRoom(){
     li.append(avatar(m.icon),nm,r,tg);ul.appendChild(li);});
   const host=Room.isHost(),others=Room.members.filter(m=>m.sid!==Room.sid);
   const allReady=others.every(m=>Room.ready[m.sid])&&!Room.pending.size;
+  const r=host?myRules:(Room.rules||RULE_DEFAULT);
+  $('#rulesHead').textContent=host?'ルール（あなたがホストやから決められる）':'ルール（ホストが決める）';
+  renderRulesPanel($('#roomRules'),r,host,n=>{myRules=n;lsSet('mrs-rules',n);Room.bcast({t:'rules',r:n});renderRoom();});
+  const L=Room.live,watching=L&&!L.over&&!G;
+  $('#bWatch').hidden=!watching;if(L)$('#bWatch').textContent='観戦する（'+L.m.players.length+'人で対戦中）';
   $('#bStart').hidden=!host;
   $('#bStart').disabled=others.length<1||!allReady;
   $('#bStart').textContent='スタート（'+Room.members.length+'人）';
@@ -770,31 +875,58 @@ function renderRoom(){
   else if(others.length<1)msg='ほかの人を待ってる…（同じ合言葉で入ってもらってな）';
   else if(!allReady)msg='みんなの準備待ち…';
   else if(!host)msg='ホストがスタートするのを待ってな';
-  if(Room.inGame&&!(G&&G.mode==='online'))msg='いま試合中。次の試合から入れるで';
+  if(watching)msg='いま試合中。観戦できるで（次の試合から参加）';
   $('#roomMsg').textContent=msg;
 }
 $('#bStart').onclick=()=>{if(Room.isHost())hostStart();};
+$('#bWatch').onclick=()=>enterWatch();
 function hostStart(){
   const players=Room.members.filter(m=>m.sid===Room.sid||Room.ready[m.sid]);
   if(players.length<2)return;
   let common=null;
   for(const p of players){if(p.sid===Room.sid)continue;const s=new Set(Room.ready[p.sid]);common=common?new Set([...common].filter(x=>s.has(x))):s;}
-  const pool=[...CH.values()].filter(c=>c.builtin||(common&&common.has(c.id)&&!blocked.has(c.id))).map(c=>c.id).sort();
+  const pool=rulePool([...CH.values()].filter(c=>c.builtin||(common&&common.has(c.id)&&!blocked.has(c.id))).map(c=>c.id).sort(),myRules);
   const recs=players.map(p=>cleanRec(validRec(table[p.pid])?table[p.pid]:defaultRec(p.pid,p.name)));
-  const m={t:'start',seed:(Math.random()*1e9)|0,pool,players:players.map(p=>({sid:p.sid,pid:p.pid,name:p.name})),first:Room.gameNo%players.length,no:Room.gameNo,recs,at:Date.now()};
+  const m={t:'start',seed:(Math.random()*1e9)|0,pool,players:players.map(p=>({sid:p.sid,pid:p.pid,name:p.name})),first:Room.gameNo%players.length,no:Room.gameNo,recs,at:Date.now(),rules:myRules};
   Room.gameNo++;
-  Room.bcast(m);beginOnline(m);
+  Room.bcast(m);onStart(m);
+}
+function normPlayers(list){return list.map(p=>({sid:String(p.sid),pid:String(p.pid||''),name:String(p.name||'ななし').slice(0,12)}));}
+function onStart(m){
+  if(!Array.isArray(m.players)||m.players.length<2||m.players.length>MAXP||!Array.isArray(m.pool))return;
+  m.rules=cleanRules(m.rules);
+  Room.live={m,t:0,snap:[],over:false};
+  beginOnline(m);
+}
+// everyone in the room (players, spectators, people in the lobby) tracks the latest settled state of the game
+function liveSettled(n,snap,fell){
+  const L=Room.live;if(!L||L.over||(n|0)<L.t)return;
+  if(fell)L.over=true;else{L.t=(n|0)+1;L.snap=Array.isArray(snap)?snap:[];}
+  if(!G)renderRoom();
+}
+function enterWatch(){
+  const L=Room.live;if(!L||L.over)return;
+  const m=L.m,missing=m.pool.filter(id=>!CH.has(id));
+  if(missing.length){const h=Room.members[0];
+    if(h&&h.sid!==Room.sid){const want=missing.filter(id=>!Room.pending.has(id));for(const id of want)Room.pending.add(id);Room.pendTotal+=want.length;if(want.length)Room.send(h.sid,{t:'need',ids:want});}
+    Room.watchWant=true;renderRoom();return;}
+  Room.watchWant=false;
+  const players=normPlayers(m.players);
+  startGame({mode:'online',watch:true,pool:m.pool.slice(),seed:m.seed|0,n:players.length,first:(m.first|0)%players.length,me:-1,players,rules:m.rules});
+  G.recs=null;
+  applySnapshot(L.snap);G.t=L.t|0;setupAim();
+  $('#hint').textContent='観戦中（次の試合から参加できる）';
 }
 function beginOnline(m){
-  if(!Array.isArray(m.players)||m.players.length<2||m.players.length>MAXP||!Array.isArray(m.pool))return;
-  Room.inGame=true;
   const idx=m.players.findIndex(p=>p&&p.sid===Room.sid);
-  if(idx<0){renderRoom();return;}                       // started without us: wait for the next one
+  if(idx<0){                                            // started without us: watch it (if we're waiting in the room or already watching)
+    if((G&&G.watch)||(!G&&!$('#sLobby').hidden&&!$('#lobbyRoom').hidden))enterWatch();else renderRoom();
+    return;}
   const pool=m.pool.filter(id=>CH.has(id));
   if(pool.length!==m.pool.length){$('#roomMsg').textContent='キャラがそろってへん。入り直してな';return;}
-  const players=m.players.map(p=>({sid:String(p.sid),pid:String(p.pid||''),name:String(p.name||'ななし').slice(0,12)}));
+  const players=normPlayers(m.players);
   const recs=Array.isArray(m.recs)&&m.recs.length===players.length&&m.recs.every(validRec)?m.recs:null;
-  startGame({mode:'online',pool,seed:m.seed|0,n:players.length,first:(m.first|0)%players.length,me:idx,players});
+  startGame({mode:'online',pool,seed:m.seed|0,n:players.length,first:(m.first|0)%players.length,me:idx,players,rules:m.rules});
   G.recs=recs;G.rated=false;G.startAt=isFinite(m.at)?+m.at:Date.now();
   $('#hint').textContent=players.length+'人で対戦。'+playerLabel(curPlayer())+'から';
   if(Room.tr&&Room.tr.prune)Room.tr.prune();
@@ -819,12 +951,25 @@ async function onRoomMsg(from,m){
         Room.pending.delete(m.c.id);
       }else if(m.c&&m.c.id)Room.pending.delete(m.c.id);
       if(!Room.pending.size)Room.pendTotal=0;
-      renderRoom();checkReady();break;}
+      renderRoom();checkReady();
+      if(Room.watchWant&&!G)enterWatch();
+      break;}
     case 'ready':Room.ready[from]=Array.isArray(m.ids)?m.ids:[];renderRoom();break;
-    case 'start':if(sender&&Room.members[0]&&Room.members[0].sid===from)beginOnline(m);break;
+    case 'start':if(sender&&Room.members[0]&&Room.members[0].sid===from)onStart(m);break;
+    case 'rules':if(Room.members[0]&&Room.members[0].sid===from){Room.rules=cleanRules(m.r);renderRoom();}break;
+    case 'live':{
+      const L=m.live;if(!L||!L.m||!Array.isArray(L.m.players)||!Array.isArray(L.m.pool)||!(Room.members[0]&&Room.members[0].sid===from))break;
+      if(Room.live&&Room.live.m.no===L.m.no&&Room.live.m.at===L.m.at&&Room.live.t>=(L.t|0))break;
+      L.m.rules=cleanRules(L.m.rules);Room.live={m:L.m,t:L.t|0,snap:Array.isArray(L.snap)?L.snap:[],over:!!L.over};
+      if(!G&&!$('#sLobby').hidden&&!$('#lobbyRoom').hidden)enterWatch();else renderRoom();
+      break;}
     case 'move':if(G&&G.mode==='online'&&G.phase==='aim'&&!myTurn()&&m.n===G.t&&G.players[curPlayer()].sid===from){G.aimX=+m.x||WW/2;G.aimA=+m.a||0;}break;
     case 'drop':if(G&&G.mode==='online'&&G.phase==='aim'&&!myTurn()&&m.n===G.t&&G.players[curPlayer()].sid===from){$('#hint').hidden=true;G.spawnY=+m.y;doDrop(+m.x,+m.y,+m.a,false);}break;
-    case 'settled':if(G&&G.mode==='online'&&!myTurn()&&G.players[curPlayer()].sid===from)remoteSettled(m);break;
+    case 'settled':{
+      const L=Room.live;
+      if(L&&!L.over){const P=L.m.players;if(P[((m.n|0)+(L.m.first|0))%P.length].sid===from)liveSettled(m.n,m.snap,m.fell);}
+      if(G&&G.mode==='online'&&!myTurn()){const P=G.players;if(P[((m.n|0)+G.first)%G.n].sid===from)remoteSettled(m);}
+      break;}
   }
 }
 
