@@ -431,6 +431,12 @@ function makeBody(cid,x,y,a,sm){
   const opt={friction:g.f,frictionStatic:g.fs,restitution:0,density:0.0015,frictionAir:0.015};
   const parts=c.parts.map(p=>{let v=p.map(q=>({x:q[0]*s,y:q[1]*s}));v=Vertices.clockwiseSort(v);return Body.create(Object.assign({position:Vertices.centre(v),vertices:v},opt));});
   const b=parts.length===1?parts[0]:Body.create(Object.assign({parts},opt));
+  if(parts.length>1){
+    // Matter.js sums each part's inertia about its own centre and forgets the distance to the body's centre
+    // (parallel axis). For a star that makes it ~4x too easy to spin, and friction at a tip flings it away.
+    let I=0;for(const q of parts){const dx=q.position.x-b.position.x,dy=q.position.y-b.position.y;I+=q.inertia+4*q.mass*(dx*dx+dy*dy);}
+    Body.setInertia(b,I);
+  }
   b.plugin={cid,sm,off:{x:b.position.x,y:b.position.y}};
   Body.setPosition(b,{x,y});Body.setAngle(b,a);
   return b;
@@ -504,7 +510,12 @@ let simTime=0;
 function afterStep(){
   if(!G||G.phase!=='fall')return;
   const ps=pieces(),g=GRIP[RULES.grip]||GRIP.normal;
-  for(const b of ps)Body.setAngularVelocity(b,b.angularVelocity*g.roll); // rolling resistance
+  for(const b of ps){
+    Body.setAngularVelocity(b,b.angularVelocity*g.roll); // rolling resistance
+    // safety net: nothing in a stacking game should be launched upward or spun fast
+    if(b.velocity.y<-6)Body.setVelocity(b,{x:b.velocity.x,y:-6});
+    if(Math.abs(b.angularVelocity)>0.3)Body.setAngularVelocity(b,Math.sign(b.angularVelocity)*0.3);
+  }
   if(G.auth&&!G.fell&&ps.some(b=>b.position.y>FALL_Y)){G.fell=true;G.fellAt=simTime;}
   if(G.fell){if(simTime-G.fellAt>900)finishTurn(true);return;}
   const calm=movers().every(b=>b.speed<0.09&&b.angularSpeed<0.005);
