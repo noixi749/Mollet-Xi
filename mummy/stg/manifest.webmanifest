@@ -1,0 +1,16 @@
+{
+  "name": "マミー会弾幕郷",
+  "short_name": "弾幕郷",
+  "description": "マミー会の顔で遊ぶ弾幕シューティング。ストーリー・スペルプラクティス・合言葉でバトル",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#0a0718",
+  "theme_color": "#0a0718",
+  "lang": "ja",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
