@@ -705,7 +705,7 @@ const WEAPONS={
   ninja:{name:'忍者',desc:'二段ジャンプ・手裏剣・変わり身で背後を取る。動きが軽い',walk:1.12},
   muscle:{name:'マッスル',desc:'バーベルでぶん殴り、ダンベルを投げる。パンプアップで攻撃力アップ'},
   hustle:{name:'ハッスル',desc:'全部が速い。ダンベル連投とハッスルタイムで押し切る',walk:1.1},
-  ishihara:{name:'石原',desc:'ネタキャラ。全部が極限まで強い。常にスーパーアーマー、攻撃力・体力・防御・速さ全部おかしい',walk:1.25,jump:1.08},
+  ishihara:{name:'石原',desc:'ネタキャラ。攻撃と速さが極限まで強くて常にスーパーアーマー。ただし体力は少なめで、ダメージはしっかり食らう',walk:1.25,jump:1.08},
   horn:{name:'角',desc:'ヤギ専用'},
 };
 const CMD={P:'パンチ',K:'キック',S1:'↓↘→ ＋ パンチ',S2:'→↓↘ ＋ パンチ',S3:'↓↙← ＋ キック'};
@@ -724,6 +724,7 @@ const SFXTXT={hit:['バキッ','ドカッ','ボコッ'],slash:['ズバッ','ザ�
 /* マミー会メンバー（roster.js）。名前はキャラ名管理で全員共通に変えられる */
 const ROSTER=(typeof window!=='undefined'&&Array.isArray(window.ROSTER))?window.ROSTER:[];
 const MEMBER_BUILD={
+  rion:{job:'samurai',weapon:'ninja',stats:{atk:2,spd:4,hp:1,def:1,mp:2}},
   yagi:{job:'fighter',weapon:'stegoro',stats:{atk:3,spd:3,hp:2,def:1,mp:1}},
   sanma:{job:'sword',weapon:'hammer',stats:{atk:4,spd:0,hp:4,def:2,mp:0}},
   kazusa:{job:'gunner',weapon:'shotgun',stats:{atk:3,spd:2,hp:2,def:1,mp:2}},
@@ -789,7 +790,7 @@ function derive(c){
   return {maxHp:Math.round((100+j.hp+10*s.hp)*(t.hp||1)),atkMul:1+0.07*s.atk,defMul:Math.max(0.5,1-0.045*s.def)*(t.def||1),walk:j.walk*1.1*(1+0.05*s.spd)*(w.walk||1),jump:j.jump*(1+0.012*s.spd)*(w.jump||1),maxMp:40+10*s.mp,mpRegen:(8+1.0*s.mp)/60,weight:j.weight};
 }
 /* 武器ごとの強さの調整（CPU同士の勝率が揃うように合わせた値）。dmg=与えるダメージ、hp=体力 */
-const TUNE={stegoro:{dmg:1.072},tonfa:{dmg:1.028},kenpo:{dmg:0.996},greatsword:{dmg:0.92},katana:{dmg:0.936},hammer:{dmg:0.973},staff:{dmg:1.189},grimoire:{dmg:1.054},ninjutsu:{dmg:1.164},handgun:{dmg:1.61},shotgun:{dmg:1.378},sniper:{dmg:1.283},akimbo:{dmg:1.303},rocket:{dmg:1.118},drill:{dmg:1.046},beam:{dmg:1.156},iai:{dmg:0.724},nitoryu:{dmg:0.947},ninja:{dmg:0.946},muscle:{dmg:1,hp:0.88},hustle:{dmg:1},ishihara:{dmg:1.6,hp:1.8,def:0.6,fixed:true}};
+const TUNE={stegoro:{dmg:1.072},tonfa:{dmg:1.028},kenpo:{dmg:0.996},greatsword:{dmg:0.92},katana:{dmg:0.936},hammer:{dmg:0.973},staff:{dmg:1.189},grimoire:{dmg:1.054},ninjutsu:{dmg:1.164},handgun:{dmg:1.61},shotgun:{dmg:1.378},sniper:{dmg:1.283},akimbo:{dmg:1.303},rocket:{dmg:1.118},drill:{dmg:1.046},beam:{dmg:1.156},iai:{dmg:0.724},nitoryu:{dmg:0.947},ninja:{dmg:0.946},muscle:{dmg:1,hp:0.88},hustle:{dmg:1},ishihara:{dmg:1.6,hp:0.82,fixed:true}};
 function M(o){return Object.assign({name:'',kind:'melee',startup:6,active:4,recovery:10,dmg:5,hb:null,kb:4,hitstun:15,lift:0,mp:0,dash:0,rise:0,multi:1,inv:0,proj:null,pose:'punch',sfx:'hit',fx:null,fxColor:'#e8452c'},o);}
 const EMPTY=M({kind:'none',startup:0,active:0,recovery:12,pose:'idle'});
 
@@ -1529,7 +1530,7 @@ function applyHit(att,def,mv,isProj,dir,pt){
   const proj=isProj||mv.kind==='beam';
   const ironBody=def.weapon==='ishihara'&&def.onGround&&['idle','walk','crouch','attack','land'].includes(def.state);
   if((ironBody||(def.state==='attack'&&def.move&&def.move.armor&&def.moveT<def.move.startup+def.move.active&&(def.armorUsed||0)<def.move.armor))&&!mv.throw&&mv.kind!=='cstrike'&&!mv.sp){ // アーマー（石原は常時）
-    const ar=Math.max(1,Math.round(mv.dmg*att.atkMul*def.defMul*0.6));
+    const ar=Math.max(1,Math.round(mv.dmg*att.atkMul*def.defMul*(def.weapon==='ishihara'?1:0.6))); // 石原はひるまへんけど体力はしっかり減る
     if(def.hp-ar>0){def.armorUsed=(def.armorUsed||0)+1;def.hp-=ar;def.flash=6;def.lastHurt=G.frame;sfx('guard');addSpark(pt.x,pt.y,'#ffd23f');addText(def.x,def.y-200,'効かん！','#ff8a3d',30);G.hitstop=Math.max(G.hitstop,6);return true;}
   }
   const guarding=def.onGround&&['idle','walk','crouch','blockstun','land'].includes(def.state)&&(def.gBtn||def.rel===4||def.rel===1);
@@ -2702,7 +2703,7 @@ function initLayoutEditor(){
 /* ================= ストーリー ================= */
 let STORYS=null,TALK=null;
 function storyLevel(ch){const L=['easy','normal','hard'],i=Math.max(0,L.indexOf(DATA.diff));return L[Math.max(0,Math.min(2,i+STORY[ch].lv))];}
-const CAST_POOL=['takeru','sanma','kazusa','bayashi','tatsuya','kojimaimo'];
+const CAST_POOL=['takeru','sanma','kazusa','bayashi','tatsuya','kojimaimo','rion'];
 function storyCast(p1){
   const me=p1&&p1.person,ids=CAST_POOL.concat(ROSTER.map(p=>p.id)).filter((id,i,a)=>a.indexOf(id)===i&&id!=='yagi'&&id!==me&&personById(id));
   return {F:ids[0]||null,A1:ids[1]||null,A2:ids[2]||null,A3:ids[3]||ids[1]||null};
@@ -2964,7 +2965,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='19';
+const GAME_VER='20';
 const TABS=['battle','kumite','story','chara','settings'];
 function showTab(t){
   if(!TABS.includes(t))t='battle';DATA.tab=t;
