@@ -898,7 +898,7 @@ const WEAPONS={
   iai:{name:'居合',desc:'抜刀術。ふだんは刀を鞘に納めてて、抜いた瞬間に斬る。構えて待つ一閃と、すり抜け抜刀'},
   nitoryu:{name:'二刀流',desc:'両手の刀で手数と十文字斬り。身軽で技の出が速い。弾を斬り落とせる',walk:1.15,jump:1.06},
   ninja:{name:'忍者',desc:'二段ジャンプ・手裏剣・変わり身で背後を取る。キックは背中の日本刀で斬る。必殺技は影分身。動きが軽い',walk:1.12},
-  muscle:{name:'マッスル',desc:'バーベルでぶん殴り、ダンベルを投げる。パンプアップで攻撃力アップ'},
+  muscle:{name:'マッスル',desc:'バーベルでぶん殴り、ダンベルを投げ、相手を壁までぶん投げる。パンプアップで攻撃力アップ'},
   hustle:{name:'ハッスル',desc:'いつもバーベルを担いで振り回す。リーチが長くて手数も多い。ダンベル連投とハッスルタイムで押し切る',walk:1.1},
   ishihara:{name:'石原',desc:'ネタキャラ。攻撃と速さが極限まで強くて、ラウンド開始から10秒だけスーパーアーマー（頭の上のゲージを削り切られるとブレイクしてダウン）。体力は少なめ',walk:1.25,jump:1.08},
   horn:{name:'角',desc:'ヤギ専用'},
@@ -1260,7 +1260,7 @@ function buildMoves(job,weapon){
       m.K2=M({name:'マッスルタックル',startup:9,active:14,recovery:20,dash:10,dmg:15,hb:{x:40,y:100,w:56,h:70},kb:12,hitstun:22,pose:'thrust',sfx:'boom',armor:2,next:'K3',nextBtn:'K'});
       m.K3=M({name:'マッスルドロップキック',startup:10,active:10,recovery:24,dash:9,dmg:16,hb:{x:52,y:90,w:62,h:44},kb:14,lift:-6,hitstun:24,pose:'kick',sfx:'boom'});
       m.S1=M({name:'ダンベル投げ',kind:'proj',startup:10,active:1,recovery:18,mp:15,pose:'cast',sfx:'whiff',proj:{speed:8,vy:-6,grav:0.28,y:140,w:30,h:18,dmg:14,life:120,kind:'dumbbell',color:'#5a5f6e',kb:8,hitstun:20}});
-      m.S2=M({name:'マッスルアッパー',startup:5,active:14,recovery:24,dmg:17,rise:-12,dash:1.5,hb:{x:30,y:140,w:52,h:76},kb:3,lift:-12,hitstun:30,pose:'upper',armor:1});
+      m.S2=M({name:'マッスルスロー',startup:4,active:4,recovery:18,dmg:14,hb:{x:42,y:100,w:56,h:96},kb:2,hitstun:36,throw:true,hurl:true,pose:'upper',sfx:'boom'}); // つかんで壁までぶん投げる（近い壁ならマヒ）
       m.S3=M({name:'パンプアップ',startup:14,active:6,recovery:14,dmg:8,hb:{x:0,y:100,w:160,h:150},kb:9,hitstun:20,buff:'pump',pose:'flex',sfx:'boom',fx:'burst',fxColor:'#ff7a3d'});
     }
     if(weapon==='hustle'){
@@ -1320,6 +1320,7 @@ function buildMoves(job,weapon){
     stegoro:{name:'ステゴロ百裂拳',startup:5,active:34,recovery:20,dash:7,multi:7,dmg:8,hb:{x:34,y:100,w:110,h:80},kb:6,lift:-9,hitstun:32,inv:30,pose:'punch'},
     tonfa:{name:'トンファー大旋風',startup:5,active:30,recovery:20,dash:7,multi:6,dmg:9,hb:{x:20,y:100,w:150,h:84},kb:6,lift:-9,hitstun:32,inv:30,pose:'spin'},
     greatsword:{name:'奥義・大斬撃波',kind:'proj',startup:8,active:1,recovery:24,inv:16,pose:'swing',sfx:'slash',proj:{speed:11,y:100,w:70,h:180,dmg:44,life:90,kind:'slashwave',color:'#ffe2b8',kb:16,lift:-14,hitstun:40,pierce:true,thru:true}},
+    muscle:{name:'ジャイアントスイング',startup:5,active:4,recovery:64,dmg:30,hb:{x:42,y:100,w:62,h:100},kb:2,hitstun:40,throw:true,swingGrab:true,inv:24,pose:'spin',sfx:'boom'},
     boosthammer:{name:'奥義・オーバードライブ',startup:12,active:24,recovery:30,dash:12,multi:4,dmg:13,hb:{x:70,y:100,w:150,h:120},kb:18,lift:-16,hitstun:44,inv:24,pose:'spin',sfx:'boom',fx:'burst',fxColor:'#ff7a2a'},
     gunblade:{name:'変形奥義・フルバースト',kind:'beam',startup:14,active:30,recovery:24,multi:5,dmg:9,beamH:90,kb:10,hitstun:30,inv:14,pose:'shoot',sfx:'boom',shout:'フルバースト！'},
     katana:{name:'奥義・百花繚乱',startup:4,active:40,recovery:22,dash:4,multi:10,dmg:5,hb:{x:56,y:110,w:160,h:130},kb:1.5,lift:0,hitstun:30,inv:24,pose:'spin',sfx:'slash',fx:'cross',fxColor:'#ffd6e0'},
@@ -1634,7 +1635,7 @@ function makeFighter(cfg,idx){
 }
 function resetFighter(f){
   const sx=(SPAWN[G.f.length]||SPAWN[2])[f.idx]||W/2;
-  Object.assign(f,{x:sx,y:GROUND,vx:0,vy:0,onGround:true,facing:sx<W/2?1:-1,out:false,tx:undefined,ty:undefined,hp:f.maxHp,hpShow:f.maxHp,mp:f.maxMp,state:'idle',t:0,move:null,moveT:0,air:false,hits:0,lastHit:-99,inv:0,hist:[],buf:null,rel:5,dir:5,combo:0,comboShow:0,comboT:0,ko:false,flash:0,guardCrouch:false,ai:{cd:0,hold:0,dir:5},moveKey:null,wallB:false,trail:[],comboDmg:0,gBtn:false,gPrev:false,gPress:-99,justUntil:-1,mpFlash:0,sg:0,gone:false,spin:0,phase2:false,ammo:f.mag||0,shotN:0,slideBuf:0,slideCd:0,pump:0,hustle:0,engine:0,form:'blade',star:0,starFx:0,stun:0,armorG:100,armorBroken:false,armorT:600,armorUsed:0,dblUsed:false,upEdge:false,lastHurt:0});
+  Object.assign(f,{x:sx,y:GROUND,vx:0,vy:0,onGround:true,facing:sx<W/2?1:-1,out:false,tx:undefined,ty:undefined,hp:f.maxHp,hpShow:f.maxHp,mp:f.maxMp,state:'idle',t:0,move:null,moveT:0,air:false,hits:0,lastHit:-99,inv:0,hist:[],buf:null,rel:5,dir:5,combo:0,comboShow:0,comboT:0,ko:false,flash:0,guardCrouch:false,ai:{cd:0,hold:0,dir:5},moveKey:null,wallB:false,trail:[],comboDmg:0,gBtn:false,gPrev:false,gPress:-99,justUntil:-1,mpFlash:0,sg:0,gone:false,spin:0,phase2:false,ammo:f.mag||0,shotN:0,slideBuf:0,slideCd:0,pump:0,hustle:0,engine:0,form:'blade',hurl:null,swing:null,star:0,starFx:0,stun:0,armorG:100,armorBroken:false,armorT:600,armorUsed:0,dblUsed:false,upEdge:false,lastHurt:0});
 }
 function newGame(c1,c2,diff,opts){
   opts=opts||{};
@@ -1875,6 +1876,20 @@ function updateFighter(f){
   physics(f);
 }
 function physics(f){
+  if(f.swing){ // ジャイアントスイングで回されてる
+    const s=f.swing,a=s.by;s.t++;const ang=s.t*0.42;
+    f.x=Math.max(20,Math.min(W-20,a.x+Math.cos(ang)*78));f.y=GROUND-36-Math.abs(Math.sin(ang))*14;f.spin=ang+Math.PI/2;f.vx=0;f.vy=0;f.onGround=false;
+    if(s.t%9===0)sfx('whiff');
+    if(s.t>=s.dur||a.out||a.state!=='attack'||f.ko){f.swing=null;f.spin=0;f.x=Math.max(40,Math.min(W-40,a.x+s.dir*70));f.hurl={x0:f.x};f.vx=s.dir*30/Math.max(0.8,f.weight);f.vy=-4;addText(f.x,f.y-150,'ぶん投げ！','#ff8a3d',30);G.shake=Math.max(G.shake,8);}
+    return;
+  }
+  if(f.hurl&&f.state==='airhit'){ // 壁まで一直線。進んだ距離がステージの半分以下ならマヒ
+    f.vy=Math.min(f.vy+GRAV*0.12,3);f.x+=f.vx;f.y=Math.min(GROUND-40,f.y+f.vy);f.onGround=false;
+    if(f.x<=30||f.x>=W-30){const left=f.x<=30,wx=left?24:W-24,dist=Math.abs(f.x-f.hurl.x0);f.x=left?30:W-30;f.hurl=null;f.wallB=true;f.vx=(left?1:-1)*3;f.vy=-6;
+      G.shake=Math.max(G.shake,14);sfx('heavy');addRing(wx,f.y-90,'#ff8a3d');addText(wx+(left?66:-66),f.y-140,'ドガァン！',INK,42);
+      if(dist<=W/2&&!f.ko){f.stun=90;addText(f.x+(left?70:-70),f.y-192,'マヒ！','#ffd23f',30);}}
+    return;
+  }
   if(f.state==='launch'){
     f.vy+=0.3;f.x+=f.vx;f.y+=f.vy;f.spin+=0.32*(Math.sign(f.vx)||1);
     if(!f.gone&&(f.y<-70||f.x<-90||f.x>W+90)){
@@ -1898,7 +1913,7 @@ function onLand(f){
   switch(f.state){
     case 'jump':case 'fall':f.state='land';f.t=4;f.vx=0;break;
     case 'attack':f.state='land';f.t=f.air?4:9;f.move=null;f.vx=0;break;
-    case 'airhit':f.wallB=false;addSmoke(f.x,GROUND,7);sfx('thud');G.shake=Math.max(G.shake,4);if(f.ko){f.state='ko';f.vx*=0.4;}else{f.state='down';f.t=34;f.inv=40;f.vx=0;}break;
+    case 'airhit':f.wallB=false;addSmoke(f.x,GROUND,7);sfx('thud');G.shake=Math.max(G.shake,4);if(f.ko){f.state='ko';f.vx*=0.4;}else if(f.stun>0){f.state='stun';f.vx=0;}else{f.state='down';f.t=34;f.inv=40;f.vx=0;}break;
   }
 }
 function separate(a,b){
@@ -1988,6 +2003,10 @@ function applyHit(att,def,mv,isProj,dir,pt){
     if(alive.length<=1){G.phase='ko';G.phaseT=0;G.winner=alive.length?alive[0].idx:att.idx;sfx('ko');G.hitstop=28;G.flash=1;G.lines={x:pt.x,y:pt.y,t:0,life:40};addRing(pt.x,pt.y,'#ffffff');}
     else{sfx('ko');G.hitstop=16;G.flash=0.6;addRing(pt.x,pt.y,'#ffffff');addText(def.x,def.y-210,`${def.name} リタイア！`,'#ff4a3d',30);}
     if(def.goat&&!(def.cfg&&def.cfg.noLaunch)){def.state='launch';def.vx=dir*(16+Math.random()*4);def.vy=-24;def.spin=0;sfx('mee',def.goat==='kid'?1.5:def.goat==='boss'?0.85:1.1);}
+  }else if(mv.swingGrab){ // ジャイアントスイング：つかんでブン回す（放したら壁まで飛ぶ）
+    def.state='airhit';def.onGround=false;def.vx=0;def.vy=0;def.swing={by:att,t:0,dur:56,dir:att.facing};addText(att.x,att.y-215,'ジャイアントスイング！','#ffd23f',34);
+  }else if(mv.hurl){ // マッスルスロー：まっすぐ壁までぶっ飛ぶ
+    def.state='airhit';def.onGround=false;def.hurl={x0:def.x};def.vy=-5;def.vx=(att.facing||dir)*30/Math.max(0.8,def.weight);addText(att.x,att.y-215,'ぶん投げ！','#ff8a3d',34);
   }else if(mv.throw){ // 投げ：持ち上げて後ろに叩きつける
     def.state='airhit';def.onGround=false;def.vy=-16;def.vx=-dir*6.5/def.weight;addText(att.x,att.y-210,'投げ！','#ff8a3d',34);
   }else if(mv.noDown){ // ハンドガン：のけぞるだけでダウンはせえへん
@@ -2803,7 +2822,7 @@ function render(){
   for(const f of fs)drawRage(f);
   for(const f of fs){
     if(f.clone){ctx.save();ctx.globalAlpha=0.68;drawFighter(f);ctx.restore();drawCloneGauge(f);continue;}
-    if(f.state==='launch'){ctx.save();ctx.translate(f.x,f.y-80);ctx.rotate(f.spin);ctx.translate(-f.x,-(f.y-80));drawFighter(f);ctx.restore();}
+    if(f.state==='launch'||(f.state==='airhit'&&f.spin)){ctx.save();ctx.translate(f.x,f.y-80);ctx.rotate(f.spin);ctx.translate(-f.x,-(f.y-80));drawFighter(f);ctx.restore();}
     else drawFighter(f);
   }
   for(const f of AFD)drawMoveFx(f);
@@ -3000,7 +3019,7 @@ function fillMoves(tb,job,weapon){
   const rows=[['P','K','S1','S2','S3']];if(mv.GP)rows.push(['GP','GK','GS1','GS2']);
   for(const keys of rows){if(keys[0]==='GP'){const r=document.createElement('tr'),a=document.createElement('td');a.colSpan=3;a.className='cmd';a.textContent='― 銃モード（技3で変形）―';r.appendChild(a);tb.appendChild(r);}
   for(const k of keys){
-    const m=mv[k],notes=[];if(m.kind==='transform')notes.push('剣モード⇔銃モードに変形');if(m.buff==='engine')notes.push('しばらく攻撃力アップ（エンジン全開）');
+    const m=mv[k],notes=[];if(m.kind==='transform')notes.push('剣モード⇔銃モードに変形');if(m.hurl)notes.push('壁までぶっ飛ばす（飛んだ距離がステージの半分以下ならマヒ）');if(m.buff==='engine')notes.push('しばらく攻撃力アップ（エンジン全開）');
     if(m.proj||m.kind==='beam'||m.swords)notes.push('飛び道具');if(m.mp)notes.push('MP'+m.mp);if(m.inv&&k==='S2')notes.push('出だし無敵');
     if(m.multi>1)notes.push(m.multi+'段');if(m.proj&&m.proj.noDown)notes.push('ダウンなし');if(m.proj&&m.proj.boom)notes.push('爆発');if(weapon==='handgun'&&m.proj&&k!=='S3')notes.push('8発でリロード');if(m.kind==='warp')notes.push('すり抜け');if(m.pass)notes.push('相手をすり抜けて斬る');if(m.kind==='stance')notes.push('近づいた相手を自動で一閃');if(m.cutProj)notes.push('弾を斬り落とす');if(m.warpBehind)notes.push('相手の背後に回る');if(m.armor)notes.push('アーマー（殴られても止まらへん）');if(m.throw)notes.push('ガード不能の投げ');if(m.kind==='beam'&&m.beamH)notes.push('画面の端まで届く極太ビーム');if(m.proj&&m.proj.thru)notes.push('何人でも貫通');if(m.swords)notes.push('相手の頭上に剣の雨');if(m.buff==='pump')notes.push('しばらく攻撃力アップ・被ダメ減');if(m.buff==='hustle')notes.push('しばらく足が速い');if(m.lift)notes.push('浮かせる');if(m.pose==='sign')notes.push('溜めあり');
     const tr=document.createElement('tr');const c1=document.createElement('td');c1.className='cmd';c1.textContent=CMD[k.replace(/^G/,'')];
@@ -3014,7 +3033,7 @@ function fillMoves(tb,job,weapon){
   c1.className='cmd';c1.textContent='攻撃に合わせてガード';c2.textContent=mv.CS.name+'（カウンター）';c3.textContent='反撃して浮かせる・弾やビームははね返す'+(weapon==='kenpo'?'・拳法は受付がいちばん長い（物理キャラの2.5倍）':weapon==='iai'?'・居合は受付が長め':JOBS[job]&&JOBS[job].phys?'・物理キャラは受付が長い':'');
   tr.append(c1,c2,c3);tb.appendChild(tr);
   if(mv.SP){const r=document.createElement('tr'),a=document.createElement('td'),b=document.createElement('td'),c=document.createElement('td');
-    a.className='cmd';a.textContent='ゲージ満タンで「必殺」';b.textContent=mv.SP.name;c.textContent=({gym:'相手全員を1秒マヒさせる',zip:'画面の端から端まで一瞬で駆け抜けて斬る（ガード不能）',clone:'5秒間、分身が一緒に戦う（分身は3発で消える）'}[mv.SP.kind]||(mv.SP.proj&&mv.SP.proj.kind==='slashwave'?'巨大な斬撃が地をはって飛ぶ（何人でも貫通）':mv.SP.proj&&mv.SP.proj.kind==='sonic'?'ソニックブームを3連発で飛ばす':mv.SP.proj&&mv.SP.proj.ret?'超大型手裏剣が行って戻ってくる（往復で2回当たる）':'必殺技・大ダメージ'))+(job==='fighter'?'・出したら3秒間無敵':'');r.append(a,b,c);tb.appendChild(r);}
+    a.className='cmd';a.textContent='ゲージ満タンで「必殺」';b.textContent=mv.SP.name;c.textContent=({gym:'相手全員を1秒マヒさせる',melee:mv.SP.swingGrab?'つかんでブン回して壁までぶん投げる（ガード不能・近い壁ならマヒ）':undefined,zip:'画面の端から端まで一瞬で駆け抜けて斬る（ガード不能）',clone:'5秒間、分身が一緒に戦う（分身は3発で消える）'}[mv.SP.kind]||(mv.SP.proj&&mv.SP.proj.kind==='slashwave'?'巨大な斬撃が地をはって飛ぶ（何人でも貫通）':mv.SP.proj&&mv.SP.proj.kind==='sonic'?'ソニックブームを3連発で飛ばす':mv.SP.proj&&mv.SP.proj.ret?'超大型手裏剣が行って戻ってくる（往復で2回当たる）':'必殺技・大ダメージ'))+(job==='fighter'?'・出したら3秒間無敵':'');r.append(a,b,c);tb.appendChild(r);}
 }
 
 /* ---- エディタ ---- */
@@ -3546,7 +3565,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='35';
+const GAME_VER='36';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
