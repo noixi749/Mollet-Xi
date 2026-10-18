@@ -1739,7 +1739,7 @@ function aiThink(me,op){
 /* ================= ポーズ ================= */
 function cp(p){const o={};for(const k in p)o[k]=Array.isArray(p[k])?p[k].slice():p[k];return o;}
 function lerpP(a,b,t){const o={};for(const k in a){if(Array.isArray(a[k]))o[k]=[a[k][0]+(b[k][0]-a[k][0])*t,a[k][1]+(b[k][1]-a[k][1])*t];else o[k]=a[k]+(b[k]-a[k])*t;}return o;}
-const BASE={hip:[0,-62],neck:[3,-118],head:[5,-143],fe:[17,-98],fh:[29,-113],be:[-3,-96],bh:[13,-107],fk:[12,-32],ff:[18,0],bk:[-10,-32],bf:[-18,0],w:-1.0};
+const BASE={hip:[0,-62],neck:[3,-118],head:[5,-143],fe:[17,-98],fh:[29,-113],be:[-3,-96],bh:[13,-107],fk:[12,-32],ff:[18,0],bk:[-10,-32],bf:[-18,0],w:-1.0,w2:-0.5};
 function full(part){const p=cp(BASE);for(const k in part)p[k]=Array.isArray(part[k])?part[k].slice():part[k];return p;}
 const CROUCH=full({hip:[0,-38],neck:[9,-88],head:[13,-111],fe:[24,-72],fh:[33,-86],be:[6,-70],bh:[20,-81],fk:[24,-28],ff:[16,0],bk:[-12,-22],bf:[-22,0],w:-0.8});
 const JUMP=full({hip:[0,-70],neck:[2,-124],head:[4,-149],fe:[18,-108],fh:[26,-124],be:[-10,-104],bh:[-4,-120],fk:[16,-50],ff:[8,-28],bk:[-4,-46],bf:[-18,-26],w:-1.2});
@@ -1768,9 +1768,38 @@ const POSE_X={
   iai:full({hip:[0,-54],neck:[10,-106],head:[14,-130],fe:[16,-80],fh:[6,-66],be:[2,-82],bh:[-6,-66],fk:[24,-28],ff:[34,0],bk:[-16,-26],bf:[-32,0],w:0.35}),
 };
 const POSE_W={punch:full({fe:[6,-102],fh:[12,-110],neck:[-1,-118],head:[0,-143]}),kick:full({fk:[20,-50],ff:[22,-30]}),lowkick:full({fk:[20,-40],ff:[22,-24]}),thrust:full({fe:[4,-104],fh:[-4,-108],w:-0.2}),upper:CROUCH,slide:CROUCH,flex:full({fe:[20,-96],fh:[12,-80],be:[-14,-96],bh:[-6,-80],w:1.2}),shoot:POSE_X.shoot,shootUp:POSE_X.shootUp,cast:full({fe:[10,-104],fh:[14,-116],w:-0.8})};
+/* 武器ごとの構え（待機ポーズ）。座標はキャラの足元が原点、右が前、上がマイナス。w=持っている武器の向き、w2=後ろの手の武器の向き */
+const STANCE_DEF={
+  stegoro:{name:'オーソドックス',note:'ボクシングの構え。両拳を顔の前に上げてあごを守り、小刻みに跳ねる',bounce:1,p:{hip:[0,-58],neck:[6,-112],head:[10,-136],fe:[24,-96],fh:[44,-114],be:[16,-92],bh:[38,-106],fk:[16,-29],ff:[24,0],bk:[-12,-28],bf:[-24,0]}},
+  tonfa:{name:'前腕受け',note:'前腕に沿わせたトンファーを盾にして、後ろの手は腰で待つ',p:{hip:[0,-58],neck:[4,-113],head:[7,-138],fe:[20,-96],fh:[40,-102],be:[0,-92],bh:[12,-80],fk:[16,-30],ff:[26,0],bk:[-14,-30],bf:[-26,0]}},
+  kenpo:{name:'弓歩の構え',note:'中国拳法の基本。前足に7割の体重、前の手は掌を突き出す',p:{hip:[-4,-52],neck:[4,-106],head:[8,-130],fe:[26,-102],fh:[46,-110],be:[12,-90],bh:[26,-102],fk:[22,-34],ff:[34,0],bk:[-26,-26],bf:[-48,0]}},
+  greatsword:{name:'担ぎの構え',note:'大剣を肩に担いで、一気に振り下ろす',p:{hip:[0,-60],neck:[2,-116],head:[5,-141],fe:[18,-98],fh:[20,-110],be:[8,-96],bh:[10,-108],fk:[18,-30],ff:[30,0],bk:[-14,-30],bf:[-30,0],w:-2.55}},
+  katana:{name:'脇構え',note:'刀を体の後ろに隠して切っ先を下げる。間合いを読ませない構え',p:{hip:[0,-59],neck:[4,-114],head:[8,-139],fe:[14,-94],fh:[2,-78],be:[0,-94],bh:[-6,-80],fk:[18,-30],ff:[30,0],bk:[-14,-30],bf:[-28,0],w:2.75}},
+  hammer:{name:'地に置く構え',note:'重いハンマーの頭を地面に置いて、柄にもたれる',p:{hip:[0,-60],neck:[4,-115],head:[7,-140],fe:[18,-96],fh:[26,-80],be:[8,-96],bh:[22,-82],fk:[14,-30],ff:[22,0],bk:[-12,-30],bf:[-24,0],w:1.17}},
+  staff:{name:'杖立ての構え',note:'杖を立てて持ち、空いた手で詠唱の準備',p:{hip:[0,-61],neck:[3,-117],head:[6,-142],fe:[18,-100],fh:[34,-108],be:[10,-98],bh:[26,-114],fk:[14,-31],ff:[22,0],bk:[-12,-31],bf:[-22,0],w:-1.5}},
+  grimoire:{name:'開典の構え',note:'魔導書を胸の前で開き、もう片手を高く掲げる',p:{hip:[0,-61],neck:[3,-117],head:[6,-142],fe:[16,-98],fh:[30,-106],be:[-18,-122],bh:[-30,-138],fk:[14,-31],ff:[22,0],bk:[-12,-31],bf:[-22,0],w:-0.25}},
+  ninjutsu:{name:'印を結ぶ構え',note:'胸の前で両手の印を結び、腰を落とす',p:{hip:[0,-58],neck:[4,-113],head:[7,-138],fe:[16,-94],fh:[26,-104],be:[10,-92],bh:[24,-100],fk:[16,-30],ff:[28,0],bk:[-14,-30],bf:[-28,0]}},
+  handgun:{name:'ウィーバースタンス',note:'両手で銃を握り、支える側の肘を下げて目の高さで狙う',p:{hip:[0,-61],neck:[6,-117],head:[10,-141],fe:[24,-112],fh:[44,-122],be:[18,-104],bh:[38,-118],fk:[14,-31],ff:[22,0],bk:[-14,-31],bf:[-26,0],w:-0.04}},
+  shotgun:{name:'ローレディ',note:'銃床を肩に付けたまま銃口を少し下げ、すぐ撃てる姿勢',p:{hip:[0,-61],neck:[3,-118],head:[6,-142],fe:[16,-98],fh:[30,-110],be:[18,-100],bh:[38,-98],fk:[14,-31],ff:[22,0],bk:[-14,-31],bf:[-26,0],w:0.45}},
+  sniper:{name:'肩付け立ち撃ち',note:'銃床を肩に当て、前の手で銃身の下を支えて狙う',p:{hip:[0,-61],neck:[5,-117],head:[8,-141],fe:[18,-106],fh:[30,-114],be:[22,-100],bh:[44,-112],fk:[14,-31],ff:[24,0],bk:[-14,-31],bf:[-26,0],w:0.02}},
+  akimbo:{name:'ガン=カタ風',note:'片方の銃は前へ、もう片方は頭の後ろで天井に向ける',p:{hip:[-2,-56],neck:[4,-112],head:[8,-136],fe:[24,-108],fh:[46,-112],be:[-16,-104],bh:[-30,-118],fk:[18,-28],ff:[30,0],bk:[-18,-28],bf:[-32,0],w:0,w2:-1.45}},
+  rocket:{name:'ファイティングポーズ',note:'鋼鉄の拳を顔の前に上げて、どっしり構える',p:{hip:[0,-58],neck:[4,-112],head:[7,-137],fe:[24,-98],fh:[44,-112],be:[16,-94],bh:[36,-104],fk:[18,-30],ff:[28,0],bk:[-16,-30],bf:[-28,0]}},
+  drill:{name:'ドリル突き出し',note:'ドリルの腕を前に出し、後ろの腕でバランスを取る',p:{hip:[0,-60],neck:[3,-118],head:[6,-142],fe:[24,-104],fh:[44,-100],be:[-8,-100],bh:[-14,-82],fk:[16,-30],ff:[26,0],bk:[-14,-30],bf:[-26,0],w:0.1}},
+  beam:{name:'砲撃姿勢',note:'砲身の腕をもう片方の手で支えて、まっすぐ狙う',p:{hip:[0,-60],neck:[3,-118],head:[6,-142],fe:[22,-106],fh:[42,-110],be:[16,-100],bh:[34,-106],fk:[16,-30],ff:[26,0],bk:[-14,-30],bf:[-26,0],w:0}},
+  iai:{name:'居合腰',note:'腰を落とし、柄に手をかけて左手で鯉口を切る。抜いた瞬間が勝負',p:{hip:[0,-56],neck:[8,-110],head:[12,-134],fe:[16,-84],fh:[6,-68],be:[2,-86],bh:[-6,-68],fk:[22,-30],ff:[32,0],bk:[-16,-28],bf:[-30,0],w:0.35}},
+  nitoryu:{name:'上段・下段の二刀',note:'二天一流のように一本は頭上に振りかぶり、もう一本は前に低く構える',p:{hip:[-4,-50],neck:[8,-102],head:[14,-126],fe:[26,-88],fh:[46,-84],be:[0,-122],bh:[-4,-144],fk:[20,-28],ff:[38,0],bk:[-26,-22],bf:[-46,0],w:-0.05,w2:-2.2}},
+  ninja:{name:'逆手の低い構え',note:'クナイを逆手に持ち、低く身を沈める',p:{hip:[-2,-46],neck:[10,-96],head:[16,-119],fe:[28,-84],fh:[42,-92],be:[-6,-84],bh:[-22,-74],fk:[20,-24],ff:[36,0],bk:[-24,-20],bf:[-42,0],w:1.75}},
+  muscle:{name:'ダブルバイセップス',note:'両腕を曲げて力こぶを見せつける、ボディビルの代表ポーズ',p:{hip:[0,-61],neck:[6,-118],head:[9,-143],fe:[30,-118],fh:[44,-140],be:[-18,-118],bh:[-30,-138],fk:[16,-31],ff:[26,0],bk:[-14,-31],bf:[-26,0]}},
+  hustle:{name:'ハッスルポーズ',note:'拳を斜め上に突き上げて跳ねる',bounce:2,p:{hip:[0,-61],neck:[3,-118],head:[6,-143],fe:[26,-120],fh:[46,-138],be:[-8,-100],bh:[4,-88],fk:[14,-31],ff:[22,0],bk:[-12,-31],bf:[-22,0]}},
+  ishihara:{name:'レスラーの構え',note:'腰を落として両手を前に出し、組み付きを狙う',p:{hip:[0,-50],neck:[14,-100],head:[20,-123],fe:[32,-90],fh:[50,-98],be:[22,-84],bh:[40,-90],fk:[18,-26],ff:[30,0],bk:[-18,-24],bf:[-32,0]}},
+  horn:{name:'突進の構え',note:'頭を下げて角で突っ込む',p:{hip:[0,-58],neck:[14,-106],head:[24,-126],fe:[4,-92],fh:[-8,-80],be:[-6,-92],bh:[-18,-80],fk:[16,-30],ff:[26,0],bk:[-16,-28],bf:[-28,0]}},
+};
+const STANCES={};for(const k in STANCE_DEF)STANCES[k]=full(STANCE_DEF[k].p);
+function stanceOf(f){return STANCES[f.weapon]||BASE;}
 function walkAnim(P,f,t){
   const dm=(f.vx*f.facing>=0)?1:-1,ph=t*0.24*dm,s=Math.sin(ph),c=Math.cos(ph);
-  P.ff=[4+20*s,-Math.max(0,c)*7];P.bf=[-4-20*s,-Math.max(0,-c)*7];P.fk=[P.ff[0]*0.45+9,-33];P.bk=[P.bf[0]*0.45+3,-33];
+  const kh=Math.min(-28,P.hip[1]*0.53);
+  P.ff=[4+20*s,-Math.max(0,c)*7];P.bf=[-4-20*s,-Math.max(0,-c)*7];P.fk=[P.ff[0]*0.45+9,kh];P.bk=[P.bf[0]*0.45+3,kh];
   P.neck[1]+=Math.abs(s)*1.5;P.head[1]+=Math.abs(s)*1.5;
 }
 function swingPose(base,mt,s,a,r){
@@ -1793,7 +1822,7 @@ function attackPose(f,t){
   const mv=f.move;if(!mv||mv.kind==='none')return cp(f.air?JUMP:BASE);
   const s=mv.startup,a=mv.active,r=mv.recovery,mt=f.moveT;
   const e=mt<s?-(mt/Math.max(1,s)):mt<s+a?1:Math.max(0,1-(mt-s-a)/Math.max(1,r));
-  const base=f.air?JUMP:BASE;
+  const base=f.air?JUMP:stanceOf(f);
   switch(mv.pose){
     case 'swing':return swingPose(base,mt,s,a,r);
     case 'spin':return spinPose(base,mt,f);
@@ -1811,7 +1840,7 @@ function poseOf(f){
     case 'crouch':P=cp(CROUCH);if(f.rel===1||f.gBtn)Object.assign(P,cp(GUARD_C));break;
     case 'jump':case 'fall':P=cp(JUMP);break;
     case 'land':P=lerpP(BASE,CROUCH,0.5);break;
-    case 'walk':P=cp(BASE);walkAnim(P,f,t);if(f.rel===4)Object.assign(P,cp(GUARD_S));break;
+    case 'walk':P=cp(stanceOf(f));walkAnim(P,f,t);if(f.rel===4)Object.assign(P,cp(GUARD_S));break;
     case 'blockstun':P=f.guardCrouch?Object.assign(cp(CROUCH),cp(GUARD_C)):Object.assign(cp(BASE),cp(GUARD_S));break;
     case 'hitstun':P=cp(HURT);break;
     case 'airhit':case 'launch':P=cp(AIRHIT);break;
@@ -1819,7 +1848,9 @@ function poseOf(f){
     case 'getup':P=lerpP(DOWN,BASE,1-Math.max(0,f.t)/14);break;
     case 'win':P=cp(WIN);P.fh[1]+=Math.sin(t*0.2)*4;P.bh[1]+=Math.cos(t*0.2)*4;break;
     case 'attack':P=attackPose(f,t);break;
-    default:{P=cp(BASE);const b=Math.sin(t*0.08)*1.6;for(const k of ['neck','head','fe','fh','be','bh'])P[k][1]+=b;if(st==='idle'&&f.gBtn)Object.assign(P,cp(GUARD_S));}
+    default:{P=cp(stanceOf(f));const b=Math.sin(t*0.08)*1.6;for(const k of ['neck','head','fe','fh','be','bh'])P[k][1]+=b;
+      const sd=STANCE_DEF[f.weapon];if(sd&&sd.bounce&&st==='idle'){const bo=Math.abs(Math.sin(t*(sd.bounce>1?0.22:0.15)))*3.2;for(const k of ['hip','neck','head','fe','fh','be','bh'])P[k][1]+=bo;P.fk[1]+=bo*0.6;P.bk[1]+=bo*0.6;}
+      if(st==='idle'&&f.gBtn)Object.assign(P,cp(GUARD_S));}
   }
   return P;
 }
@@ -1970,7 +2001,7 @@ function drawWeapon(f,P){
   }if(wp==='stegoro'||wp==='kenpo'||wp==='ninjutsu'||wp==='tonfa'||wp==='muscle'||wp==='hustle'||wp==='ishihara')return;
   const knife=f.job==='gunner'&&f.state==='attack'&&f.moveKey==='K';
   if(wp==='akimbo'||wp==='nitoryu'){ // 後ろの手にも持つ
-    ctx.save();ctx.translate(P.bh[0],P.bh[1]);ctx.rotate(P.w+(wp==='nitoryu'?0.5:0.08));ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=3;
+    ctx.save();ctx.translate(P.bh[0],P.bh[1]);ctx.rotate(f.state==='attack'?P.w+(wp==='nitoryu'?0.5:0.08):(P.w2!=null?P.w2:P.w+0.5));ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=3;
     if(wp==='akimbo'&&!knife)drawPistol();else if(wp==='nitoryu')drawBlade(58,'#d5dae3');ctx.restore();
   }
   if(wp==='rocket'&&f.fistOut)return;
@@ -2382,6 +2413,7 @@ function updateSoundBtns(){
 function fillMoves(tb,job,weapon){
   const mv=buildMoves(job,weapon);tb.textContent='';
   const hr=document.createElement('tr');for(const h of ['コマンド','技','メモ']){const th=document.createElement('th');th.textContent=h;hr.appendChild(th);}tb.appendChild(hr);
+  const sd=STANCE_DEF[weapon];if(sd){const r=document.createElement('tr'),a=document.createElement('td'),b=document.createElement('td'),c=document.createElement('td');a.className='cmd';a.textContent='構え';b.textContent=sd.name;c.textContent=sd.note;r.append(a,b,c);tb.appendChild(r);}
   for(const k of ['P','K','S1','S2','S3']){
     const m=mv[k],notes=[];
     if(m.proj||m.kind==='beam')notes.push('飛び道具');if(m.mp)notes.push('MP'+m.mp);if(m.inv&&k==='S2')notes.push('出だし無敵');
@@ -2905,7 +2937,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='14';
+const GAME_VER='15';
 const TABS=['battle','kumite','story','chara','settings'];
 function showTab(t){
   if(!TABS.includes(t))t='battle';DATA.tab=t;
