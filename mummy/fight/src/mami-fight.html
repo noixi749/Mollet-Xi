@@ -903,7 +903,12 @@ const MEMBER_BUILD={
   tatsuya:{job:'builder',weapon:'muscle',stats:{atk:4,spd:1,hp:3,def:1,mp:1}}, // 筋肉おばけ
   takeru:{job:'fighter',weapon:'stegoro',stats:{atk:3,spd:0,hp:4,def:3,mp:0}},
   kojimaimo:{job:'mage',weapon:'staff',stats:{atk:2,spd:3,hp:2,def:1,mp:2}},
+  allen:{job:'gunner',weapon:'akimbo',stats:{atk:2,spd:3,hp:2,def:1,mp:2}}, // 銃オタク
+  tanigucci:{job:'fighter',weapon:'kenpo',stats:{atk:4,spd:2,hp:2,def:1,mp:1}}, // 生粋のストリートファイター
+  aniki:{job:'robot',weapon:'rocket',stats:{atk:3,spd:1,hp:3,def:2,mp:1}}, // 攻撃のたびに「おいタコ」
 };
+const FEMALE=new Set(['rion','kojimaimo']); // 女として登録（谷GUCCIの特効）
+function personOf(f){return f&&f.cfg?f.cfg.person||'':'';}
 const SAMPLES=ROSTER.length?ROSTER.map(p=>Object.assign({id:'m_'+p.id,person:p.id,skin:0,name:'',member:true,sample:true},JSON.parse(JSON.stringify(MEMBER_BUILD[p.id]||{job:'fighter',weapon:'stegoro',stats:{atk:2,spd:2,hp:2,def:2,mp:2}})))):BASE_SAMPLES;
 let NAMES={};
 function personById(id){if(!id)return null;return ROSTER.find(p=>p.id===id)||(DATA.people||[]).find(p=>p.id===id)||null;}
@@ -1677,6 +1682,7 @@ function startMove(f,key){
   if(mv.mp>0)f.mp-=mv.mp;
   if(f.mag>0&&mv.proj&&key!=='SP'){const n=Math.max(1,Math.min(mv.proj.burst||1,f.ammo));f.ammo-=n;f.shotN=n;}
   Object.assign(f,{state:'attack',move:mv,moveKey:key,moveT:0,air,hits:0,lastHit:-99,armorUsed:0});
+  if(personOf(f)==='aniki'&&key!=='RL'&&key!=='SL'&&G.frame-(f.takoFx||0)>18){f.takoFx=G.frame;addText(f.x+f.facing*30,f.y-205,'おいタコ','#ff8a3d',26);} // アニキ
   if(mv.inv)f.inv=Math.max(f.inv,mv.inv);
   if(!air)f.vx=0;
 }
@@ -1875,7 +1881,9 @@ function applyHit(att,def,mv,isProj,dir,pt){
   }
   const guarding=def.onGround&&['idle','walk','crouch','blockstun','land'].includes(def.state)&&(def.gBtn||def.rel===4||def.rel===1);
   if(guarding&&G.frame<=def.justUntil&&mv.kind!=='cstrike'&&!mv.throw&&!mv.unblock){def.justUntil=-1;return doCounter(att,def,mv,isProj,dir,pt);}
-  const raw=Math.max(1,Math.round(mv.dmg*att.atkMul*(att.pump>0?1.25:1)*def.defMul*(def.pump>0?0.85:1)));
+  const gucci=personOf(att)==='tanigucci'&&FEMALE.has(personOf(def)); // 谷GUCCI：相手が女やと攻撃力1.75倍のバケモノ
+  const raw=Math.max(1,Math.round(mv.dmg*att.atkMul*(att.pump>0?1.25:1)*def.defMul*(def.pump>0?0.85:1)*(gucci?1.75:1)));
+  if(gucci&&G.frame-(att.gucciFx||0)>24){att.gucciFx=G.frame;addText(def.x,def.y-232,'×1.75','#ff4a3d',26);}
   let crushed=false;
   if(guarding&&!mv.throw&&!mv.unblock){
     const cost=guardCost(raw);
@@ -3415,7 +3423,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='30';
+const GAME_VER='31';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
