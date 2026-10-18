@@ -310,7 +310,7 @@ table.moves{border-collapse:collapse;width:100%;font-size:14px}
           <span>パンチ</span><span>黄色ボタン／<kbd>J</kbd></span>
           <span>キック</span><span>水色ボタン／<kbd>K</kbd></span>
           <span>ガード</span><span>ガードボタン押しっぱなし、か相手と逆の方向に入れっぱなし。下を入れながらでしゃがみガード／<kbd>L</kbd>。攻撃を受け止めるたびにMPが減って、足りへんとガードクラッシュ（大きな隙）。ガード中はMPが回復せえへん</span>
-          <span>カウンター</span><span>相手の攻撃が当たる直前にガードを入れる（ジャストガード）と発動。瞬時に反撃して浮かせる。飛び道具ははね返す。ガードしっぱなしや連打では出えへん</span>
+          <span>カウンター</span><span>相手の攻撃が当たる直前にガードを入れる（ジャストガード）と発動。瞬時に反撃して浮かせる。銃や魔法の弾・ビームははね返して撃った本人に当てる。格闘・大剣・ロボ（物理キャラ）は受付時間が約2倍。ガードしっぱなしや連打では出えへん</span>
           <span>コンボ</span><span>パンチやキックが当たった瞬間にコマンド技を入れるとキャンセルでつながる</span>
           <span>ショートカット</span><span>設定でONにすると技ボタンが出る／PCは <kbd>1</kbd>〜<kbd>3</kbd></span>
           <span>コントローラー</span><span>つないでボタンを押すと使える（画面のボタンは自動で消える）。割り当ては設定の「ボタン設定」で変えられる。初期：十字キー/左スティック移動、□パンチ、×キック、○ジャンプ、R1ガード、△必殺、L1・R2・L2が技1〜3、Optionsで一時停止</span>
@@ -571,12 +571,12 @@ const FONT_B='"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif';
 const BPM=142,BEAT0=0.336,SUN={x:640,y:GROUND-92,r:96};
 const STATS=[['atk','攻撃'],['spd','速度'],['hp','体力'],['def','防御'],['mp','MP']];
 const JOBS={
-  fighter:{name:'格闘',hp:0,walk:4.3,jump:-15.5,weight:1.0,weapons:['stegoro','tonfa','kenpo'],desc:'手数で押すタイプ。足が速い。'},
-  sword:{name:'大剣',hp:10,walk:3.2,jump:-14.6,weight:1.1,weapons:['greatsword','katana','hammer'],desc:'リーチと一撃の重さ。足は遅め。'},
+  fighter:{name:'格闘',hp:0,walk:4.3,jump:-15.5,weight:1.0,phys:true,weapons:['stegoro','tonfa','kenpo'],desc:'手数で押すタイプ。足が速い。物理キャラなのでカウンターの受付が長い。'},
+  sword:{name:'大剣',hp:10,walk:3.2,jump:-14.6,weight:1.1,phys:true,weapons:['greatsword','katana','hammer'],desc:'リーチと一撃の重さ。足は遅め。物理キャラなのでカウンターの受付が長い。'},
   mage:{name:'魔法',hp:-15,walk:3.4,jump:-15,weight:0.9,weapons:['staff','grimoire','ninjutsu'],desc:'飛び道具とワープ。打たれ弱い。'},
   gunner:{name:'銃',hp:-10,walk:3.6,jump:-15,weight:0.95,weapons:['handgun','shotgun','sniper'],desc:'撃ちまくり。MPが弾の代わりで、切れたら回復待ち。'},
-  robot:{name:'ロボ',hp:30,walk:2.8,jump:-12.8,weight:1.4,weapons:['rocket','drill','beam'],desc:'硬くて重い。ジャンプ低め。'},
-  goat:{name:'ヤギ',hp:60,walk:3.6,jump:-15,weight:1.2,weapons:['horn'],desc:'ストーリーのラスボス専用',hidden:true},
+  robot:{name:'ロボ',hp:30,walk:2.8,jump:-12.8,weight:1.4,phys:true,weapons:['rocket','drill','beam'],desc:'硬くて重い。ジャンプ低め。物理キャラなのでカウンターの受付が長い。'},
+  goat:{name:'ヤギ',hp:60,walk:3.6,jump:-15,weight:1.2,phys:true,weapons:['horn'],desc:'ストーリーのラスボス専用',hidden:true},
 };
 const WEAPONS={
   stegoro:{name:'ステゴロ',desc:'素手。技の出がいちばん速い'},
@@ -598,7 +598,7 @@ const WEAPONS={
 };
 const CMD={P:'パンチ',K:'キック',S1:'↓↘→ ＋ パンチ',S2:'→↓↘ ＋ パンチ',S3:'↓↙← ＋ キック'};
 const SCMD={S1:'↓↘→P',S2:'→↓↘P',S3:'↓↙←K'};
-const JUST=8;
+const JUST=8,JUST_PHYS=15; // ジャストガードの受付（フレーム）。物理キャラ（格闘・大剣・ロボ）は長い
 const MIRROR={1:3,2:2,3:1,4:6,5:5,6:4,7:9,8:8,9:7};
 const DIFF={easy:{react:22,guard:0.15,aa:0.15,aggr:0.35,special:0.15,just:0.04},normal:{react:12,guard:0.45,aa:0.4,aggr:0.55,special:0.3,just:0.12},hard:{react:6,guard:0.75,aa:0.7,aggr:0.75,special:0.45,just:0.25}};
 const BASE_SAMPLES=[
@@ -1053,6 +1053,7 @@ let onMatchEnd=()=>{};
 function makeFighter(cfg,idx){
   const f=Object.assign({},derive(cfg),{idx,cfg,name:charName(cfg),job:cfg.job,weapon:cfg.weapon,moves:buildMoves(cfg.job,cfg.weapon),ink:INKS[idx%4],img:faceImage(cfg)});
   f.ranged=!!(f.moves.P.proj||f.moves.S1.proj||f.moves.S1.kind==='beam');
+  f.phys=!!(JOBS[cfg.job]&&JOBS[cfg.job].phys);f.justWin=f.phys?JUST_PHYS:JUST;f.justLock=f.phys?30:20;
   f.goat=cfg.goat||null;f.boss=!!cfg.boss;f.aiLevel=cfg.aiLevel||null;if(f.boss)f.ranged=false;
   return f;
 }
@@ -1076,7 +1077,7 @@ function feed(f,inp){
   const h=f.hist;if(!h.length||h[h.length-1].d!==f.rel){h.push({d:f.rel,f:G.frame});if(h.length>14)h.shift();}
   f.gBtn=!!inp.g;
   const gi=f.gBtn||f.rel===4||f.rel===1;
-  if(gi&&!f.gPrev){if(G.frame-f.gPress>=20)f.justUntil=G.frame+JUST;f.gPress=G.frame;}
+  if(gi&&!f.gPrev){if(G.frame-f.gPress>=f.justLock)f.justUntil=G.frame+f.justWin;f.gPress=G.frame;}
   f.gPrev=gi;
   if(inp.key)f.buf={key:inp.key,f:G.frame};
   if(inp.keys)for(const k of inp.keys)f.buf={key:k,f:G.frame};
@@ -1330,7 +1331,13 @@ function doCounter(att,def,mv,isProj,dir,pt){
   sfx('counter');G.flash=0.8;G.shake=14;G.lines={x:def.x,y:def.y-100,t:0,life:36};
   addRing(def.x+def.facing*34,def.y-100,MARKER);addRing(def.x+def.facing*34,def.y-100,'#ffffff');
   if(isProj){banner('はね返し！');G.hitstop=12;return 'counter';}
-  if(mv.kind==='beam'){if(att.move)att.moveT=Math.max(att.moveT,att.move.startup+att.move.active);banner('見切った！');G.hitstop=14;return true;}
+  if(mv.kind==='beam'){ // ビームもはね返して撃った本人に当てる
+    if(att.move)att.moveT=Math.max(att.moveT,att.move.startup+att.move.active);
+    banner('はね返し！');G.nReflect=(G.nReflect||0)+1;
+    const y=def.y-105,x0=def.x+def.facing*40,x1=att.x;for(let i=0;i<=5;i++)addSpark(x0+(x1-x0)*i/5,y,'#7fe3ff');
+    att.inv=0;applyHit(def,att,{dmg:mv.dmg,hitstun:Math.max(18,mv.hitstun||0),kb:Math.max(6,mv.kb||0),lift:0,sfx:'beam',kind:'proj'},true,-dir,{x:att.x,y:att.y-105});
+    G.hitstop=Math.max(G.hitstop,14);return true;
+  }
   att.inv=0;
   banner('COUNTER!!');
   applyHit(def,att,def.moves.CS,false,-dir,{x:(att.x+def.x)/2,y:pt.y});
@@ -1398,6 +1405,17 @@ function aiThink(me,op){
   else if(op.move&&op.move!==ai.seen&&op.moveT>=1){
     ai.seen=op.move;
     if(op.move.kind==='melee'&&me.onGround&&dist<reachOf(op.move)+70&&R()<D.just)ai.justAt=G.frame+Math.max(1,op.move.startup-op.moveT-3);
+    else if(op.move.kind==='beam'&&me.onGround&&R()<D.just*(me.phys?0.7:0.3))ai.justAt=G.frame+Math.max(1,op.move.startup-op.moveT-3);
+  }
+  if(!ai.justAt&&me.onGround){ // 飛んでくる弾をジャストガードではね返す
+    for(const p of G.projs){
+      if(p.dead||p.owner===me||(p.aiSeen&&p.aiSeen[me.idx]))continue;
+      const gap=Math.abs(me.x-p.x)-30,sp=Math.abs(p.vx);
+      if(sp<0.5||Math.sign(p.vx)!==Math.sign(me.x-p.x)||gap>sp*(me.justWin+8))continue;
+      p.aiSeen=p.aiSeen||{};p.aiSeen[me.idx]=1;
+      if(R()<D.just*(me.phys?0.7:0.3))ai.justAt=G.frame+Math.max(1,Math.round(gap/sp-me.justWin*0.5));
+      break;
+    }
   }
   if(ai.justAt){
     if(G.frame>=ai.justAt){ai.justAt=0;ai.dir=back;ai.hold=16;ai.cd=0;return {dir:back};}
@@ -2024,7 +2042,7 @@ function fillMoves(tb,job,weapon){
     tr.append(c1,c2,c3);tb.appendChild(tr);
   }
   const tr=document.createElement('tr'),c1=document.createElement('td'),c2=document.createElement('td'),c3=document.createElement('td');
-  c1.className='cmd';c1.textContent='攻撃に合わせてガード';c2.textContent=mv.CS.name+'（カウンター）';c3.textContent='反撃して浮かせる・飛び道具ははね返す';
+  c1.className='cmd';c1.textContent='攻撃に合わせてガード';c2.textContent=mv.CS.name+'（カウンター）';c3.textContent='反撃して浮かせる・弾やビームははね返す'+(JOBS[job]&&JOBS[job].phys?'・物理キャラは受付が長い':'');
   tr.append(c1,c2,c3);tb.appendChild(tr);
   if(mv.SP){const r=document.createElement('tr'),a=document.createElement('td'),b=document.createElement('td'),c=document.createElement('td');
     a.className='cmd';a.textContent='ゲージ満タンで「必殺」';b.textContent=mv.SP.name;c.textContent='必殺技・大ダメージ';r.append(a,b,c);tb.appendChild(r);}
