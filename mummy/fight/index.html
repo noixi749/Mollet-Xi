@@ -703,7 +703,7 @@ const WEAPONS={
   handgun:{name:'ハンドガン',desc:'中距離の連射。8発ごとにリロード。当ててもダウンは取れへん'},
   shotgun:{name:'ショットガン',desc:'射程は短いけど散弾が痛い'},
   sniper:{name:'スナイパー',desc:'画面の端まで届く。1発がとにかく重い'},
-  akimbo:{name:'二丁拳銃',desc:'射程はいちばん短い。動きが軽くて、近づいて撃ちまくる',walk:1.3,jump:1.05},
+  akimbo:{name:'二丁拳銃',desc:'射程は短め。動きが軽くて、近づいて撃ちまくる。キックは大型サバイバルナイフ',walk:1.3,jump:1.05},
   rocket:{name:'ロケットパンチ型',desc:'拳が飛ぶ'},
   drill:{name:'ドリル型',desc:'密着で連続ヒット'},
   beam:{name:'ビーム型',desc:'画面の端まで届くビーム。MP大食い'},
@@ -870,13 +870,13 @@ function buildMoves(job,weapon){
       m.S1=M({name:'貫通弾',kind:'proj',startup:12,active:1,recovery:26,mp:32,pose:'shoot',sfx:'gun',proj:{speed:30,w:30,h:6,dmg:38,life:60,kind:'bullet',color:'#c63a2f',hitstun:26,kb:12,pierce:true}});
     }
     if(weapon==='akimbo'){
-      m.P=M({name:'二丁連射',kind:'proj',startup:3,active:1,recovery:8,mp:7,pose:'shoot',sfx:'gun',proj:Object.assign({speed:13,w:12,h:6,dmg:4,life:15,burst:2,hitstun:12,kb:3},B)});
-      m.S1=M({name:'乱れ撃ち',kind:'proj',startup:5,active:1,recovery:16,mp:18,pose:'shoot',sfx:'gun',proj:Object.assign({speed:13,w:12,h:6,dmg:4,life:16,count:3,spread:1.1,burst:2,hitstun:12,kb:4},B)});
+      m.P=M({name:'二丁連射',kind:'proj',startup:3,active:1,recovery:8,mp:7,pose:'shoot',sfx:'gun',proj:Object.assign({speed:13,w:12,h:6,dmg:4,life:22,burst:2,hitstun:12,kb:3},B)});
+      m.S1=M({name:'乱れ撃ち',kind:'proj',startup:5,active:1,recovery:16,mp:18,pose:'shoot',sfx:'gun',proj:Object.assign({speed:13,w:12,h:6,dmg:4,life:22,count:3,spread:1.1,burst:2,hitstun:12,kb:4},B)});
     }
     m.K=M({name:'ナイフ',startup:4,active:3,recovery:9,dmg:9,hb:{x:46,y:104,w:46,h:24},kb:4,hitstun:15,pose:'punch',sfx:'slash'});
-    m.S2=M({name:'対空射撃',kind:'proj',startup:6,active:1,recovery:18,mp:10,pose:'shootUp',sfx:'gun',proj:{speed:9,vy:-9,y:125,w:12,h:12,dmg:9,life:weapon==='sniper'?60:weapon==='akimbo'?18:30,kind:'bullet',color:INK,hitstun:20,kb:3,lift:weapon==='handgun'?0:-9,noDown:weapon==='handgun'}});
+    m.S2=M({name:'対空射撃',kind:'proj',startup:6,active:1,recovery:18,mp:10,pose:'shootUp',sfx:'gun',proj:{speed:9,vy:-9,y:125,w:12,h:12,dmg:9,life:weapon==='sniper'?60:weapon==='akimbo'?24:30,kind:'bullet',color:INK,hitstun:20,kb:3,lift:weapon==='handgun'?0:-9,noDown:weapon==='handgun'}});
     m.S3=M({name:'グレネード',kind:'proj',startup:10,active:1,recovery:20,mp:18,pose:'cast',sfx:'whiff',proj:{speed:6,vy:-9,grav:0.45,y:130,w:16,h:16,dmg:14,life:120,kind:'grenade',color:'#3b5b2e',kb:7,lift:-8,hitstun:22,boom:72}});
-    if(weapon==='akimbo'){m.K.startup=3;m.K.name='ナイフ連撃';m.K.multi=2;m.K.active=6;m.K.dmg=6;}
+    if(weapon==='akimbo'){Object.assign(m.K,{startup:4,name:'サバイバルナイフ連撃',multi:2,active:7,dmg:7,kb:5,hb:{x:58,y:104,w:68,h:30},bigKnife:true});}
   }
   if(job==='robot'){
     m.P=M({name:'鉄拳',startup:8,active:4,recovery:14,dmg:11,hb:{x:52,y:108,w:46,h:32},kb:6,hitstun:17,pose:'punch'});
@@ -1994,7 +1994,15 @@ function drawAmbient(){
 }
 function drawBlade(len,col){ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-12,0);ctx.lineTo(4,0);ctx.stroke();ctx.beginPath();ctx.arc(6,0,4.5,0,7);ctx.fillStyle=MARKER;ctx.fill();ctx.lineWidth=2.5;ctx.stroke();
   ctx.beginPath();ctx.moveTo(10,0);ctx.quadraticCurveTo(len*0.55,2,len,-len*0.1);ctx.lineWidth=7;ctx.strokeStyle=INK;ctx.stroke();ctx.lineWidth=4;ctx.strokeStyle=col||'#e6e9ef';ctx.stroke();ctx.strokeStyle=INK;}
-function drawKnife(){ctx.lineWidth=5;ctx.strokeStyle=INK;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(4,0);ctx.stroke();ctx.fillStyle='#e6e9ef';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(5,-4);ctx.lineTo(30,-1);ctx.lineTo(34,2);ctx.lineTo(5,4);ctx.closePath();ctx.fill();ctx.stroke();}
+function drawKnife(big){
+  if(big){ // 大型サバイバルナイフ：太い刃、背のギザギザ、黒い柄とヒルト
+    ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(4,0);ctx.stroke();ctx.strokeStyle='#3a3f4d';ctx.lineWidth=5;ctx.stroke();
+    ctx.strokeStyle=INK;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(6,-9);ctx.lineTo(6,9);ctx.stroke();
+    ctx.fillStyle='#d6dbe3';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(8,-6);for(let x=12;x<34;x+=5){ctx.lineTo(x,-8);ctx.lineTo(x+2.5,-5.5);}ctx.lineTo(44,-6);ctx.lineTo(56,-1);ctx.quadraticCurveTo(50,6,40,7);ctx.lineTo(8,6);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.strokeStyle='#9aa1ad';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(12,1);ctx.lineTo(44,1);ctx.stroke();return;
+  }
+  ctx.lineWidth=5;ctx.strokeStyle=INK;ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(4,0);ctx.stroke();ctx.fillStyle='#e6e9ef';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(5,-4);ctx.lineTo(30,-1);ctx.lineTo(34,2);ctx.lineTo(5,4);ctx.closePath();ctx.fill();ctx.stroke();
+}
 function drawPistol(){ctx.fillStyle='#3a3f4d';ctx.beginPath();ctx.rect(-2,-5,26,9);ctx.fill();ctx.stroke();ctx.beginPath();ctx.rect(-2,2,8,12);ctx.fill();ctx.stroke();}
 function drawScabbard(f,P){
   const [hx,hy]=P.hip,stance=f.state==='attack'&&f.move&&f.move.kind==='stance';
@@ -2021,7 +2029,7 @@ function drawWeapon(f,P){
   }
   if(wp==='rocket'&&f.fistOut)return;
   ctx.save();ctx.translate(P.fh[0],P.fh[1]);ctx.rotate(P.w);ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=3;
-  if(knife){drawKnife();ctx.restore();return;}
+  if(knife){drawKnife(wp==='akimbo');ctx.restore();return;}
   switch(wp){
     case 'iai':drawBlade(88);break;
     case 'nitoryu':drawBlade(78);break;
@@ -2960,7 +2968,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='17';
+const GAME_VER='18';
 const TABS=['battle','kumite','story','chara','settings'];
 function showTab(t){
   if(!TABS.includes(t))t='battle';DATA.tab=t;
