@@ -882,7 +882,7 @@ const WEAPONS={
   kenpo:{name:'拳法',desc:'蹴りが強くて長い。旋風脚が4段'},
   greatsword:{name:'大剣',desc:'重い一撃。リーチ長め'},
   katana:{name:'刀',desc:'出が速い。威力は控えめ'},
-  hammer:{name:'ハンマー',desc:'出が早めで範囲もそこそこ。振り回して近づいて、そこから読み合い'},
+  hammer:{name:'ハンマー',desc:'重くて遅いけど、範囲そこそこの振り回しで吹っ飛ばす'},
   boosthammer:{name:'ブーストハンマー',desc:'エンジン付きのハンマー。出は遅くて隙もデカいけど、一撃がめっちゃ重い。技3でエンジン全開（攻撃力アップ）'},
   gunblade:{name:'変形銃剣',desc:'剣の中にスナイパーを仕込んだ変形武器。技3で切り替え。剣モードは身軽、銃モードは少し重いけど遠くから撃てる'},
   staff:{name:'杖',desc:'火の玉がまっすぐ飛ぶ'},
@@ -935,7 +935,7 @@ const FEMALE=new Set(['rion','kojimaimo']); // 女として登録（谷GUCCIの�
 /* 人物ごとの特性。job があるものはそのジョブを選んだ時だけ効く。hp/atk/spd/mpRegen は倍率、def は受けるダメージの倍率、pts はステータスの振り分け追加、sg は必殺ゲージのたまりやすさ、mpCost は技のMP消費 */
 const TRAITS={
   yagi:{name:'しぶとい',desc:'体力1.15倍',hp:1.15},
-  sanma:{name:'剛腕',desc:'大剣ジョブを選ぶと攻撃力1.15倍',job:'sword',atk:1.15},
+  sanma:{name:'剛腕',desc:'大剣ジョブで攻撃力1.15倍。ハンマー・ブーストハンマーなら速さも1.25倍（動きも技の出と戻りも）',job:'sword',atk:1.15,wpn:{hammer:{spd:1.25,quick:1.25},boosthammer:{spd:1.25,quick:1.25}}},
   kazusa:{name:'メカ好き',desc:'ロボを選ぶと体力・攻撃・防御・速さが全部1.15倍',job:'robot',hp:1.15,atk:1.15,def:1/1.15,spd:1.15},
   bayashi:{name:'瞑想',desc:'MPの回復が1.3倍',mpRegen:1.3},
   tatsuya:{name:'筋肉おばけ',desc:'ボディビルダーを選ぶとステータスの振り分けが+5（15ポイント）',job:'builder',pts:5},
@@ -1064,6 +1064,7 @@ function derive(c){
   const w=WEAPONS[c.weapon]||{},t=TUNE[c.weapon]||{};
   const d={maxHp:Math.round((100+j.hp+10*s.hp)*(t.hp||1)),atkMul:1+0.07*s.atk,defMul:Math.max(0.5,1-0.045*s.def)*(t.def||1),walk:j.walk*1.1*(1+0.05*s.spd)*(w.walk||1),jump:j.jump*(1+0.012*s.spd)*(w.jump||1),maxMp:40+10*s.mp,mpRegen:(8+1.0*s.mp)/60,weight:j.weight};
   const tr=traitOf(c); // 人物の特性
+  const tw=tr&&tr.wpn&&tr.wpn[c.weapon];if(tw&&tw.spd){d.walk*=tw.spd;d.jump*=1+(tw.spd-1)*0.3;}
   if(tr){if(tr.hp)d.maxHp=Math.round(d.maxHp*tr.hp);if(tr.atk)d.atkMul*=tr.atk;if(tr.def)d.defMul*=tr.def;if(tr.spd){d.walk*=tr.spd;d.jump*=1+(tr.spd-1)*0.3;}if(tr.mpRegen)d.mpRegen*=tr.mpRegen;}
   return d;
 }
@@ -1116,7 +1117,7 @@ function buildMoves(job,weapon){
       m.S2.dmg=14;m.S2.startup=3;m.P.name='居合';m.P2.name='逆袈裟';m.P3.name='唐竹割り';m.K2.name='柄当て';m.K3.name='諸手突き';
     }
     if(weapon==='hammer'){
-      for(const k of ['P','P2','P3','K','K2','K3','S1','S3']){const v=m[k];v.startup=Math.max(4,Math.round(v.startup*0.85));v.dmg=Math.round(v.dmg*1.2);v.kb*=1.4;v.sfx='hit';v.hb=Object.assign({},v.hb,{w:Math.round(v.hb.w*1.1)});} // 出は早め・範囲そこそこの振り回し
+      for(const k of ['P','P2','P3','K','K2','K3','S1','S3']){const v=m[k];v.startup=Math.round(v.startup*1.25);v.dmg=Math.round(v.dmg*1.3);v.kb*=1.5;v.recovery=Math.round(v.recovery*1.1);v.sfx='hit';v.hb=Object.assign({},v.hb,{w:Math.round(v.hb.w*1.1)});} // 重いけど範囲そこそこで吹っ飛ばす
       m.S2.sfx='hit';m.P2.name='振り下ろし';m.P.name='ぶん回し';m.K.name='柄打ち';m.S1.name='突進殴り';m.S2.name='かち上げ';m.S3.name='大回転';
       Object.assign(m.P3,{name:'地割り',sfx:'boom',fx:'burst',fxColor:'#ffe2b8',hb:{x:70,y:60,w:130,h:110}});
       Object.assign(m.K2,{name:'膝蹴り',pose:'kick',hb:{x:46,y:90,w:44,h:34}});
@@ -1625,7 +1626,9 @@ function makeFighter(cfg,idx){
   f.mag=cfg.weapon==='handgun'?8:0;
   f.phys=!!(JOBS[cfg.job]&&JOBS[cfg.job].phys);f.justWin=cfg.weapon==='kenpo'?Math.round(JUST_PHYS*2.5):cfg.weapon==='iai'?20:f.phys?JUST_PHYS:JUST; // 拳法は受けの達人（2.5倍）、居合は見切りの達人
   f.justLock=Math.max(f.phys?30:20,Math.round(f.justWin*1.8)); // 連打で受付を出しっぱなしにでけへんように
-  {const tr=traitOf(cfg);f.sgMul=(tr&&tr.sg)||1;f.mpCost=(tr&&tr.mpCost)||1;}
+  {const tr=traitOf(cfg);f.sgMul=(tr&&tr.sg)||1;f.mpCost=(tr&&tr.mpCost)||1;
+    const q=tr&&tr.wpn&&tr.wpn[cfg.weapon]&&tr.wpn[cfg.weapon].quick; // 技の出と戻りが速なる特性
+    if(q){const mv={};for(const k in f.moves){const v=Object.assign({},f.moves[k]);v.startup=Math.max(2,Math.round(v.startup/q));v.recovery=Math.round(v.recovery/q);mv[k]=v;}f.moves=mv;}}
   f.goat=cfg.goat||null;f.boss=!!cfg.boss;f.aiLevel=cfg.aiLevel||null;if(f.boss)f.ranged=false;
   return f;
 }
@@ -3543,7 +3546,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='34';
+const GAME_VER='35';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
