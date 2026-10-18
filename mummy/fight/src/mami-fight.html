@@ -217,49 +217,186 @@ table.moves{border-collapse:collapse;width:100%;font-size:14px}
 .rank .rsc small{font-size:11px;margin-left:2px}
 textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radius:10px;padding:10px 12px;background:var(--card);color:var(--ink);width:100%;box-sizing:border-box;resize:vertical}
 .pname{font-size:12px;color:var(--marker)!important}
+/* ===== ホームとパネル（スクロールせんと画面の中で選ぶ） ===== */
+#menu.home{position:fixed;inset:0;padding:0;min-height:0;overflow:hidden}
+.home-wrap{height:100%;box-sizing:border-box;max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 14px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 10px) max(16px,env(safe-area-inset-left,0px))}
+.home-top{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
+.logo{margin:0;font-family:var(--f-display);font-weight:400;font-size:clamp(28px,8.4vw,44px);line-height:1.1;white-space:nowrap}
+.pf-chip{display:flex;flex-direction:column;align-items:flex-end;gap:2px;background:var(--card);border:2px solid var(--rule);border-radius:12px;padding:6px 10px;color:var(--ink);cursor:pointer;min-width:0;max-width:42%;font-family:var(--f-body)}
+.pf-chip span{font-size:10.5px;color:var(--ink-soft);font-weight:700;white-space:nowrap}
+.pf-chip b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.hero{display:flex;align-items:center;gap:14px;background:var(--card);border:2px solid var(--hot);border-radius:18px 8px 16px 8px/8px 16px 8px 18px;box-shadow:4px 4px 0 var(--hot);padding:10px 14px;color:var(--ink);cursor:pointer;text-align:left;font-family:var(--f-body);transition:transform .06s,box-shadow .06s;min-width:0}
+.hero .face{width:72px;height:72px;border-color:var(--hot)}
+.hero-info{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.hero-l{font-size:11.5px;color:var(--ink-soft);font-weight:700}
+.hero-info b{font-family:var(--f-display);font-weight:400;font-size:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+#hJob{font-size:12.5px;color:var(--marker);font-weight:700}
+.hero-go{font:700 13px/1 var(--f-body);border:2px solid var(--ink);border-radius:999px;padding:8px 12px;flex:none}
+.home-tiles{flex:1;min-height:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1.3fr 1fr 1fr;gap:10px}
+.tile{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:4px;text-align:left;border:2.5px solid var(--ink);border-radius:18px 8px 16px 8px/8px 16px 8px 18px;padding:12px 14px;color:var(--ink);cursor:pointer;min-height:60px;overflow:hidden;box-shadow:3px 3px 0 var(--edge);transition:transform .06s,box-shadow .06s;font-family:var(--f-body)}
+.tile:active,.stile:active,.hero:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--edge)}
+.tile b{font-family:var(--f-display);font-weight:400;font-size:clamp(20px,5.6vw,28px);line-height:1.1;position:relative}
+.tile span{font-size:12px;font-weight:700;color:rgba(255,241,224,.85);position:relative}
+.tile::after{content:'';position:absolute;right:-30px;top:-30px;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,rgba(255,229,138,.3),transparent 70%);pointer-events:none}
+.t-story{grid-column:1/-1;background:linear-gradient(135deg,#7a1a0e 0%,#c43b12 55%,#ff8a2a 100%)}
+.t-story b{font-size:clamp(26px,7.6vw,38px)}
+.t-battle{background:linear-gradient(135deg,#3a1610,#80301a)}
+.t-kumite{background:linear-gradient(135deg,#46200c,#93500f)}
+.t-online{grid-column:1/-1;background:linear-gradient(135deg,#1c1830,#40306a)}
+.badge{position:absolute;top:10px;right:12px;font:400 13px/1 var(--f-display);font-style:normal;background:var(--marker);color:var(--on-hot);border-radius:999px;padding:5px 9px;transform:rotate(4deg)}
+.home-sub{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stile{font:700 14px/1 var(--f-body);color:var(--ink);background:var(--card);border:2px solid var(--ink);border-radius:12px;padding:13px 4px;cursor:pointer;box-shadow:2px 2px 0 var(--edge);transition:transform .06s,box-shadow .06s}
+.home .credit{margin:0;font-size:11px;text-align:center}
+.sheet,.screen.fixscr{position:fixed;inset:0;z-index:6;display:flex;flex-direction:column;box-sizing:border-box;min-height:0;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);background:radial-gradient(120% 50% at 50% 0%,rgba(255,106,26,.22),transparent 62%),var(--paper)}
+.sheet{animation:shIn .16s ease-out}
+@keyframes shIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.sh-head{display:flex;align-items:center;gap:10px;padding:10px 16px 8px;width:100%;max-width:960px;margin:0 auto;box-sizing:border-box;flex:none}
+.sh-head h2{flex:1;min-width:0;font-size:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sh-head .note{flex:none;font-size:12px;max-width:45%;text-align:right}
+.sh-back{width:44px;height:44px;flex:none;border-radius:12px;border:2px solid var(--ink);background:var(--card);color:var(--ink);font:700 20px/1 var(--f-body);cursor:pointer;display:grid;place-items:center;padding:0}
+.sh-body{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;width:100%;max-width:960px;margin:0 auto;box-sizing:border-box;padding:4px 16px 18px;display:flex;flex-direction:column;gap:14px}
+.col-a,.col-b{display:flex;flex-direction:column;gap:14px;min-width:0}
+.sh-foot{flex:none;display:flex;gap:10px;justify-content:flex-end;align-items:center;padding:10px 16px;width:100%;max-width:960px;margin:0 auto;box-sizing:border-box;border-top:1px solid var(--rule)}
+.sh-foot .btn.primary{flex:1;max-width:360px;font-size:20px;padding:12px 18px}
+.seg.wide{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+.seg.wide button{padding:12px 4px;white-space:nowrap;position:relative}
+.row-actions.stretch{justify-content:stretch}
+.row-actions.stretch>*{flex:1 1 0;min-width:0}
+.row-actions.stretch .btn{white-space:nowrap;padding-left:6px;padding-right:6px}
+.row-actions.stretch .btn.small{font-size:13px}
+.row-actions.stretch .btn.primary{font-size:18px;padding-top:12px;padding-bottom:12px}
+.pickbtn{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:2px solid var(--ink);border-radius:12px;padding:8px 12px;color:var(--ink);cursor:pointer;font:700 15px/1.2 var(--f-body);min-height:58px;box-sizing:border-box}
+.pickbtn img{width:40px;height:40px;border-radius:50%;border:2px solid var(--ink);object-fit:cover;flex:none;background:var(--paper)}
+.pickbtn .sw,.pk .sw{display:grid;place-items:center;font:400 18px/1 var(--f-display);font-style:normal;color:var(--on-hot);border:2px solid var(--ink);box-sizing:border-box}
+.pickbtn .sw{width:40px;height:40px;border-radius:10px;flex:none}
+.pickbtn span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pickbtn::after{content:'変える';font-size:11.5px;color:var(--ink-soft);border:1.5px solid var(--ink-soft);border-radius:999px;padding:4px 8px;flex:none}
+.best{display:flex;align-items:baseline;justify-content:space-between;gap:10px;background:var(--card);border:2px solid var(--rule);border-radius:12px;padding:12px 14px}
+.best span{font-weight:700;color:var(--ink-soft);font-size:13px}
+.best b{font-family:var(--f-display);font-weight:400;font-size:28px;color:var(--marker)}
+.sheet .nowchar{padding:8px 10px;gap:10px;box-shadow:3px 3px 0 var(--hot);flex-wrap:nowrap}
+.sheet .nowchar .face{width:48px;height:48px}
+.sheet .nowchar .info b{font-size:15px}
+.nc-acts{flex-direction:row}
+.picker{position:fixed;inset:0;z-index:12;background:rgba(10,4,3,.72);display:flex;align-items:flex-end;justify-content:center;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) 0 env(safe-area-inset-left,0px)}
+.pk-panel{width:100%;max-width:760px;max-height:min(88%,680px);background:var(--paper);border:3px solid var(--ink);border-bottom:0;border-radius:20px 20px 0 0;display:flex;flex-direction:column;animation:pkIn .16s ease-out;padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}
+@keyframes pkIn{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.pk-grid{overflow-y:auto;overscroll-behavior:contain;padding:4px 14px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.pk{display:flex;flex-direction:column;align-items:center;gap:5px;background:var(--card);border:2px solid var(--rule);border-radius:12px;padding:10px 6px;color:var(--ink);font:700 12.5px/1.2 var(--f-body);cursor:pointer;min-width:0;text-align:center}
+.pk img{width:52px;height:52px;border-radius:50%;border:2px solid var(--ink);object-fit:cover;background:var(--paper)}
+.pk .sw{width:100%;height:52px;border-radius:8px}
+.pk span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pk small{font-size:10.5px;color:var(--ink-soft);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pk.on{border-color:var(--hot);box-shadow:0 0 0 2px rgba(255,106,26,.45)}
+.pk-group{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--ink-soft);margin-top:4px}
+.nb{position:absolute;top:-8px;right:-4px;font:400 10px/1 var(--f-display);font-style:normal;background:var(--marker);color:var(--on-hot);border-radius:999px;padding:3px 6px}
+.nb.ok{background:var(--jump)}
+.arcinfo{display:flex;flex-direction:column;gap:4px}
+.arcinfo b{font-family:var(--f-display);font-weight:400;font-size:19px}
+.chaps{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.chap{flex-direction:row;align-items:center;gap:10px;padding:8px 10px;box-shadow:2px 2px 0 var(--edge)}
+.chap .cf{width:42px;height:42px;border-radius:50%;border:2px solid var(--ink);object-fit:cover;flex:none;background:var(--paper)}
+.chap .lock{width:42px;height:42px;border-radius:50%;border:2px dashed var(--ink-soft);display:grid;place-items:center;flex:none;color:var(--ink-soft);font-style:normal;font-weight:700;box-sizing:border-box}
+.chap .ct{display:flex;flex-direction:column;gap:2px;min-width:0}
+.chap b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chap small{font-size:11px;color:var(--marker);font-weight:700;white-space:nowrap}
+.chap span{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chap.done .cf{border-color:var(--marker)}
+.charbar{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 12px;align-items:center;background:var(--card);border:2px solid var(--hot);border-radius:16px 7px 14px 6px/7px 14px 6px 16px;padding:10px 12px;box-shadow:4px 4px 0 var(--hot)}
+.charbar .face{width:64px;height:64px;border-color:var(--hot)}
+.charbar .acts{grid-column:1/-1;display:flex;gap:6px}
+.charbar .acts .mini{flex:1;padding:10px 4px;font-size:12.5px}
+.ctiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.ctile{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card);border:2px solid var(--rule);border-radius:12px;padding:8px 4px;color:var(--ink);font:700 12px/1.2 var(--f-body);cursor:pointer;min-width:0}
+.ctile img{width:50px;height:50px;border-radius:50%;border:2px solid var(--ink);object-fit:cover;background:var(--paper)}
+.ctile span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctile small{font-size:10.5px;color:var(--ink-soft);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctile.sel{border-color:var(--hot);box-shadow:0 0 0 2px rgba(255,106,26,.45)}
+.ctile.sel img{border-color:var(--hot)}
+.mytag{position:absolute;top:4px;left:4px;font:700 9px/1 var(--f-body);font-style:normal;background:var(--blue);color:#fff;border-radius:999px;padding:2px 5px}
+.edtabs{flex:none;width:100%;max-width:960px;margin:0 auto 8px;box-sizing:border-box;padding:0 16px;gap:6px}
+.edtabs button{font-size:12.5px;padding:11px 2px;letter-spacing:-.03em}
+.edpane{gap:14px}
+#lobby .sh-body.wrap{gap:20px}
+@media (orientation:landscape) and (max-height:600px){
+  .home-wrap{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);grid-template-rows:auto minmax(0,1fr) auto;gap:10px 18px;padding-top:calc(env(safe-area-inset-top,0px) + 10px)}
+  .home-top{grid-column:1;grid-row:1;flex-wrap:wrap}
+  .logo{font-size:clamp(22px,7vh,34px)}
+  .pf-chip{max-width:none}
+  .hero{grid-column:1;grid-row:2;flex-direction:column;justify-content:center;text-align:center;gap:8px;min-height:0}
+  .hero .face{width:clamp(52px,21vh,104px);height:clamp(52px,21vh,104px)}
+  .hero-info{align-items:center;flex:none}
+  .home-tiles{grid-column:2;grid-row:1/3;gap:8px}
+  .home-sub{grid-column:2;grid-row:3}
+  .stile{padding:10px 4px}
+  .home .credit{grid-column:1;grid-row:3;align-self:center}
+  .tile{padding:8px 12px;min-height:0}
+  .tile b{font-size:clamp(18px,5.4vh,26px)}
+  .t-story b{font-size:clamp(22px,7vh,32px)}
+  .sh-head{padding:6px 16px 4px}
+  .sh-back{width:40px;height:40px}
+  .sh-head h2{font-size:19px}
+  .sh-body{padding-bottom:12px}
+  .sh-body.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);align-items:start;gap:10px 18px}
+  .sh-body.two>.col-a,.sh-body.two>.col-b{gap:10px}
+  .btn.start{font-size:21px;padding:11px}
+  .sh-foot{padding:6px 16px}
+  .pk-panel{max-height:94%}
+  .edtabs{margin-bottom:4px}
+  .edtabs button{padding:9px 2px}
+  .pickbtn{min-height:50px;padding:6px 10px}
+  .seg.wide button{padding:10px 4px}
+}
+@media (prefers-reduced-motion:reduce){.sheet,.pk-panel{animation:none}.tile,.stile,.hero{transition:none}}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}#bS.ready,.talk-next{animation:none}}
 </style>
 
 <div id="app">
-  <section id="menu" class="screen">
-    <div class="wrap">
-      <header class="title">
-        <p class="eyebrow">棒人間バトル ／ 夕焼けの河原で決着をつけろ</p>
-        <h1><span class="mark">マミー会</span>ファイト</h1>
+  <section id="menu" class="screen home">
+    <div class="home-wrap">
+      <header class="home-top">
+        <h1 class="logo"><span class="mark">マミー会</span>ファイト</h1>
+        <button type="button" class="pf-chip" data-open="profile"><span>プロフィール</span><b id="hProf"></b></button>
       </header>
-
-      <nav class="tabs" id="tabs" role="tablist" aria-label="メニュー">
-        <button type="button" role="tab" data-tab="battle">バトル</button>
-        <button type="button" role="tab" data-tab="kumite">組手</button>
-        <button type="button" role="tab" data-tab="story">ストーリー</button>
-        <button type="button" role="tab" data-tab="chara">キャラ</button>
-        <button type="button" role="tab" data-tab="settings">設定</button>
+      <button type="button" class="hero" data-open="chara">
+        <img class="face" id="hFace" alt="">
+        <span class="hero-info"><span class="hero-l">使うキャラ</span><b id="hName"></b><span id="hJob"></span></span>
+        <span class="hero-go">変える</span>
+      </button>
+      <nav class="home-tiles" aria-label="あそびかた">
+        <button type="button" class="tile t-story" data-open="story"><b>ストーリー</b><span id="hStory"></span><i class="badge" id="hStoryNew" hidden>NEW</i></button>
+        <button type="button" class="tile t-battle" data-open="battle"><b>CPUバトル</b><span>1対1・3〜4人乱闘</span></button>
+        <button type="button" class="tile t-kumite" data-open="kumite"><b>組手</b><span id="hKumite"></span></button>
+        <button type="button" class="tile t-online" data-open="online"><b>オンライン</b><span>合言葉で2〜4人</span></button>
       </nav>
+      <nav class="home-sub" aria-label="その他">
+        <button type="button" class="stile" data-open="chara">キャラ</button>
+        <button type="button" class="stile" data-open="rank">ランキング</button>
+        <button type="button" class="stile" data-open="settings">設定</button>
+      </nav>
+      <p class="note credit">製作者 Naohisa Akiyama　／　BGM：魔王魂</p>
+    </div>
 
-      <!-- バトル -->
-      <div class="tabpane" data-pane="battle" role="tabpanel">
-        <div class="nowchar"></div>
-        <div class="block">
-          <h2>CPUと対戦</h2>
-          <div class="field">
-            <label class="lbl" for="oppSel">相手</label>
-            <select id="oppSel"></select>
-          </div>
+    <div class="sheet" data-pane="battle" hidden>
+      <header class="sh-head"><button type="button" class="sh-back" aria-label="戻る">←</button><h2>CPUバトル</h2></header>
+      <div class="sh-body two">
+        <div class="col-a">
+          <div class="nowchar"></div>
+          <div class="field"><span class="lbl">相手</span><button type="button" class="pickbtn" data-pick="opp" id="oppBtn"></button><select id="oppSel" hidden></select></div>
+          <div class="field"><span class="lbl">ステージ</span><button type="button" class="pickbtn" data-pick="stage" id="stageBtn"></button><select id="stageSel" hidden></select></div>
+        </div>
+        <div class="col-b">
           <div class="field">
             <span class="lbl">人数</span>
-            <div class="seg" id="numSeg">
+            <div class="seg wide" id="numSeg">
               <button type="button" data-v="2">1対1</button>
               <button type="button" data-v="3">3人乱闘</button>
               <button type="button" data-v="4">4人乱闘</button>
             </div>
           </div>
           <div class="field">
-            <label class="lbl" for="stageSel">ステージ</label>
-            <select id="stageSel"></select>
-          </div>
-          <div class="field">
             <span class="lbl">CPUの強さ</span>
-            <div class="seg" id="diffSeg">
+            <div class="seg wide" id="diffSeg">
               <button type="button" data-v="easy">よわい</button>
               <button type="button" data-v="normal">ふつう</button>
               <button type="button" data-v="hard">つよい</button>
@@ -267,123 +404,148 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
           </div>
           <button class="btn primary start" id="fightBtn" type="button">たたかう</button>
         </div>
+      </div>
+    </div>
 
-        <div class="block" id="onBlock">
-          <div class="block-head">
-            <h2>オンライン対戦</h2>
-            <span class="note" id="onStatus"></span>
-          </div>
+    <div class="sheet" data-pane="online" hidden>
+      <header class="sh-head"><button type="button" class="sh-back" aria-label="戻る">←</button><h2>オンライン対戦</h2><span class="note" id="onStatus"></span></header>
+      <div class="sh-body two" id="onBlock">
+        <div class="col-a">
+          <div class="nowchar"></div>
           <p class="note">同じ合言葉を入れた人と、最大4人で対戦できる。部屋を作った人がホストになる。キャラは部屋の中でも変えられる。</p>
+        </div>
+        <div class="col-b">
           <div class="field">
             <label class="lbl" for="onCode">合言葉</label>
             <input type="text" id="onCode" maxlength="16" placeholder="例：ジンギスカン（作る時は空でもOK）" autocomplete="off">
           </div>
-          <div class="row-actions">
+          <div class="row-actions stretch">
             <button class="btn" id="onCreate" type="button">部屋を作る</button>
             <button class="btn primary" id="onJoin" type="button">部屋に入る</button>
           </div>
           <p class="note" id="onOff" hidden>この画面ではオンライン対戦が使えへん。claude.ai にログインして、このページを開き直してな。</p>
         </div>
       </div>
+    </div>
 
-      <!-- 組手 -->
-      <div class="tabpane" data-pane="kumite" role="tabpanel" hidden>
-        <div class="nowchar"></div>
-        <div class="block">
-          <div class="block-head">
-            <h2>組手</h2>
-            <span class="note" id="kmBest"></span>
-          </div>
-          <p class="note">CPUが次々に出てくる勝ち抜き戦。倒したらすぐ次の相手が出てきて、倒れるまで続く。勝つたびに体力が少しだけ回復する。人数が増えるほど相手が強なる。途中でやめる時は Ⅱ →「メニューへ」（そこまでの記録が残る）。</p>
+    <div class="sheet" data-pane="kumite" hidden>
+      <header class="sh-head"><button type="button" class="sh-back" aria-label="戻る">←</button><h2>組手</h2></header>
+      <div class="sh-body two">
+        <div class="col-a">
+          <div class="nowchar"></div>
+          <p class="note">CPUが次々に出てくる勝ち抜き戦。倒したらすぐ次の相手が出てきて、倒れるまで続く。勝つたびに体力が少しだけ回復して、人数が増えるほど相手が強なる。やめる時は Ⅱ →「メニューへ」（そこまでの記録が残る）。</p>
+        </div>
+        <div class="col-b">
+          <div class="best"><span>自己ベスト</span><b id="kmBest"></b></div>
           <button class="btn primary start" id="kmStart" type="button">組手スタート</button>
-        </div>
-        <div class="block">
-          <div class="block-head">
-            <h2>ランキング</h2>
-            <span class="note" id="rkStatus"></span>
-          </div>
-          <p class="note" id="rkNote">組手で何人抜いたか。使ったキャラとジョブも出る。名前と一言は「キャラ」のプロフィールで変えられる。</p>
-          <ol class="rank" id="rkList"></ol>
+          <button class="btn" type="button" data-open="rank">ランキングを見る</button>
         </div>
       </div>
+    </div>
 
-      <!-- ストーリー -->
-      <div class="tabpane" data-pane="story" role="tabpanel" hidden>
-        <div class="nowchar"></div>
-        <div class="block" id="storyBlock">
-          <div class="block-head">
-            <h2>ストーリー</h2>
-            <span class="note" id="storyProg"></span>
-          </div>
-          <p class="note">ヤギ団をしばいて、親玉のヤギを夕日の向こうまでぶっ飛ばせ。強さは「バトル」の「CPUの強さ」が基準。話をタップで始まる。</p>
-          <div class="chaps" id="chapList"></div>
-          <div class="field">
-            <label class="lbl" for="yagiSel">ヤギの顔</label>
+    <div class="sheet" data-pane="rank" hidden>
+      <header class="sh-head"><button type="button" class="sh-back" aria-label="戻る">←</button><h2>組手ランキング</h2><span class="note" id="rkStatus"></span></header>
+      <div class="sh-body">
+        <p class="note" id="rkNote">組手で何人抜いたか。使ったキャラとジョブも出る。名前と一言は「プロフィール」で変えられる。</p>
+        <ol class="rank" id="rkList"></ol>
+      </div>
+    </div>
+
+    <div class="sheet" data-pane="story" hidden>
+      <header class="sh-head"><button type="button" class="sh-back" aria-label="戻る">←</button><h2>ストーリー</h2><span class="note" id="storyProg"></span></header>
+      <div class="sh-body two">
+        <div class="col-a">
+          <div class="nowchar"></div>
+          <div class="seg wide arcseg" id="arcSeg" role="tablist" aria-label="章"></div>
+          <div class="arcinfo"><b id="arcTitle"></b><p class="note" id="arcDesc"></p></div>
+          <div class="field" id="yagiRow">
+            <label class="lbl" for="yagiSel">ラスボスのヤギの顔</label>
             <select id="yagiSel"></select>
-            <span class="note">お気に入りのキャラを選ぶと、その顔に角が生えてラスボスになる</span>
           </div>
+        </div>
+        <div class="col-b">
+          <div class="chaps" id="chapList"></div>
         </div>
       </div>
+    </div>
 
-      <!-- キャラ -->
-      <div class="tabpane" data-pane="chara" role="tabpanel" hidden>
-        <div class="block" id="pfBlock">
-          <h2>プロフィール</h2>
-          <p class="note">ランキングとオンライン対戦の部屋に出る。</p>
-          <div class="field">
-            <label class="lbl" for="pfName">名前（12文字まで）</label>
-            <input type="text" id="pfName" maxlength="12" autocomplete="off" placeholder="例：殿下">
+    <div class="sheet" data-pane="chara" hidden>
+      <header class="sh-head"><button type="button" class="sh-back" aria-label="戻る">←</button><h2>キャラ</h2></header>
+      <div class="sh-body two">
+        <div class="col-a">
+          <div class="charbar" id="charBar"></div>
+          <div class="row-actions stretch">
+            <button class="btn small" id="newChar" type="button">＋ 新しく作る</button>
+            <button class="btn small ghost" type="button" data-open="names">名前を変える</button>
+            <button class="btn small ghost" type="button" data-open="profile">プロフィール</button>
           </div>
-          <div class="field">
-            <label class="lbl" for="pfMsg">一言（30文字まで）</label>
-            <input type="text" id="pfMsg" maxlength="30" autocomplete="off" placeholder="例：ヤギは俺がしばく">
-          </div>
-          <div class="row-actions"><button class="btn small" id="pfSave" type="button">保存</button></div>
-        </div>
-        <div class="block">
-          <div class="block-head">
-            <h2>使うキャラ</h2>
-            <div class="row-actions"><button class="btn small ghost" id="charPractice" type="button">練習する</button><button class="btn small" id="newChar" type="button">＋ 新しく作る</button></div>
-          </div>
-          <div id="myList" class="cards"></div>
           <p class="note" id="myNote"></p>
         </div>
-        <div class="block" id="nameBlock">
-          <div class="block-head">
-            <h2>キャラ名管理</h2>
-            <span class="note" id="nameStatus"></span>
-          </div>
-          <p class="note">マミー会メンバーの名前は誰でも変えられる。変えた名前はサーバー経由で、遊んでる全員の画面にすぐ反映される。</p>
-          <p class="note" id="nameOff" hidden>この画面では名前の共有が使えへん。claude.ai にログインして、このページを開き直してな。</p>
-          <div class="names" id="nameList"></div>
+        <div class="col-b">
+          <div id="myList" class="ctiles"></div>
         </div>
       </div>
+    </div>
 
-      <!-- 設定 -->
-      <div class="tabpane" data-pane="settings" role="tabpanel" hidden>
-        <div class="block">
-          <h2>設定</h2>
+    <div class="sheet" data-pane="profile" hidden>
+      <header class="sh-head"><button type="button" class="sh-back" aria-label="戻る">←</button><h2>プロフィール</h2></header>
+      <div class="sh-body" id="pfBlock">
+        <p class="note">ランキングとオンライン対戦の部屋に出る。</p>
+        <div class="field">
+          <label class="lbl" for="pfName">名前（12文字まで）</label>
+          <input type="text" id="pfName" maxlength="12" autocomplete="off" placeholder="例：殿下">
+        </div>
+        <div class="field">
+          <label class="lbl" for="pfMsg">一言（30文字まで）</label>
+          <input type="text" id="pfMsg" maxlength="30" autocomplete="off" placeholder="例：ヤギは俺がしばく">
+        </div>
+        <div class="row-actions"><button class="btn primary small" id="pfSave" type="button">保存</button></div>
+      </div>
+    </div>
+
+    <div class="sheet" data-pane="names" hidden>
+      <header class="sh-head"><button type="button" class="sh-back" aria-label="戻る">←</button><h2>キャラ名管理</h2><span class="note" id="nameStatus"></span></header>
+      <div class="sh-body" id="nameBlock">
+        <p class="note">マミー会メンバーの名前は誰でも変えられる。変えた名前はサーバー経由で、遊んでる全員の画面にすぐ反映される。</p>
+        <p class="note" id="nameOff" hidden>この画面では名前の共有が使えへん。claude.ai にログインして、このページを開き直してな。</p>
+        <div class="names" id="nameList"></div>
+      </div>
+    </div>
+
+    <div class="sheet" data-pane="settings" hidden>
+      <header class="sh-head"><button type="button" class="sh-back" aria-label="戻る">←</button><h2>設定</h2></header>
+      <div class="sh-body two">
+        <div class="col-a">
           <div class="setting">
             <div><b>音</b><span class="note">BGMと効果音</span></div>
             <button class="toggle" id="soundBtn" type="button" aria-pressed="true">ON</button>
           </div>
           <div class="setting">
-            <div><b>技ショートカットボタン</b><span class="note">コマンド技を1タッチで出せるボタンを対戦画面に出す</span></div>
+            <div><b>技ショートカット</b><span class="note">コマンド技を1タッチで出すボタン</span></div>
             <button class="toggle" id="scToggle" type="button" aria-pressed="true">ON</button>
           </div>
           <div class="setting">
             <div><b>コントローラー</b><span class="note" id="padStatus">つないでボタンを押すと使える</span></div>
-            <button class="toggle" id="padOpen" type="button">ボタン設定</button>
-          </div>
-          <div class="setting">
-            <div><b>ボタン配置</b><span class="note">十字キーやボタンの位置と大きさを変える。横向きと縦向きは別々に覚える</span></div>
-            <button class="toggle" id="layOpen" type="button">変える</button>
+            <button class="toggle" id="padOpen" type="button">設定</button>
           </div>
         </div>
+        <div class="col-b">
+          <div class="setting">
+            <div><b>ボタン配置</b><span class="note">十字キーやボタンの位置と大きさ</span></div>
+            <button class="toggle" id="layOpen" type="button">変える</button>
+          </div>
+          <div class="row-actions stretch">
+            <button class="btn" type="button" data-open="howto">操作方法</button>
+            <button class="btn" type="button" data-open="inbox">問い合わせ・要望</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        <details class="howto">
-          <summary>操作方法</summary>
-          <div class="keys">
+    <div class="sheet" data-pane="howto" hidden>
+      <header class="sh-head"><button type="button" class="sh-back" aria-label="戻る">←</button><h2>操作方法</h2></header>
+      <div class="sh-body">
+        <div class="keys">
             <span>移動</span><span>左の十字キー。腕と腕の間を押すと斜め／PCは <kbd>WASD</kbd> か矢印キー</span>
             <span>パンチ</span><span>黄色ボタン／<kbd>J</kbd></span>
             <span>キック</span><span>水色ボタン／<kbd>K</kbd>。銃キャラはナイフ</span>
@@ -400,30 +562,39 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
             <span>一時停止</span><span>下まんなかの Ⅱ／<kbd>Esc</kbd></span>
           </div>
           <p class="note">スマホは横向きにすると画面が大きくなる。回転ロック中とかで画面が回らへん時は、対戦中の「横画面」ボタンで横表示に切り替わる（スマホを左に倒して持つ）。</p>
-        </details>
+      </div>
+    </div>
 
-        <div class="block" id="ibBlock">
-          <h2>問い合わせ・要望</h2>
-          <p class="note">バグ・こうしてほしい・新しいキャラの案など。送った内容は製作者とClaudeが読んで、ゲームの更新に使う。</p>
-          <div class="field">
-            <label class="lbl" for="ibText">内容（300文字まで）</label>
-            <textarea id="ibText" maxlength="300" rows="4" placeholder="例：スナイパーもうちょい強くして"></textarea>
-          </div>
-          <div class="row-actions"><span class="note" id="ibStatus"></span><button class="btn small" id="ibSend" type="button">送る</button></div>
+    <div class="sheet" data-pane="inbox" hidden>
+      <header class="sh-head"><button type="button" class="sh-back" aria-label="戻る">←</button><h2>問い合わせ・要望</h2></header>
+      <div class="sh-body" id="ibBlock">
+        <p class="note">バグ・こうしてほしい・新しいキャラの案など。送った内容は製作者とClaudeが読んで、ゲームの更新に使う。</p>
+        <div class="field">
+          <label class="lbl" for="ibText">内容（300文字まで）</label>
+          <textarea id="ibText" maxlength="300" rows="4" placeholder="例：スナイパーもうちょい強くして"></textarea>
         </div>
-        <p class="note credit">製作者 Naohisa Akiyama　／　BGM：魔王魂</p>
+        <div class="row-actions"><span class="note" id="ibStatus"></span><button class="btn small primary" id="ibSend" type="button">送る</button></div>
+      </div>
+    </div>
+
+    <div class="picker" id="picker" hidden>
+      <div class="pk-panel" role="dialog" aria-modal="true" aria-labelledby="pkTitle">
+        <header class="sh-head"><button type="button" class="sh-back" id="pkClose" aria-label="閉じる">←</button><h2 id="pkTitle"></h2></header>
+        <div class="pk-grid" id="pkGrid"></div>
       </div>
     </div>
   </section>
 
-  <section id="editor" class="screen" hidden>
-    <div class="wrap">
-      <div class="ed-top">
-        <button class="btn ghost small" id="edBack" type="button">← 戻る</button>
-        <h2 id="edTitle">キャラ作成</h2>
-      </div>
-
-      <div class="block">
+  <section id="editor" class="screen fixscr" hidden>
+    <header class="sh-head"><button type="button" class="sh-back" id="edBack" aria-label="戻る">←</button><h2 id="edTitle">キャラ作成</h2><button class="btn small" id="edSave" type="button">保存</button></header>
+    <nav class="seg wide edtabs" id="edTabs" aria-label="編集する項目">
+      <button type="button" data-et="face" class="on">顔・名前</button>
+      <button type="button" data-et="job">ジョブ・武器</button>
+      <button type="button" data-et="stat">ステータス</button>
+      <button type="button" data-et="moves">技表</button>
+    </nav>
+    <div class="sh-body">
+      <div class="edpane block" data-ep="face">
         <div class="face-row">
           <img id="edFace" class="face big" alt="顔">
           <div class="face-fields">
@@ -450,19 +621,14 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
           </div>
         </div>
       </div>
-
-      <div class="block">
+      <div class="edpane block" data-ep="job" hidden>
         <h3>ジョブ</h3>
         <div class="seg" id="jobSeg"></div>
         <p class="note" id="jobDesc"></p>
-      </div>
-
-      <div class="block">
         <h3>武器</h3>
         <div class="weapons" id="wpnList"></div>
       </div>
-
-      <div class="block">
+      <div class="edpane block" data-ep="stat" hidden>
         <div class="block-head">
           <h3>ステータス</h3>
           <span class="pts">残り <b id="ptsLeft">0</b> / 10</span>
@@ -470,27 +636,21 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
         <div id="statRows" class="block" style="gap:10px"></div>
         <div class="derived" id="derived"></div>
       </div>
-
-      <div class="block">
+      <div class="edpane block" data-ep="moves" hidden>
         <h3>技表</h3>
         <div class="tblwrap"><table class="moves" id="moveTbl"></table></div>
         <p class="note">ジャンプ中もパンチ・キックが出る。パンチ・キックが当たった瞬間にコマンド技でキャンセルできる。</p>
       </div>
-
-      <div class="row-actions">
-        <button class="btn ghost" id="edPractice" type="button">練習する</button>
-        <button class="btn" id="edSave" type="button">お気に入りに保存</button>
-        <button class="btn primary" id="edFight" type="button">この子でたたかう</button>
-      </div>
     </div>
+    <footer class="sh-foot">
+      <button class="btn ghost" id="edPractice" type="button">練習する</button>
+      <button class="btn primary" id="edFight" type="button">この子でたたかう</button>
+    </footer>
   </section>
 
-  <section id="lobby" class="screen" hidden>
-    <div class="wrap">
-      <div class="ed-top">
-        <button class="btn ghost small" id="lbLeave" type="button">← 抜ける</button>
-        <h2>オンライン部屋</h2>
-      </div>
+  <section id="lobby" class="screen fixscr" hidden>
+    <header class="sh-head"><button type="button" class="sh-back" id="lbLeave" aria-label="部屋から抜ける">←</button><h2>オンライン部屋</h2></header>
+    <div class="sh-body wrap">
       <div class="block">
         <div class="block-head">
           <h2>合言葉 <span class="mark" id="lbCode"></span></h2>
@@ -794,6 +954,59 @@ const STORY=[
    mid:[['E','メェ……ワシをここまで追い詰めたんは、お前が初めてや……！'],['E','見せたるわ……ヤギの本気をな！！ メェェェェェ！！！'],['P','来いや！！ こっちも燃えてきたとこや！！']],
    pinch:[['A1','{P}！ 立てぇぇ！！'],['A2','まだ終わってへんぞ！！'],['F','お前が負けたら、誰がヤギをぶっ飛ばすんや！！'],['P','……聞こえとるわ。みんなの声が……！'],['P','うおおおおお！！ 燃えてきたぁぁぁ！！']],
    post:[['E','メェェェ〜〜〜〜〜！！！'],[null,'――ヤギは、夕日の向こうへ消えた。'],['A1','やった……やったで{P}！！'],['F','ほんまに、ぶっ飛ばしよった……'],['P','……ヤギ。お前とのケンカ、悪なかったで。'],['P','また来いや。何回でも、ぶっ飛ばしたる。'],[null,'（次の週、ヤギは普通に帰ってきた）']]},
+];
+/* 第2章。enemy.person があればその人で固定（member:true ならその人のいつものジョブ）。'@id' はその人がしゃべる、{@id} はその人の名前 */
+const STORY2=[
+  {stage:'sunset',title:'第1話',sub:'果たし状',tag:'帰ってきたヤギ',lv:-1,
+   enemy:{name:'子ヤギ隊長',job:'fighter',weapon:'kenpo',stats:{atk:2,spd:4,hp:2,def:1,mp:1},goat:'kid'},
+   pre:[[null,'――あの戦いから、一週間。'],['A1','{P}、肉焼けたで！ 河原でジンギスカンとか最高やな！'],['A2','ヤギぶっ飛ばした記念や。食え食え！'],['P','……なあ。ヤギぶっ飛ばした記念にジンギスカンって、ちょっと気まずないか？'],['A3','今さら言う？'],
+        ['E','メェ〜〜！！ そこまでや！！'],['E','ヤギ様からの果たし状や！ 読めぇ！'],['P','……「ジンギスカンを食うやつは全員ぶっ飛ばす。ヤギ団四天王を連れて帰ってきたで。　ヤギより」'],['A1','あいつ、ほんまに普通に帰ってきとる！'],['A2','四天王ってなんやねん。先週までおらんかったやろ。'],
+        ['E','四天王はな……お前らがよう知っとる顔ぶれやで。メェッヘッヘ！'],['P','よう知っとる顔……？ まあええ。とりあえず、お前から鍋の具にしたるわ！']],
+   post:[['E','メェェ……隊長やのに……'],['A3','見て。手紙の裏に、まだ何か書いてある。'],['P','「四天王その一は、ネオンの高架下で待つ」……。'],['A1','その一って……嫌な予感しかせえへんな。'],['P','上等や。四天王やろうが五天王やろうが、全部ぶっ飛ばす！']]},
+  {stage:'city',title:'第2話',sub:'ネオンの高架下',tag:'四天王・夜の忍術使い',lv:0,
+   enemy:{person:'bayashi',member:true,goat:'black',noLaunch:true,alt:'四天王・忍術使い'},
+   pre:[['A2','おい……あれ、{@bayashi}ちゃうか！？'],['E','…………ニン。'],['P','{E}！ なんでお前がヤギ団におんねん！'],['E','ヤギ様ハ言ッタ……「仲間ニナッタラ、毎日ジンギスカン食ベ放題」ト……'],['A1','めっちゃ食べ物で釣られとる！！'],['A3','そもそもヤギがジンギスカン配ってるの、何かがおかしい。'],
+        ['E','忍法……メェ遁ノ術……！'],['P','もうなんでもありやな。目ぇ覚まさしたるから、歯ぁ食いしばれ！']],
+   post:[['E','……はっ！ 俺、なにしてたんや……口の中がずっと羊の味する……'],['P','おかえり、{E}。'],['@bayashi','すまん……ヤギのやつ、四天王を集めて「全国ジンギスカン鍋計画・改」を進めとる。'],['A1','「改」になっとる！'],['@bayashi','次の四天王は桜の河原や。あいつは……撃つのに迷いがない。気ぃつけろ。']]},
+  {stage:'sakura',title:'第3話',sub:'桜の河原',tag:'四天王・桜吹雪のガンナー',lv:0,
+   enemy:{person:'kazusa',member:true,goat:'black',noLaunch:true,alt:'四天王・ガンナー'},
+   pre:[[null,'――桜の河原。花びらの向こうで、銃口が光った。'],['E','……来たか。'],['P','{E}……お前もか！'],['E','ヤギ様は言うた。「桜の下で食うジンギスカンは格別や」と。'],['@bayashi','あかん、完全に俺と同じ手口で釣られとる！'],['A2','ヤギの勧誘、全部メシなんよ。'],
+        ['E','花見の邪魔はさせへん。全弾、持っていけ。'],['P','花より団子、団子よりジンギスカン……やかましいわ！ いくで！！']],
+   post:[['E','……あれ。桜、きれいやな……なんで俺、銃なんか向けてたんや。'],['P','目ぇ覚めたか、{E}。'],['@kazusa','悪い。……ヤギは夜明けの鉄橋に、新しいメカを用意しとる。'],['A3','前のメカヤギ、ドリルやったよね。'],['@kazusa','今度のは……ビームが出る。'],['A1','グレードアップしとる！！']]},
+  {stage:'dawn',title:'第4話',sub:'夜明けの鉄橋',tag:'鋼鉄の逆襲',lv:0,
+   enemy:{name:'メカヤギMk-II',job:'robot',weapon:'beam',stats:{atk:3,spd:1,hp:3,def:3,mp:2},goat:'mecha'},
+   pre:[['E','ピピッ。前回ノ敗北ヲ学習シタ。今回ハ、ビーム搭載。'],['P','学習してそれかい。'],['E','ヤギ様ノ指令。「鉄橋ヲ渡ル者ハ、全員ジンギスカン」。'],['A2','通行料が重すぎるやろ。'],['@kazusa','{P}、ビームは溜めが長い。撃つ前に懐へ潜れ！'],['P','おう！ 二回目のスクラップにしたる！']],
+   post:[['E','ガガ……学習……データ……不足……'],['A3','あ、メカヤギの中からメモが出てきた。'],['P','「四天王その三：雪の河原。影に気をつけろ」……。'],['@bayashi','雪の河原……まさか、あいつか。'],['A1','知っとるん！？'],['@bayashi','忍者や。俺とは別の流派の。']]},
+  {stage:'snow',title:'第5話',sub:'雪の河原',tag:'四天王・白銀の忍',lv:0,
+   enemy:{person:'rion',member:true,goat:'black',noLaunch:true,alt:'四天王・忍者'},
+   pre:[[null,'――雪の河原。足跡が、途中でぷっつり消えている。'],['A2','おい、誰もおらんぞ……'],['E','……後ろ。'],['P','うおっ！？ いつの間に！'],['E','ヤギ様に言われた。「雪見ジンギスカン、あったまるで」って。'],['A1','また食べ物！！ 四天王、全員メシで釣られとる！！'],['@bayashi','忍の者がメシで寝返るなんて……いや、俺も寝返ったんやけど。'],
+        ['E','影分身はせえへん。でも、手裏剣はデカい。'],['P','デカいんかい！ ほな、こっちもデカい気合いでいくで！！']],
+   post:[['E','……負けた。……雪、冷たい。'],['P','帰ったらあったかいもん食お。ジンギスカン以外で。'],['@rion','……ありがと。ヤギ団の四天王、最後の一人は……'],['@rion','雷の河原で、ずっとスクワットしてる。'],['A3','スクワット？'],['@rion','筋肉おばけ。四天王で、いちばん強い。']]},
+  {stage:'thunder',title:'第6話',sub:'雷鳴の河原',tag:'四天王最強・筋肉おばけ',lv:0,
+   enemy:{person:'tatsuya',job:'builder',weapon:'ishihara',stats:{atk:1,spd:2,hp:1,def:1,mp:5},goat:'black',noLaunch:true,alt:'四天王・筋肉おばけ'},
+   pre:[[null,'――雷鳴の河原。稲光の中で、誰かがバーベルを上げ下げしている。'],['E','……998……999……1000。'],['A2','なんか数えとる……'],['E','よう来たな、{P}。'],['P','{E}……！ お前、また一段とデカなってへんか！？'],['E','ヤギ様は言うた。「ジンギスカンは高タンパク・低脂質や」とな。'],['A1','いちばん説得力ある釣られ方しとる！！'],
+        ['@kazusa','{P}、あいつは殴っても止まらへん。頭の上のゲージを削り切るんや！'],['E','ほな、始めよか。……その前に、ひとつだけ聞いてええか。'],['P','なんや。'],['E','ジム行かね？'],['P','行かへんわ！！ 行くのはお前をぶっ飛ばしにや！！']],
+   mid:[['E','……ええパンチや。効いたで、ちょっとだけな。'],['E','ほな、こっちもプロテイン分、本気出すわ。'],['P','プロテイン分ってなんやねん！！']],
+   pinch:[['A2','{P}！ 筋肉に負けんな！！'],['@rion','……がんばれ。'],['@bayashi','お前の拳は、プロテインなんかに負けへん！'],['P','……せや。俺の拳は、仲間で出来とるんや……！'],['P','うおおおお！！ 必殺技、いくでぇぇ！！']],
+   post:[['E','…………ふっ。'],['E','ええ汗かいたわ。……目ぇ覚めた。すまんかったな、{P}。'],['P','おかえり、{E}。……で、ジムは行かへんで。'],['@tatsuya','ほな来週な。'],['A1','行く前提になっとる！'],['@tatsuya','ヤギは夜の河原にアジトを作っとる。門番は……月夜の狙撃手や。']]},
+  {stage:'night',title:'第7話',sub:'夜の河原',tag:'月夜の狙撃手',lv:0,
+   enemy:{name:'黒ヤギ',job:'gunner',weapon:'sniper',stats:{atk:3,spd:2,hp:2,def:2,mp:1},goat:'black'},
+   pre:[['E','久しぶりやな、{P}。第1章では世話になった。'],['P','お前、あの時の黒ヤギか！ ショットガンはどうしたんや。'],['E','{@kazusa}とかぶるから、やめた。'],['@kazusa','そこ気にするんや。'],['E','せやから今度はスナイパーや。この距離なら、お前の拳は届かへん。'],['@rion','遠い相手には、スライディング。弾の下をくぐって近づく。'],['P','なるほどな。ほな、這いつくばってでも近づいて、ぶっ飛ばしたる！']],
+   post:[['E','くっ……アジトの扉が開いてもうた……ヤギ様は、燃える河原で鍋を煮込んどる……'],['A3','鍋を……煮込んでる？'],['@tatsuya','全国ジンギスカン鍋計画・改。……日本中の河原を、でっかい鍋にする計画や。'],['A2','規模がでかすぎる！！'],['P','止めるで。みんな、最後や。'],['@bayashi','おう！'],['@kazusa','うん。'],['@rion','……うん。'],['@tatsuya','ジム行く前に片付けよか。']]},
+  {stage:'fire',title:'最終話',sub:'燃えるジンギスカン鍋',tag:'真・ヤギ',lv:1,boss:true,
+   enemy:{person:'yagi',job:'goat',weapon:'horn',stats:{atk:4,spd:3,hp:5,def:3,mp:3},goat:'boss',boss:true,alt:'ヤギ'},
+   pre:[[null,'――燃える河原。巨大なジンギスカン鍋が、ぐつぐつと煮えている。'],['E','メェ〜ッハッハ！ よう来たな、{P}！ そして裏切り者の四天王ども！'],['@bayashi','裏切ったんちゃう、目ぇ覚めただけや！'],['P','ヤギ。一週間で戻ってきて、四天王まで作って……なんでそこまでするんや。'],['E','……決まっとるやろ。'],
+        ['E','前回、夕日の向こうに飛ばされた時な……めっちゃ寂しかったんや！！'],['A1','理由がかわいい！！'],['E','せやから決めた。全員ヤギ団に入れて、毎日みんなでジンギスカンや！！'],['A3','誘い方さえ普通なら、普通に行ったのに。'],['E','うるさい！ 鍋はもう煮えとる！ かかってこいや、{P}！！'],['P','おう。マミー会の鍋は……マミー会みんなで囲むもんや！！']],
+   mid:[['E','メェ……やるやないか……せやけど、ワシにはまだ奥の手がある……！'],['E','ジンギスカン鍋の、シメのうどんパワーや！！ メェェェェ！！！'],['A2','シメのうどんでパワーアップすな！！'],['P','ほな、こっちもシメや！！ 最後までいくで！！']],
+   pinch:[['A1','{P}！ 立てぇぇ！！'],['@tatsuya','まだいける。お前の筋肉は、まだ泣いてへん！'],['@rion','……負けんな。'],['@kazusa','援護する。いけ！'],['@bayashi','全員の分、乗せたれ！！'],['P','……おう。聞こえとるで、みんなの声……！'],['P','これが……マミー会の――全員分の拳やぁぁぁ！！']],
+   post:[['E','メェェェェェ〜〜〜〜〜〜！！！'],[null,'――ヤギは、巨大な鍋ごと夕日の向こうへ消えた。'],['A2','やった……！ 今度こそ、やったで！！'],['@tatsuya','ええ一撃やった。'],['P','……なあ、みんな。'],['P','あいつ、寂しかった言うてたな。'],['A3','……うん。'],['P','次は、最初から呼んだろか。ジンギスカン。'],[null,'（次の週、ヤギは普通に帰ってきた。鍋を持って）'],['@yagi','メェ。……来たで。'],['P','……おう。座れや。']]},
+];
+/* 章（増えたらここに足す） */
+const STORY_ARCS=[
+  {id:'c1',title:'第1章',sub:'ヤギ団をぶっ飛ばせ',desc:'河原に現れたヤギ団。手下をしばいて、親玉のヤギを夕日の向こうまでぶっ飛ばせ。',eps:STORY,
+   clear:'ヤギは夕日の向こうへ消えた。マミー会の夕日は、今日も燃えている。'},
+  {id:'c2',title:'第2章',sub:'ヤギ団の逆襲',desc:'ヤギが四天王を連れて帰ってきた。メシで釣られた仲間を取り戻して、もう一回ヤギをぶっ飛ばせ。',eps:STORY2,cast:{A1:'sanma',A2:'takeru',A3:'kojimaimo'},isNew:true,
+   clear:'ヤギは鍋ごと夕日の向こうへ。……そして次の週、みんなで鍋を囲んだ。'},
 ];
 const pick=a=>a[(Math.random()*a.length)|0];
 const clone=o=>JSON.parse(JSON.stringify(o));
@@ -1606,9 +1819,7 @@ function applyHit(att,def,mv,isProj,dir,pt){
     def.phase2=true;def.walk*=1.2;def.aiLevel='hard';
     if(def.moves.S1.proj)def.moves.S1=Object.assign({},def.moves.S1,{proj:Object.assign({},def.moves.S1.proj,{burst:2})});
     banner('ヤギ、本気モード！');sfx('mee',0.8);
-    if(G.story&&G.mid)G.pendingTalk={lines:G.mid};
   }
-  if(G.story&&G.pinch&&!G.pinched&&def.idx===0&&def.hp>0&&def.hp<def.maxHp*0.3){G.pinched=true;G.pendingTalk={lines:G.pinch,boost:true};}
   const s=mv.sfx||'hit';sfx(s,1+Math.min(0.7,(def.combo-1)*0.09));
   if(heavy){sfx('heavy');G.flash=Math.max(G.flash,0.3);addRing(pt.x,pt.y,'#ff8a3d');}
   addSpark(pt.x,pt.y,MARKER);addDebris(pt.x,pt.y,dir,heavy?12:6);
@@ -2441,24 +2652,9 @@ function jw(c){return `${JOBS[c.job].name}・${WEAPONS[c.weapon].name}`;}
 function addOpt(parent,v,t){const o=document.createElement('option');o.value=v;o.textContent=t;parent.appendChild(o);}
 function miniBtn(t,act){const b=document.createElement('button');b.type='button';b.className='mini';b.textContent=t;b.dataset.act=act;return b;}
 function renderMenu(){
-  const list=$('#myList');list.textContent='';
   const items=DATA.favs.concat(SAMPLES.map(s=>findChar(s.id)));
   if(!items.some(c=>c.id===DATA.sel))DATA.sel=items[0].id;
-  for(const c of items){
-    const isSample=!!c.sample;
-    const d=document.createElement('div');d.className='card'+(c.id===DATA.sel?' sel':'');d.dataset.id=c.id;d.tabIndex=0;d.setAttribute('role','button');d.setAttribute('aria-pressed',c.id===DATA.sel);
-    const im=document.createElement('img');im.className='face';im.alt='';im.src=faceURL(c);
-    const info=document.createElement('div');info.className='info';
-    const b=document.createElement('b');b.textContent=charName(c);if(isSample){const ch=document.createElement('span');ch.className='chip';ch.textContent=c.member?'マミー会':'サンプル';b.appendChild(ch);}
-    const s1=document.createElement('span');s1.textContent=jw(c);
-    const s2=document.createElement('span');s2.textContent=STATS.map(([k,l])=>`${l.slice(0,1)}${c.stats[k]}`).join(' ');
-    info.append(b,s1,s2);
-    const acts=document.createElement('div');acts.className='card-actions';acts.append(miniBtn(isSample?'コピー':'編集','edit'));
-    if(c.person&&personSkins(c.person).length>1)acts.append(miniBtn('スキン','skin'));
-    if(!isSample)acts.append(miniBtn('削除','del'));
-    d.append(im,info,acts);list.appendChild(d);
-  }
-  $('#myNote').textContent=DATA.favs.length?'タップで使うキャラを選ぶ。「スキン」でその人の別の顔に変わる。':'タップで使うキャラを選ぶ。「スキン」でその人の別の顔に変わる。「コピー」か「新しく作る」で自分のキャラも作れる。';
+  renderChara(items);
   const sel=$('#oppSel');sel.textContent='';addOpt(sel,'rand','ランダム（マミー会から）');
   const g1=document.createElement('optgroup');g1.label='マミー会';SAMPLES.forEach(c=>addOpt(g1,c.id,`${charName(c)}（${jw(c)}）`));sel.appendChild(g1);
   if(DATA.favs.length){const g2=document.createElement('optgroup');g2.label='お気に入り';DATA.favs.forEach(c=>addOpt(g2,c.id,`${charName(c)}（${jw(c)}）`));sel.appendChild(g2);}
@@ -2466,23 +2662,93 @@ function renderMenu(){
   for(const b of $('#diffSeg').children){b.classList.toggle('on',b.dataset.v===DATA.diff);b.setAttribute('aria-pressed',b.dataset.v===DATA.diff);}
   for(const b of $('#numSeg').children){const on=+b.dataset.v===(DATA.players||2);b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));}
   const sg=$('#stageSel');if(!sg.options.length){addOpt(sg,'random','ランダム');STAGE_ORDER.forEach(k=>addOpt(sg,k,STAGES[k].name));}sg.value=STAGES[DATA.stage]?DATA.stage:'random';
-  const cl=$('#chapList');cl.textContent='';const cleared=DATA.story||0;
-  STORY.forEach((S,i)=>{
-    const open=i<=cleared,b=document.createElement('button');b.type='button';b.className='chap'+(S.boss?' boss':'');b.dataset.ch=i;b.disabled=!open;
-    const t=document.createElement('b');t.textContent=open?`${S.title}　${S.sub}`:`${S.title}　？？？`;
-    const s=document.createElement('span');s.textContent=open?`vs ${S.enemy.boss&&personById('yagi')?personName('yagi'):S.enemy.name}`:'前の話をクリアすると開く';
-    b.append(t,s);cl.appendChild(b);
-  });
-  $('#storyProg').textContent=cleared>=STORY.length?'STORY CLEAR':`クリア ${cleared} / ${STORY.length}`;
+  renderPickBtns();
   const ys=$('#yagiSel');ys.textContent='';
   if(personById('yagi'))addOpt(ys,'yagi',`${personName('yagi')}の写真（マミー会）`);
   addOpt(ys,'illust','イラストのヤギ');DATA.favs.forEach(c=>addOpt(ys,c.id,charName(c)));
   if(![...ys.options].some(o=>o.value===DATA.yagiFace))DATA.yagiFace=ys.options[0].value;ys.value=DATA.yagiFace;
+  renderStory();
   renderNames();
   updateSoundBtns();
-  renderNowChar();renderProfile();
-  $('#kmBest').textContent=`自己ベスト ${DATA.kumiteBest||0}人抜き`;
-  if(!$('#menu').hidden&&DATA.tab==='kumite')renderRank();
+  renderNowChar();renderProfile();renderHome();
+  $('#kmBest').textContent=`${DATA.kumiteBest||0}人抜き`;
+  if(!$('#menu').hidden&&(DATA.tab==='kumite'||DATA.tab==='rank'))renderRank();
+}
+function elx(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+function imgx(src,cls){const im=document.createElement('img');im.alt='';if(cls)im.className=cls;im.src=src;return im;}
+function renderChara(items){ // キャラ一覧（タイル）と選んだキャラの操作
+  const list=$('#myList');list.textContent='';
+  for(const c of items){
+    const on=c.id===DATA.sel,b=elx('button','ctile'+(on?' sel':''));b.type='button';b.dataset.id=c.id;b.setAttribute('aria-pressed',String(on));
+    b.append(imgx(faceURL(c)),elx('span','',charName(c)),elx('small','',WEAPONS[c.weapon].name));
+    if(!c.sample)b.appendChild(elx('i','mytag','MY'));
+    list.appendChild(b);
+  }
+  const c=findChar(DATA.sel)||items[0],bar=$('#charBar');bar.textContent='';
+  const info=elx('div','info'),nb=elx('b','',charName(c));nb.appendChild(elx('span','chip',c.sample?(c.member?'マミー会':'サンプル'):'お気に入り'));
+  info.append(elx('span','','使うキャラ'),nb,elx('span','pname',jw(c)),elx('span','',STATS.map(([k,l])=>`${l.slice(0,1)}${c.stats[k]}`).join(' ')));
+  const acts=elx('div','acts');acts.append(miniBtn(c.sample?'カスタム':'編集','edit'));
+  if(c.person&&personSkins(c.person).length>1)acts.append(miniBtn('スキン','skin'));
+  if(!c.sample)acts.append(miniBtn('削除','del'));
+  acts.append(miniBtn('練習','practice'));
+  bar.append(imgx(faceURL(c),'face'),info,acts);
+  $('#myNote').textContent=DATA.favs.length?'タップで使うキャラを選ぶ。「スキン」でその人の別の顔になる。':'タップで使うキャラを選ぶ。「カスタム」か「新しく作る」で自分のキャラも作れる。';
+}
+function stageSwatch(k){const st=STAGES[k];return st?`linear-gradient(180deg,${st.sky.join(',')})`:'linear-gradient(135deg,#ff8a2a,#7a1a0e 50%,#1c1830)';}
+function renderPickBtns(){
+  const ob=$('#oppBtn');ob.textContent='';
+  if(DATA.opp==='rand'){const sw=elx('i','sw','?');sw.style.background='linear-gradient(135deg,#ffd75e,#ff7a1f)';ob.append(sw,elx('span','','ランダム（マミー会から）'));}
+  else{const c=findChar(DATA.opp)||SAMPLES[0];ob.append(imgx(faceURL(c)),elx('span','',`${charName(c)}（${jw(c)}）`));}
+  const sb=$('#stageBtn');sb.textContent='';const k=STAGES[DATA.stage]?DATA.stage:'random',sw=elx('i','sw',k==='random'?'?':'');sw.style.background=stageSwatch(k);
+  sb.append(sw,elx('span','',k==='random'?'ランダム':STAGES[k].name));
+}
+let PK=null;
+function openPicker(title,groups,value,onPick){
+  PK={onPick};$('#pkTitle').textContent=title;const g=$('#pkGrid');g.textContent='';
+  for(const grp of groups){
+    if(grp.label)g.appendChild(elx('div','pk-group',grp.label));
+    for(const it of grp.items){const b=elx('button','pk'+(it.v===value?' on':''));b.type='button';b.dataset.v=it.v;b.setAttribute('aria-pressed',String(it.v===value));
+      if(it.img)b.appendChild(imgx(it.img));else{const sw=elx('i','sw',it.mark||'');sw.style.background=it.sw;b.appendChild(sw);}
+      b.appendChild(elx('span','',it.label));if(it.sub)b.appendChild(elx('small','',it.sub));g.appendChild(b);}
+  }
+  $('#picker').hidden=false;requestAnimationFrame(()=>{const on=g.querySelector('.pk.on');if(on)on.scrollIntoView({block:'nearest'});});
+}
+function closePicker(){$('#picker').hidden=true;PK=null;}
+function openPickFor(kind){
+  if(kind==='opp'){
+    const mk=c=>({v:c.id,label:charName(c),sub:WEAPONS[c.weapon].name,img:faceURL(c)});
+    const gs=[{items:[{v:'rand',label:'ランダム',sub:'マミー会から',sw:'linear-gradient(135deg,#ffd75e,#ff7a1f)',mark:'?'}]},{label:'マミー会',items:SAMPLES.map(s=>mk(findChar(s.id)))}];
+    if(DATA.favs.length)gs.push({label:'お気に入り',items:DATA.favs.map(mk)});
+    openPicker('相手をえらぶ',gs,DATA.opp,v=>{DATA.opp=v;save();renderMenu();});
+  }else if(kind==='stage'){
+    openPicker('ステージをえらぶ',[{items:[{v:'random',label:'ランダム',sw:stageSwatch('random'),mark:'?'}].concat(STAGE_ORDER.map(k=>({v:k,label:STAGES[k].name,sw:stageSwatch(k)})))}],STAGES[DATA.stage]?DATA.stage:'random',v=>{DATA.stage=v;save();renderMenu();});
+  }
+}
+function defaultArc(){for(let i=0;i<STORY_ARCS.length;i++)if(arcCleared(i)<STORY_ARCS[i].eps.length)return i;return STORY_ARCS.length-1;}
+function renderStory(){
+  if(!(DATA.arcSel>=0&&DATA.arcSel<STORY_ARCS.length))DATA.arcSel=defaultArc();
+  const ai=DATA.arcSel,AR=STORY_ARCS[ai],cl=arcCleared(ai);
+  const seg=$('#arcSeg');seg.textContent='';
+  STORY_ARCS.forEach((X,i)=>{const on=i===ai,b=elx('button',on?'on':'',X.title);b.type='button';b.dataset.arc=i;b.setAttribute('role','tab');b.setAttribute('aria-selected',String(on));
+    if(arcCleared(i)>=X.eps.length)b.appendChild(elx('i','nb ok','済'));else if(X.isNew&&arcCleared(i)===0)b.appendChild(elx('i','nb','NEW'));seg.appendChild(b);});
+  $('#arcTitle').textContent=`${AR.title}　${AR.sub}`;$('#arcDesc').textContent=AR.desc;
+  const list=$('#chapList');list.textContent='';
+  AR.eps.forEach((S,i)=>{
+    const open=i<=cl,done=i<cl,b=elx('button','chap'+(S.boss?' boss':'')+(done?' done':''));b.type='button';b.dataset.ch=i;b.disabled=!open;
+    if(open){const e=storyEnemySpec(S);b.appendChild(imgx(faceURL(e),'cf'));}else b.appendChild(elx('i','lock','？'));
+    const ct=elx('div','ct');ct.append(elx('small','',S.title+(done?'　✓クリア':'')),elx('b','',open?S.sub:'？？？'),elx('span','',open?`vs ${charName(storyEnemySpec(S))}`:'前の話をクリアで開く'));
+    b.appendChild(ct);list.appendChild(b);
+  });
+  $('#storyProg').textContent=cl>=AR.eps.length?`${AR.title} CLEAR`:`クリア ${cl} / ${AR.eps.length}`;
+  $('#yagiRow').hidden=AR.id!=='c1';
+}
+function renderHome(){
+  const c=findChar(DATA.sel)||SAMPLES[0];$('#hFace').src=faceURL(c);$('#hName').textContent=charName(c);$('#hJob').textContent=jw(c);
+  $('#hProf').textContent=profName();
+  const ai=defaultArc(),AR=STORY_ARCS[ai],cl=arcCleared(ai),all=STORY_ARCS.every((X,i)=>arcCleared(i)>=X.eps.length);
+  $('#hStory').textContent=all?'全章クリア！ いつでも遊べる':`${AR.title}「${AR.sub}」 ${cl} / ${AR.eps.length}`;
+  $('#hStoryNew').hidden=!STORY_ARCS.some((X,i)=>X.isNew&&arcCleared(i)===0);
+  $('#hKumite').textContent=`自己ベスト ${DATA.kumiteBest||0}人抜き`;
 }
 function updateSoundBtns(){
   const sb=$('#soundBtn');sb.textContent=A.on?'ON':'OFF';sb.setAttribute('aria-pressed',String(!!A.on));$('#pSound').textContent=A.on?'音：ON':'音：OFF';
@@ -2515,12 +2781,14 @@ let ED=null,EDFROM='';
 function openEditor(c,asCopy){
   ED=c?clone(c):{id:null,name:'',person:'',skin:0,face:null,job:'fighter',weapon:'stegoro',stats:{atk:2,spd:2,hp:2,def:2,mp:2}};
   if(asCopy){ED.id=null;delete ED.sample;delete ED.member;ED.name=(c.name||'').replace('サンプル','');}
-  EDFROM=NET.role?'net':$('#menu').hidden?'':(DATA.tab||'');
-  $('#edTitle').textContent=ED.id?'キャラ編集':'キャラ作成';$('#edFight').textContent=NET.role?'この子で部屋に戻る':EDFROM==='kumite'?'この子で組手':'この子でたたかう';
-  $('#edBack').textContent=EDFROM==='kumite'?'← 組手に戻る':'← 戻る';
+  const mode=SHEETS.concat([DATA.tab]).reverse().find(t=>['kumite','story','battle','online'].includes(t))||'';
+  EDFROM=NET.role?'net':$('#menu').hidden?'':mode;
+  $('#edTitle').textContent=ED.id?'キャラ編集':'キャラ作成';$('#edFight').textContent=NET.role?'この子で部屋に戻る':EDFROM==='kumite'?'この子で組手':EDFROM==='story'?'この子で決定':'この子でたたかう';
+  $('#edBack').setAttribute('aria-label',NET.role?'部屋に戻る':'戻る');edTab(c?'job':'face');
   $('#edName').value=ED.name;$('#cropBox').hidden=true;
-  renderEditor();show('editor');window.scrollTo(0,0);
+  renderEditor();show('editor');
 }
+function edTab(t){for(const b of $('#edTabs').children){const on=b.dataset.et===t;b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));}for(const p of document.querySelectorAll('#editor .edpane'))p.hidden=p.dataset.ep!==t;const bd=$('#editor .sh-body');if(bd)bd.scrollTop=0;}
 function edUsed(){return STATS.reduce((s,[k])=>s+ED.stats[k],0);}
 function skinBtn(url,key,on,label){const b=document.createElement('button');b.type='button';b.className='skin'+(on?' on':'');b.dataset.k=key;b.setAttribute('aria-pressed',String(on));b.setAttribute('aria-label',label);const im=document.createElement('img');im.alt='';im.src=url;b.appendChild(im);return b;}
 function renderPersonUI(){
@@ -2657,10 +2925,10 @@ onMatchEnd=()=>{
   if(G.kumite&&KUMITE){kumiteEnd();return;}
   if(G.story&&STORYS){
     if(w0>w1){
-      const S=STORY[STORYS.ch];DATA.story=Math.max(DATA.story||0,STORYS.ch+1);save();
-      setTimeout(()=>{if(!G||!STORYS)return;talkStart(S.post,()=>{if(!STORYS)return;if(STORYS.ch+1<STORY.length){STORYS.ch++;storyChapter();}else storyClear();});},300);
+      const S=curEp(),AR=STORY_ARCS[STORYS.arc];arcSetCleared(STORYS.arc,STORYS.ch+1);
+      setTimeout(()=>{if(!G||!STORYS)return;talkStart(S.post,()=>{if(!STORYS)return;if(STORYS.ch+1<AR.eps.length){STORYS.ch++;storyChapter();}else storyClear();});},300);
     }else{
-      $('#resTitle').textContent='負け…';$('#resSub').textContent=`${STORY[STORYS.ch].title}　${G.f[1].name}にやられた。もう一回いくか？`;$('#resAgain').textContent='この話をもう一回';
+      $('#resTitle').textContent='負け…';$('#resSub').textContent=`${STORY_ARCS[STORYS.arc].title} ${curEp().title}　${G.f[1].name}にやられた。もう一回いくか？`;$('#resAgain').textContent='この話をもう一回';
       setTimeout(()=>{if(G&&G.over)$('#result').hidden=false;},300);
     }
     return;
@@ -2755,47 +3023,63 @@ function initLayoutEditor(){
 
 /* ================= ストーリー ================= */
 let STORYS=null,TALK=null;
-function storyLevel(ch){const L=['easy','normal','hard'],i=Math.max(0,L.indexOf(DATA.diff));return L[Math.max(0,Math.min(2,i+STORY[ch].lv))];}
+function arcCleared(a){const A=STORY_ARCS[a];if(!A)return 0;return A.id==='c1'?(DATA.story||0):((DATA.storyP||{})[A.id]||0);}
+function arcSetCleared(a,n){const A=STORY_ARCS[a];if(!A)return;n=Math.min(A.eps.length,n);if(A.id==='c1')DATA.story=Math.max(DATA.story||0,n);else{DATA.storyP=DATA.storyP||{};DATA.storyP[A.id]=Math.max(DATA.storyP[A.id]||0,n);}save();}
+function curEp(){return STORYS?STORY_ARCS[STORYS.arc].eps[STORYS.ch]:null;}
+function storyLevel(){const L=['easy','normal','hard'],i=Math.max(0,L.indexOf(DATA.diff));return L[Math.max(0,Math.min(2,i+curEp().lv))];}
 const CAST_POOL=['takeru','sanma','kazusa','bayashi','tatsuya','kojimaimo','rion'];
-function storyCast(p1){
-  const me=p1&&p1.person,ids=CAST_POOL.concat(ROSTER.map(p=>p.id)).filter((id,i,a)=>a.indexOf(id)===i&&id!=='yagi'&&id!==me&&personById(id));
+function storyCast(p1,arc){
+  const me=p1&&p1.person,A=STORY_ARCS[arc||0];
+  if(A&&A.cast){const c={};for(const k in A.cast){const id=A.cast[k];c[k]=id!==me&&personById(id)?id:null;}c.F=null;return c;}
+  const ids=CAST_POOL.concat(ROSTER.map(p=>p.id)).filter((id,i,a)=>a.indexOf(id)===i&&id!=='yagi'&&id!==me&&personById(id));
   return {F:ids[0]||null,A1:ids[1]||null,A2:ids[2]||null,A3:ids[3]||ids[1]||null};
 }
-function storyEnemy(ch){
-  const e=JSON.parse(JSON.stringify(STORY[ch].enemy));e.id='story'+ch;e.aiLevel=storyLevel(ch);
-  const fid=STORYS&&STORYS.cast&&STORYS.cast.F;
-  if(STORY[ch].friend&&fid){
-    Object.assign(e,JSON.parse(JSON.stringify(MEMBER_BUILD[fid]||{job:'sword',weapon:'katana',stats:{atk:3,spd:2,hp:3,def:2,mp:0}})),{person:fid,skin:0,name:'洗脳'+personName(fid)});
-  }
-  if(e.boss){
-    const yf=DATA.yagiFace||'yagi';
-    if(yf==='yagi'&&personById('yagi')){e.person='yagi';e.skin=Math.floor(Math.random()*personSkins('yagi').length);e.name='';}
-    else if(yf!=='illust'){const f=findChar(yf);if(f){if(f.person){e.person=f.person;e.skin=f.skin||0;e.name='';}else if(f.face)e.face=f.face;}}
-  }
+function storyEnemySpec(S){ // メニューの表示用（顔と名前）
+  const e=clone(S.enemy);
+  if(e.person){if(personById(e.person)){e.name='';if(e.member&&!e.job)Object.assign(e,clone(MEMBER_BUILD[e.person]||{job:'fighter',weapon:'stegoro',stats:{atk:2,spd:2,hp:2,def:2,mp:2}}));}else{e.person='';e.name=e.alt||e.name||'ヤギ団';}}
+  else if(e.boss){const yf=DATA.yagiFace||'yagi';
+    if(yf==='yagi'&&personById('yagi')){e.person='yagi';e.name='';}
+    else if(yf!=='illust'){const f=findChar(yf);if(f){if(f.person){e.person=f.person;e.skin=f.skin||0;e.name='';}else if(f.face)e.face=f.face;}}}
   return e;
 }
-function storyStart(ch){aInit();const p=findChar(DATA.sel)||SAMPLES[0];STORYS={ch,p1:clone(p),cast:storyCast(p)};storyChapter();}
+function storyEnemy(){
+  const S=curEp(),e=storyEnemySpec(S);e.id='story'+STORYS.arc+'_'+STORYS.ch;e.aiLevel=storyLevel();
+  const fid=STORYS.cast&&STORYS.cast.F;
+  if(S.friend&&fid)Object.assign(e,clone(MEMBER_BUILD[fid]||{job:'sword',weapon:'katana',stats:{atk:3,spd:2,hp:3,def:2,mp:0}}),{person:fid,skin:0,name:'洗脳'+personName(fid)});
+  if(e.person==='yagi'&&e.boss)e.skin=Math.floor(Math.random()*Math.max(1,personSkins('yagi').length));
+  if(e.person&&STORYS.p1.person===e.person&&!S.friend)e.name='偽'+personName(e.person); // 自分と同じ人なら偽者
+  return e;
+}
+function storyStart(arc,ch){aInit();const p=findChar(DATA.sel)||SAMPLES[0];STORYS={arc,ch,p1:clone(p),cast:storyCast(p,arc)};storyChapter();}
 function storyChapter(){
-  const S=STORY[STORYS.ch];
+  const S=curEp(),AR=STORY_ARCS[STORYS.arc];
   $('#pause').hidden=true;$('#result').hidden=true;$('#resAgain').hidden=false;$('#resMenu').textContent='メニューへ';talkEnd();
   show('battle');
-  newGame(STORYS.p1,storyEnemy(STORYS.ch),DATA.diff,{story:true,need:1,stage:S.stage,title:S.title,mid:S.mid,pinch:S.pinch});
+  newGame(STORYS.p1,storyEnemy(),DATA.diff,{story:true,need:1,stage:S.stage,title:S.title,mid:S.mid,pinch:S.pinch});
   setupShortcuts();
   G.paused=true;lastTs=0;acc=0;keys.clear();pressQ.length=0;scQ.length=0;gHeld=false;jHeld=false;jBuf=0;
   if(A.on)bgmStart();
-  talkStart([[null,`${S.title}　${S.sub}　―${S.tag}―`]].concat(S.pre),()=>{if(G&&STORYS){G.paused=false;lastTs=0;}});
+  talkStart([[null,`${AR.title}　${S.title}　${S.sub}　―${S.tag}―`]].concat(S.pre),()=>{if(G&&STORYS){G.paused=false;lastTs=0;}});
 }
 function castName(code){const id=STORYS&&STORYS.cast&&STORYS.cast[code];return id?personName(id):'';}
 function fillText(t){
-  return t.replace(/\{(P|E|F|A1|A2|A3)\}/g,(m,c)=>c==='P'?(G?G.f[0].name:''):c==='E'?(G?G.f[1].name:''):castName(c));
+  return t.replace(/\{(P|E|F|A1|A2|A3|@[a-z0-9_]+)\}/g,(m,c)=>c==='P'?(G?G.f[0].name:''):c==='E'?(G?G.f[1].name:''):c[0]==='@'?personName(c.slice(1)):castName(c));
 }
 function speaker(code){
   if(code===null)return null;
   if(code==='P'||code==='E'){const f=G&&G.f[code==='P'?0:1];return f?{face:faceURL(f.cfg),name:f.name,cls:code==='P'?'p':'e'}:false;}
+  if(code[0]==='@'){const id=code.slice(1);if(!personById(id))return false;if(id!=='yagi'&&STORYS&&STORYS.p1&&STORYS.p1.person===id)return false;return {face:personSkins(id)[0]||'',name:personName(id),cls:'a'};}
   const id=STORYS&&STORYS.cast&&STORYS.cast[code];if(!id)return false;
   return {face:personSkins(id)[0]||'',name:personName(id),cls:'a'};
 }
+function storyTalkCheck(){ // 相手の体力が半分を切ったら途中の会話、自分がピンチになったら仲間の声
+  if(!G||!G.story||G.pendingTalk||G.over||G.phase!=='fight')return;
+  const me=G.f[0],en=G.f[1];
+  if(G.mid&&!G.midDone&&en&&en.hp>0&&en.hp<en.maxHp*0.5){G.midDone=true;G.pendingTalk={lines:G.mid};return;}
+  if(G.pinch&&!G.pinched&&me&&me.hp>0&&me.hp<me.maxHp*0.3){G.pinched=true;G.pendingTalk={lines:G.pinch,boost:true};}
+}
 function runPendingTalk(){
+  storyTalkCheck();
   if(!G||!G.pendingTalk||TALK||G.phase!=='fight'||G.hitstop>0||G.over)return;
   const pt=G.pendingTalk;G.pendingTalk=null;G.paused=true;
   talkStart(pt.lines,()=>{
@@ -2804,10 +3088,11 @@ function runPendingTalk(){
   });
 }
 function storyClear(){
-  STORYS.clear=true;DATA.story=STORY.length;save();
-  $('#resTitle').textContent='STORY CLEAR!';
-  $('#resSub').textContent='ヤギは夕日の向こうへ消えた。マミー会の夕日は、今日も燃えている。（各話はメニューの「ストーリー」からいつでも遊べる）';
-  $('#resAgain').textContent='最初からもう一回';$('#result').hidden=false;
+  const AR=STORY_ARCS[STORYS.arc],nx=STORY_ARCS[STORYS.arc+1];
+  STORYS.clear=true;arcSetCleared(STORYS.arc,AR.eps.length);
+  $('#resTitle').textContent=`${AR.title} CLEAR!`;
+  $('#resSub').textContent=AR.clear+'（各話はメニューの「ストーリー」からいつでも遊べる）';
+  $('#resAgain').textContent=nx?`${nx.title}へ`:'この章を最初から';$('#result').hidden=false;
 }
 function talkStart(lines,done){
   lines=(lines||[]).filter(l=>speaker(l[0])!==false);
@@ -3018,34 +3303,28 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='23';
-const TABS=['battle','kumite','story','chara','settings'];
-function showTab(t){
-  if(!TABS.includes(t))t='battle';DATA.tab=t;
-  for(const b of $('#tabs').children){const on=b.dataset.tab===t;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1;}
-  for(const p of document.querySelectorAll('.tabpane'))p.hidden=p.dataset.pane!==t;
-  if(t==='kumite')renderRank();
+const GAME_VER='24';
+const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
+let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
+function applySheets(){
+  for(const p of document.querySelectorAll('#menu .sheet'))p.hidden=p.dataset.pane!==DATA.tab;
+  if(DATA.tab==='kumite'||DATA.tab==='rank')renderRank();
 }
+function showTab(t,push){
+  if(!TABS.includes(t)){SHEETS=[];DATA.tab='home';}
+  else{if(push&&TABS.includes(DATA.tab)&&DATA.tab!==t)SHEETS.push(DATA.tab);else if(!push)SHEETS=[];DATA.tab=t;}
+  applySheets();
+  const sh=document.querySelector(`#menu .sheet[data-pane="${DATA.tab}"]`);
+  if(sh){const bd=sh.querySelector('.sh-body');if(bd)bd.scrollTop=0;}
+}
+function sheetBack(){DATA.tab=SHEETS.pop()||'home';applySheets();save();}
 function renderNowChar(){
-  const c=findChar(DATA.sel)||SAMPLES[0],items=DATA.favs.concat(SAMPLES.map(s=>findChar(s.id)));
+  const c=findChar(DATA.sel)||SAMPLES[0];
   for(const el of document.querySelectorAll('.nowchar')){
-    const open=el.classList.contains('open');
-    el.textContent='';const im=document.createElement('img');im.className='face';im.alt='';im.src=faceURL(c);
-    const info=document.createElement('div');info.className='info';
-    const t=document.createElement('span');t.textContent='使うキャラ';const b=document.createElement('b');b.textContent=charName(c);const s1=document.createElement('span');s1.textContent=jw(c);
-    info.append(t,b,s1);
-    const acts=document.createElement('div');acts.className='nc-acts';
-    const tg=miniBtn(open?'閉じる':'キャラを変える','qpToggle');tg.setAttribute('aria-expanded',String(open));
-    acts.append(tg,miniBtn(c.sample?'カスタム':'編集','qpEdit'));
-    el.append(im,info,acts);
-    if(open){ // その場でキャラを選ぶ（キャラのタブに行かんでええように）
-      const qp=document.createElement('div');qp.className='qpick';qp.setAttribute('role','listbox');qp.setAttribute('aria-label','キャラを選ぶ');
-      for(const it of items){const q=document.createElement('button');q.type='button';q.className='qp'+(it.id===c.id?' on':'');q.dataset.id=it.id;q.setAttribute('role','option');q.setAttribute('aria-selected',String(it.id===c.id));
-        const fi=document.createElement('img');fi.alt='';fi.src=faceURL(it);const nm=document.createElement('span');nm.textContent=charName(it);const jb=document.createElement('small');jb.textContent=WEAPONS[it.weapon].name;q.append(fi,nm,jb);qp.appendChild(q);}
-      const nw=document.createElement('button');nw.type='button';nw.className='qp new';nw.dataset.act='qpNew';nw.textContent='＋ 新しく作る';qp.appendChild(nw);
-      el.appendChild(qp);
-      requestAnimationFrame(()=>{const on=qp.querySelector('.qp.on');if(on)qp.scrollLeft=Math.max(0,on.offsetLeft-qp.offsetLeft-8);});
-    }
+    el.textContent='';
+    const info=elx('div','info');info.append(elx('span','','使うキャラ'),elx('b','',charName(c)),elx('span','',jw(c)));
+    const acts=elx('div','nc-acts');acts.append(miniBtn('変える','qpChange'),miniBtn(c.sample?'カスタム':'編集','qpEdit'));
+    el.append(imgx(faceURL(c),'face'),info,acts);
   }
 }
 function prof(){if(!DATA.profile||typeof DATA.profile!=='object')DATA.profile={};const p=DATA.profile;if(!p.id){p.id='u'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);save();}return p;}
@@ -3053,7 +3332,7 @@ function profName(){return cleanName(prof().name)||'ななし';}
 function cleanMsg(t){return String(t==null?'':t).replace(/[\u0000-\u001f\u007f-\u009f\u200b\u200e\u200f\u2028-\u202e\u2060-\u2064\u2066-\u2069\ufeff]/g,'').trim().slice(0,30);}
 function renderProfile(){const p=prof();if(document.activeElement!==$('#pfName'))$('#pfName').value=p.name||'';if(document.activeElement!==$('#pfMsg'))$('#pfMsg').value=p.msg||'';}
 function saveProfile(){
-  const p=prof();p.name=cleanName($('#pfName').value);p.msg=cleanMsg($('#pfMsg').value);save();toast('プロフィールを保存した');
+  const p=prof();p.name=cleanName($('#pfName').value);p.msg=cleanMsg($('#pfMsg').value);save();toast('プロフィールを保存した');renderHome();
   const mine=RANK&&RANK.find(r=>r.id===p.id);if(mine)pushRank(mine.s,mine.c,true);
 }
 /* ---- ランキング（組手で何人抜いたか。claude.ai では db、GitHub 版は Firebase で全員と共有） ---- */
@@ -3561,27 +3840,23 @@ function playFx(e){
 function init(){
   load();A.on=DATA.sound!==false;
   cv=$('#cv');ctx=cv.getContext('2d');bgC=document.createElement('canvas');
-  renderMenu();showTab(DATA.tab||'battle');
+  DATA.tab='home';renderMenu();showTab('home');
   if(BUILD_GH){$('#nameOff').textContent='サーバーにつながらへん。電波を確かめて、開き直してな。';$('#onOff').textContent='サーバーにつながらへん。電波を確かめて、開き直してな。';}
   initNames();renderPadStatus();
 
   $('#newChar').addEventListener('click',()=>openEditor(null,false));
-  $('#myList').addEventListener('click',e=>{
-    const card=e.target.closest('.card');if(!card)return;const id=card.dataset.id,btn=e.target.closest('[data-act]');
-    if(btn&&btn.dataset.act==='edit'){const c=findChar(id);openEditor(c,!!c.sample);return;}
-    if(btn&&btn.dataset.act==='skin'){
-      const c=findChar(id),n=personSkins(c.person).length,next=((c.skin||0)+1)%Math.max(1,n);
-      if(c.sample){DATA.sampleSkin=DATA.sampleSkin||{};DATA.sampleSkin[id]=next;}else c.skin=next;
-      save();renderMenu();return;
-    }
-    if(btn&&btn.dataset.act==='del'){
-      if(btn.classList.contains('armed')){DATA.favs=DATA.favs.filter(c=>c.id!==id);if(DATA.opp===id)DATA.opp='rand';save();renderMenu();toast('消した');}
+  $('#myList').addEventListener('click',e=>{const t=e.target.closest('.ctile');if(!t)return;DATA.sel=t.dataset.id;save();renderMenu();});
+  $('#charBar').addEventListener('click',e=>{
+    const btn=e.target.closest('[data-act]');if(!btn)return;const id=DATA.sel,c=findChar(id);if(!c)return;const a=btn.dataset.act;
+    if(a==='edit'){openEditor(c,!!c.sample);return;}
+    if(a==='practice'){practiceStart(c,'menu');return;}
+    if(a==='skin'){const n=personSkins(c.person).length,next=((c.skin||0)+1)%Math.max(1,n);
+      if(c.sample){DATA.sampleSkin=DATA.sampleSkin||{};DATA.sampleSkin[id]=next;}else c.skin=next;save();renderMenu();return;}
+    if(a==='del'){
+      if(btn.classList.contains('armed')){DATA.favs=DATA.favs.filter(x=>x.id!==id);if(DATA.opp===id)DATA.opp='rand';DATA.sel=null;save();renderMenu();toast('消した');}
       else{btn.classList.add('armed');btn.textContent='ほんまに消す？';setTimeout(()=>{if(btn.isConnected){btn.classList.remove('armed');btn.textContent='削除';}},3000);}
-      return;
     }
-    DATA.sel=id;save();renderMenu();
   });
-  $('#myList').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('card')){e.preventDefault();DATA.sel=e.target.dataset.id;save();renderMenu();}});
   $('#oppSel').addEventListener('change',e=>{DATA.opp=e.target.value;save();});
   $('#diffSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;DATA.diff=b.dataset.v;save();renderMenu();});
   $('#numSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;DATA.players=+b.dataset.v;save();renderMenu();});
@@ -3600,7 +3875,7 @@ function init(){
   window.addEventListener('gamepadconnected',e=>{toast(`コントローラー接続：${String(e.gamepad&&e.gamepad.id||'').slice(0,28)}`);renderPadStatus();});
   window.addEventListener('gamepaddisconnected',()=>{toast('コントローラーが外れた');PAD.active=false;$('#battle').classList.remove('padmode');renderPadStatus();});
   $('#battle').addEventListener('pointerdown',e=>{if(PAD.active&&e.pointerType==='touch'){PAD.active=false;$('#battle').classList.remove('padmode');applyLayout();}},true);
-  $('#chapList').addEventListener('click',e=>{const b=e.target.closest('.chap');if(!b||b.disabled)return;storyStart(+b.dataset.ch);});
+  $('#chapList').addEventListener('click',e=>{const b=e.target.closest('.chap');if(!b||b.disabled)return;storyStart(DATA.arcSel|0,+b.dataset.ch);});
   $('#yagiSel').addEventListener('change',e=>{DATA.yagiFace=e.target.value;save();});
   $('#talk').addEventListener('click',e=>{if(e.target.closest('#talkSkip'))return;talkNext();});
   $('#talkSkip').addEventListener('click',e=>{e.stopPropagation();talkSkip();});
@@ -3634,17 +3909,17 @@ function init(){
     if(k==='illust')ED.face=null;else if(k!=='face')ED.skin=+k;
     renderPersonUI();
   });
-  $('#tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(!b)return;showTab(b.dataset.tab);save();const t=$('#tabs');if(window.scrollY>t.offsetTop)window.scrollTo(0,t.offsetTop);});
-  $('#tabs').addEventListener('keydown',e=>{if(e.key!=='ArrowRight'&&e.key!=='ArrowLeft')return;const i=TABS.indexOf(DATA.tab),n=TABS[(i+(e.key==='ArrowRight'?1:TABS.length-1))%TABS.length];showTab(n);save();$('#tabs').querySelector(`[data-tab="${n}"]`).focus();e.preventDefault();});
   $('#menu').addEventListener('click',e=>{
-    const nc=e.target.closest('.nowchar');if(!nc)return;
-    const act=e.target.closest('[data-act]'),q=e.target.closest('.qp[data-id]');
-    if(q){DATA.sel=q.dataset.id;save();nc.classList.remove('open');renderMenu();toast(`「${charName(findChar(DATA.sel))}」にした`);return;}
-    if(!act)return;
-    if(act.dataset.act==='qpToggle'){nc.classList.toggle('open');renderNowChar();return;}
-    if(act.dataset.act==='qpEdit'){const c=findChar(DATA.sel)||SAMPLES[0];nc.classList.remove('open');openEditor(c,!!c.sample);return;}
-    if(act.dataset.act==='qpNew'){nc.classList.remove('open');openEditor(null,false);}
+    if(e.target.closest('#picker'))return;
+    const op=e.target.closest('[data-open]');if(op){showTab(op.dataset.open,TABS.includes(DATA.tab));save();return;}
+    if(e.target.closest('.sh-back')){sheetBack();return;}
+    const act=e.target.closest('.nowchar [data-act]');
+    if(act){if(act.dataset.act==='qpChange')showTab('chara',true);else if(act.dataset.act==='qpEdit'){const c=findChar(DATA.sel)||SAMPLES[0];openEditor(c,!!c.sample);}return;}
+    const pb=e.target.closest('.pickbtn');if(pb){openPickFor(pb.dataset.pick);return;}
   });
+  $('#picker').addEventListener('click',e=>{if(e.target===$('#picker')||e.target.closest('#pkClose')){closePicker();return;}const b=e.target.closest('.pk');if(!b||!PK)return;const f=PK.onPick;closePicker();f(b.dataset.v);});
+  $('#arcSeg').addEventListener('click',e=>{const b=e.target.closest('button[data-arc]');if(!b)return;DATA.arcSel=+b.dataset.arc;save();renderStory();$('#chapList').scrollTop=0;});
+  window.addEventListener('keydown',e=>{if(e.key!=='Escape'||$('#menu').hidden)return;if(!$('#picker').hidden){closePicker();e.preventDefault();return;}if(TABS.includes(DATA.tab)){sheetBack();e.preventDefault();}});
   $('#pfSave').addEventListener('click',saveProfile);
   $('#kmStart').addEventListener('click',()=>kumiteStart());
   $('#ibSend').addEventListener('click',sendInbox);
@@ -3662,7 +3937,8 @@ function init(){
   $('#lbCpu').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;NET.cpu=+b.dataset.v;hostSync(false);renderLobby();});
   $('#fightBtn').addEventListener('click',()=>{const c=findChar(DATA.sel)||SAMPLES[0];startBattle(c);});
 
-  $('#edBack').addEventListener('click',()=>{if(NET.role){showLobby();return;}show('menu');if(TABS.includes(EDFROM))showTab(EDFROM);renderMenu();window.scrollTo(0,0);});
+  $('#edBack').addEventListener('click',()=>{if(NET.role){showLobby();return;}show('menu');renderMenu();applySheets();});
+  $('#edTabs').addEventListener('click',e=>{const b=e.target.closest('button[data-et]');if(b)edTab(b.dataset.et);});
   $('#edName').addEventListener('input',e=>{ED.name=e.target.value;if(!ED.face)$('#edFace').src=faceURL(Object.assign({},ED,{name:ED.name||'new'}));});
   $('#jobSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;ED.job=b.dataset.v;if(!JOBS[ED.job].weapons.includes(ED.weapon))ED.weapon=JOBS[ED.job].weapons[0];renderEditor();});
   $('#wpnList').addEventListener('click',e=>{const b=e.target.closest('.wpn');if(!b||b.disabled||!wpnOK(b.dataset.v,ED.person))return;ED.weapon=b.dataset.v;renderEditor();});
@@ -3701,6 +3977,7 @@ function init(){
   });
   $('#edFight').addEventListener('click',()=>{if(NET.role){netSetMyChar(edResult());showLobby();return;}
     if(EDFROM==='kumite'){const c=edResult();if(c.id&&DATA.favs.some(x=>x.id===c.id)){DATA.sel=c.id;save();}kumiteStart(c);return;}
+    if(EDFROM==='story'){$('#edSave').click();while(DATA.tab!=='story'&&SHEETS.length)DATA.tab=SHEETS.pop();show('menu');renderMenu();applySheets();return;}
     startBattle(edResult());});
 
   const stickEl=$('#stick'),hls=[...stickEl.querySelectorAll('.hl')];
@@ -3743,9 +4020,8 @@ function init(){
   $('#pMenu').addEventListener('click',()=>{if(G&&G.practice){practiceExit();return;}toMenu();});
   $('#pDummy').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||!PRACTICE)return;practiceSetDummy(b.dataset.v);});
   $('#edPractice').addEventListener('click',()=>practiceStart(edResult(),'editor'));
-  $('#charPractice').addEventListener('click',()=>practiceStart(findChar(DATA.sel)||SAMPLES[0],'menu'));
   $('#resMenu').addEventListener('click',()=>{if(G&&G.net&&G.net.host){netToLobby();return;}toMenu();});
-  $('#resAgain').addEventListener('click',()=>{if(G&&G.net){if(G.net.host)netStart();return;}if(G&&G.kumite&&KUMITE){if(KUMITE.done)kumiteStart(KUMITE.p1);else kumiteNext();return;}if(STORYS){if(STORYS.clear)storyStart(0);else storyChapter();}else if(lastCfgs)runBattle();});
+  $('#resAgain').addEventListener('click',()=>{if(G&&G.net){if(G.net.host)netStart();return;}if(G&&G.kumite&&KUMITE){if(KUMITE.done)kumiteStart(KUMITE.p1);else kumiteNext();return;}if(STORYS){if(STORYS.clear){const nx=STORY_ARCS[STORYS.arc+1];storyStart(nx?STORYS.arc+1:STORYS.arc,0);}else storyChapter();}else if(lastCfgs)runBattle();});
 
   const KM={ArrowLeft:'L',KeyA:'L',ArrowRight:'R',KeyD:'R',ArrowUp:'U',KeyW:'U',Space:'U',ArrowDown:'D',KeyS:'D',KeyL:'G'};
   window.addEventListener('keydown',e=>{
