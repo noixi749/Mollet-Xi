@@ -907,7 +907,7 @@ const MEMBER_BUILD={
   sanma:{job:'sword',weapon:'hammer',stats:{atk:4,spd:0,hp:4,def:2,mp:0}},
   kazusa:{job:'gunner',weapon:'shotgun',stats:{atk:3,spd:2,hp:2,def:1,mp:2}},
   bayashi:{job:'mage',weapon:'ninjutsu',stats:{atk:2,spd:2,hp:1,def:1,mp:4}},
-  tatsuya:{job:'robot',weapon:'drill',stats:{atk:3,spd:1,hp:3,def:3,mp:0}},
+  tatsuya:{job:'builder',weapon:'muscle',stats:{atk:4,spd:1,hp:3,def:1,mp:1}}, // 筋肉おばけ
   takeru:{job:'fighter',weapon:'stegoro',stats:{atk:3,spd:0,hp:4,def:3,mp:0}},
   kojimaimo:{job:'mage',weapon:'staff',stats:{atk:2,spd:3,hp:2,def:1,mp:2}},
 };
@@ -3310,7 +3310,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='24';
+const GAME_VER='25';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
