@@ -680,7 +680,7 @@ const JOBS={
   gunner:{name:'銃',hp:-10,walk:3.6,jump:-15,weight:0.95,weapons:['handgun','shotgun','sniper','akimbo'],desc:'撃ちまくり。MPが弾の代わりで、切れたら回復待ち。キックはナイフ。'},
   robot:{name:'ロボ',hp:30,walk:2.8,jump:-12.8,weight:1.4,phys:true,weapons:['rocket','drill','beam'],desc:'硬くて重い。ジャンプ低め。物理キャラなのでカウンターの受付が長い。'},
   samurai:{name:'侍',hp:5,walk:3.9,jump:-15.2,weight:1.0,phys:true,weapons:['iai','nitoryu','ninja'],desc:'刀の達人。出が速くて踏み込みが鋭い。物理キャラなのでカウンターの受付が長い。'},
-  builder:{name:'ボディビルダー',hp:25,walk:3.3,jump:-14,weight:1.3,phys:true,weapons:['muscle','hustle','ishihara'],desc:'筋肉で全部解決する。体力が多くて重い。物理キャラなのでカウンターの受付が長い。'},
+  builder:{name:'ボディビルダー',hp:8,walk:4.4,jump:-15.6,weight:1.12,phys:true,weapons:['muscle','hustle','ishihara'],desc:'筋肉で全部解決する。マッチョは速い。物理キャラなのでカウンターの受付が長い。'},
   goat:{name:'ヤギ',hp:60,walk:3.6,jump:-15,weight:1.2,phys:true,weapons:['horn'],desc:'ストーリーのラスボス専用',hidden:true},
 };
 const WEAPONS={
@@ -789,7 +789,7 @@ function derive(c){
   return {maxHp:Math.round((100+j.hp+10*s.hp)*(t.hp||1)),atkMul:1+0.07*s.atk,defMul:Math.max(0.5,1-0.045*s.def),walk:j.walk*1.1*(1+0.05*s.spd)*(w.walk||1),jump:j.jump*(1+0.012*s.spd)*(w.jump||1),maxMp:40+10*s.mp,mpRegen:(8+1.0*s.mp)/60,weight:j.weight};
 }
 /* 武器ごとの強さの調整（CPU同士の勝率が揃うように合わせた値）。dmg=与えるダメージ、hp=体力 */
-const TUNE={stegoro:{dmg:1.021},tonfa:{dmg:0.968},kenpo:{dmg:0.93},greatsword:{dmg:0.888},katana:{dmg:0.895},hammer:{dmg:0.924},staff:{dmg:1.22},grimoire:{dmg:1.148},ninjutsu:{dmg:1.241},handgun:{dmg:1.481},shotgun:{dmg:1.337},sniper:{dmg:1.298},akimbo:{dmg:1.252},rocket:{dmg:1.064},drill:{dmg:0.966},beam:{dmg:1.117},iai:{dmg:0.696},nitoryu:{dmg:0.914},ninja:{dmg:0.923},muscle:{dmg:0.708},hustle:{dmg:0.76},ishihara:{dmg:0.983}};
+const TUNE={stegoro:{dmg:1.072},tonfa:{dmg:1.028},kenpo:{dmg:0.996},greatsword:{dmg:0.92},katana:{dmg:0.936},hammer:{dmg:0.973},staff:{dmg:1.189},grimoire:{dmg:1.054},ninjutsu:{dmg:1.164},handgun:{dmg:1.61},shotgun:{dmg:1.378},sniper:{dmg:1.283},akimbo:{dmg:1.303},rocket:{dmg:1.118},drill:{dmg:1.046},beam:{dmg:1.156},iai:{dmg:0.724},nitoryu:{dmg:0.947},ninja:{dmg:0.946},muscle:{dmg:0.7},hustle:{dmg:0.811},ishihara:{dmg:0.925}};
 function M(o){return Object.assign({name:'',kind:'melee',startup:6,active:4,recovery:10,dmg:5,hb:null,kb:4,hitstun:15,lift:0,mp:0,dash:0,rise:0,multi:1,inv:0,proj:null,pose:'punch',sfx:'hit',fx:null,fxColor:'#e8452c'},o);}
 const EMPTY=M({kind:'none',startup:0,active:0,recovery:12,pose:'idle'});
 
@@ -844,9 +844,9 @@ function buildMoves(job,weapon){
     if(weapon==='staff') m.S1=M({name:'ファイアボール',kind:'proj',startup:12,active:1,recovery:20,mp:20,pose:'cast',sfx:'magic',proj:{speed:7,w:30,h:30,dmg:13,life:150,kind:'fire',color:col}});
     if(weapon==='grimoire') m.S1=M({name:'追尾弾',kind:'proj',startup:14,active:1,recovery:22,mp:22,pose:'cast',sfx:'magic',proj:{speed:4.2,w:26,h:26,dmg:11,life:230,kind:'orb',color:col,homing:0.35}});
     if(weapon==='ninjutsu') m.S1=M({name:'火遁・大玉',kind:'proj',startup:26,active:1,recovery:18,mp:30,pose:'sign',sfx:'magic',proj:{speed:8,w:54,h:54,dmg:22,life:140,kind:'fire',color:col,kb:9}});
-    m.S2=M({name:weapon==='grimoire'?'雷柱':(weapon==='ninjutsu'?'火遁・火柱':'火柱'),startup:8,active:16,recovery:22,dmg:15,hb:{x:34,y:130,w:54,h:190},kb:3,lift:-12,hitstun:28,inv:6,pose:'upper',sfx:'magic',fx:'pillar',fxColor:col});
+    m.S2=M({name:weapon==='grimoire'?'雷柱':(weapon==='ninjutsu'?'火遁・火柱':'火柱'),startup:5,active:18,recovery:22,dmg:15,hb:{x:92,y:140,w:150,h:250},kb:3,lift:-12,hitstun:28,inv:6,pose:'cast',sfx:'magic',fx:'pillar',fxColor:col,fxW:130,fxH:260});
     m.S3=M({name:weapon==='ninjutsu'?'変わり身':'ワープ',kind:'warp',startup:10,active:1,recovery:10,warp:170,inv:22,pose:weapon==='ninjutsu'?'sign':'cast',sfx:'warp'});
-    if(weapon==='ninjutsu'){m.S2.startup=12;m.S2.dmg=18;}
+    if(weapon==='ninjutsu'){m.S2.startup=7;m.S2.dmg=18;m.S2.fxW=150;m.S2.hb.w=170;}
   }
   if(job==='gunner'){
     const B={kind:'bullet',color:INK};
@@ -944,6 +944,7 @@ function buildMoves(job,weapon){
       m.S3=M({name:'石原ボディプレス',startup:12,active:18,recovery:16,rise:-10,dash:5,dmg:18,hb:{x:20,y:30,w:80,h:60},kb:6,lift:-6,hitstun:22,pose:'stomp',sfx:'boom',armor:1});
     }
   }
+  if(job==='builder'){for(const k in m){const v=m[k];v.startup=Math.max(3,Math.round(v.startup*0.72));v.recovery=Math.round(v.recovery*0.72);if(v.dash)v.dash*=1.15;}} // マッチョは速い
   if(job==='goat'){
     m.P=M({name:'頭突き',startup:7,active:4,recovery:12,dmg:10,hb:{x:40,y:140,w:42,h:32},kb:6,hitstun:18,pose:'thrust'});
     m.K=M({name:'ヤギキック',startup:8,active:4,recovery:14,dmg:12,hb:{x:56,y:70,w:54,h:30},kb:7,hitstun:18,pose:'kick'});
@@ -2930,7 +2931,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='15';
+const GAME_VER='16';
 const TABS=['battle','kumite','story','chara','settings'];
 function showTab(t){
   if(!TABS.includes(t))t='battle';DATA.tab=t;
