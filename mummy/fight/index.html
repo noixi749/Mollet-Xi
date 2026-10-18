@@ -942,12 +942,13 @@ const TRAITS={
   rion:{name:'気合い',desc:'必殺ゲージが1.25倍たまりやすい',sg:1.25},
   allen:{name:'銃オタク',desc:'銃を選ぶと技のMP消費が0.7倍',job:'gunner',mpCost:0.7},
   tanigucci:{name:'バケモノ',desc:'相手が女（りおん・小島妹）やと攻撃力1.75倍'},
-  aniki:{name:'おいタコ',desc:'攻撃のたびに「おいタコ」。攻撃力1.1倍',atk:1.1},
+  aniki:{name:'おいタコ',desc:'攻撃のたびに「おいタコ」。体力1/3以下で攻撃力1.3倍、1/5以下で1.75倍'},
 };
 function traitInfo(person){return TRAITS[person]||null;} // 表示用（ジョブの条件は問わへん）
 function traitOf(c){const t=c&&TRAITS[c.person];if(!t)return null;if(t.job&&c.job!==t.job)return null;return t;}
 function statCap(c){const t=traitOf(c);return 10+((t&&t.pts)||0);}
 function personOf(f){return f&&f.cfg?f.cfg.person||'':'';}
+function anikiRage(f){if(personOf(f)!=='aniki'||!(f.hp>0))return 1;const r=f.hp/f.maxHp;return r<=0.2?1.75:r<=1/3?1.3:1;} // アニキ：追い込まれるほどキレる
 const SAMPLES=ROSTER.length?ROSTER.map(p=>Object.assign({id:'m_'+p.id,person:p.id,skin:0,name:'',member:true,sample:true},JSON.parse(JSON.stringify(MEMBER_BUILD[p.id]||{job:'fighter',weapon:'stegoro',stats:{atk:2,spd:2,hp:2,def:2,mp:2}})))):BASE_SAMPLES;
 let NAMES={};
 function personById(id){if(!id)return null;return ROSTER.find(p=>p.id===id)||(DATA.people||[]).find(p=>p.id===id)||null;}
@@ -1926,7 +1927,7 @@ function applyHit(att,def,mv,isProj,dir,pt){
   const guarding=def.onGround&&['idle','walk','crouch','blockstun','land'].includes(def.state)&&(def.gBtn||def.rel===4||def.rel===1);
   if(guarding&&G.frame<=def.justUntil&&mv.kind!=='cstrike'&&!mv.throw&&!mv.unblock){def.justUntil=-1;return doCounter(att,def,mv,isProj,dir,pt);}
   const gucci=personOf(att)==='tanigucci'&&FEMALE.has(personOf(def)); // 谷GUCCI：相手が女やと攻撃力1.75倍のバケモノ
-  const raw=Math.max(1,Math.round(mv.dmg*att.atkMul*(att.pump>0?1.25:1)*def.defMul*(def.pump>0?0.85:1)*(gucci?1.75:1)));
+  const raw=Math.max(1,Math.round(mv.dmg*att.atkMul*(att.pump>0?1.25:1)*def.defMul*(def.pump>0?0.85:1)*(gucci?1.75:1)*anikiRage(att)));
   if(gucci&&G.frame-(att.gucciFx||0)>24){att.gucciFx=G.frame;addText(def.x,def.y-232,'×1.75','#ff4a3d',26);}
   let crushed=false;
   if(guarding&&!mv.throw&&!mv.unblock){
@@ -1943,7 +1944,8 @@ function applyHit(att,def,mv,isProj,dir,pt){
   }
   const wasHurt=def.state==='hitstun'||def.state==='airhit';
   def.combo=wasHurt?def.combo+1:1;att.comboShow=def.combo;att.comboDmg=(wasHurt?att.comboDmg:0)+raw;att.comboT=80;
-  def.hp-=raw;def.move=null;def.flash=8;def.justUntil=-1;def.lastHurt=G.frame;
+  const hp0=def.hp;def.hp-=raw;def.move=null;
+  if(personOf(def)==='aniki'&&def.hp>0){const a=def.maxHp/3,b=def.maxHp*0.2;if(hp0>b&&def.hp<=b)addText(def.x,def.y-215,'アニキ、ブチギレ！','#ff2a1a',34);else if(hp0>a&&def.hp<=a)addText(def.x,def.y-215,'アニキ、キレた！','#ff6a1a',30);}def.flash=8;def.justUntil=-1;def.lastHurt=G.frame;
   if(G.practice&&def.hp<1)def.hp=1;
   const heavy=raw>=15||mv.kind==='cstrike';
   if(def.hp<=0){
@@ -2460,6 +2462,13 @@ function drawTonfa(P){
   ctx.save();ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(hx+ux*14,hy+uy*14);ctx.lineTo(ex-ux*12,ey-uy*12);ctx.stroke();
   ctx.strokeStyle='#8a5a2b';ctx.lineWidth=5;ctx.stroke();ctx.lineWidth=4;ctx.strokeStyle=INK;ctx.beginPath();ctx.moveTo(hx,hy);ctx.lineTo(hx-uy*12,hy+ux*12);ctx.stroke();ctx.restore();
 }
+function drawRage(f){ // アニキがキレてる時の赤いオーラ
+  const m=anikiRage(f);if(m<=1||f.gone||f.out)return;const big=m>1.5,pl=(big?0.55:0.4)+0.18*Math.sin(G.frame*(big?0.5:0.3)),R=big?150:120,g=ctx.createRadialGradient(f.x,f.y-80,10,f.x,f.y-80,R);
+  g.addColorStop(0,`rgba(255,20,10,${pl.toFixed(3)})`);g.addColorStop(0.6,`rgba(200,0,0,${(pl*0.5).toFixed(3)})`);g.addColorStop(1,'rgba(200,0,0,0)');ctx.fillStyle=g;ctx.fillRect(f.x-R,f.y-80-R,R*2,R*2);
+  // 怒りマーク
+  const hx=f.x+f.facing*26,hy=f.y-172+Math.sin(G.frame*0.25)*2,sc=big?1.25:1;ctx.save();ctx.translate(hx,hy);ctx.scale(sc,sc);ctx.strokeStyle='#ff1a1a';ctx.lineWidth=4;ctx.lineCap='round';
+  for(let i=0;i<4;i++){ctx.save();ctx.rotate(i*Math.PI/2);ctx.beginPath();ctx.moveTo(4,-11);ctx.quadraticCurveTo(4,-4,11,-4);ctx.stroke();ctx.restore();}ctx.restore();
+}
 function drawCloneGauge(c){ // 分身の体力（3発）と残り時間
   const x=c.x-27,y=c.y-236;ctx.save();ctx.fillStyle='rgba(20,7,10,.75)';ctx.fillRect(x-3,y-3,60,17);
   for(let i=0;i<3;i++){ctx.fillStyle=i<c.cloneHp?'#7fe3ff':'rgba(255,255,255,.18)';ctx.fillRect(x+i*19,y,16,7);}
@@ -2734,6 +2743,7 @@ function render(){
   for(const f of AFD)for(let i=0;i<f.trail.length;i++)drawGhost(f,f.trail[i],0.1+0.18*(i+1)/f.trail.length);
   const fs=[...AFD].sort((p,q)=>(p.state==='attack'?1:0)-(q.state==='attack'?1:0));
   for(const f of fs)drawGuard(f);
+  for(const f of fs)drawRage(f);
   for(const f of fs){
     if(f.clone){ctx.save();ctx.globalAlpha=0.68;drawFighter(f);ctx.restore();drawCloneGauge(f);continue;}
     if(f.state==='launch'){ctx.save();ctx.translate(f.x,f.y-80);ctx.rotate(f.spin);ctx.translate(-f.x,-(f.y-80));drawFighter(f);ctx.restore();}
@@ -3477,7 +3487,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='32';
+const GAME_VER='33';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
