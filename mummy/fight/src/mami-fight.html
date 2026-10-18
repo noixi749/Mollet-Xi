@@ -306,13 +306,21 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
 .charbar .face{width:64px;height:64px;border-color:var(--hot)}
 .charbar .acts{grid-column:1/-1;display:flex;gap:6px}
 .charbar .acts .mini{flex:1;padding:10px 4px;font-size:12.5px}
-.ctiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
-.ctile{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;background:var(--card);border:2px solid var(--rule);border-radius:12px;padding:8px 4px;color:var(--ink);font:700 12px/1.2 var(--f-body);cursor:pointer;min-width:0}
-.ctile img{width:50px;height:50px;border-radius:50%;border:2px solid var(--ink);object-fit:cover;background:var(--paper)}
+.ctiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:7px}
+.ctile{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--card);border:2px solid var(--rule);border-radius:12px;padding:7px 3px 6px;color:var(--ink);font:700 11.5px/1.2 var(--f-body);cursor:pointer;min-width:0}
+.ctile img{width:44px;height:44px;border-radius:50%;border:2px solid var(--ink);object-fit:cover;background:var(--paper)}
 .ctile span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ctile small{font-size:10.5px;color:var(--ink-soft);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ctile.sel{border-color:var(--hot);box-shadow:0 0 0 2px rgba(255,106,26,.45)}
 .ctile.sel img{border-color:var(--hot)}
+.charbar .trait,#edTrait{font-size:12px;font-weight:700;color:var(--jump);white-space:normal;line-height:1.4}
+.charbar .trait.off{color:var(--ink-soft)}
+.ctile.newtile{border-style:dashed;justify-content:center;color:var(--ink-soft)}
+.ctile.newtile b{font-size:26px;line-height:1;color:var(--ink)}
+.ctile.newtile.big{grid-column:span 2;flex-direction:column;justify-content:center;gap:4px;border-color:var(--hot);color:var(--ink);background:linear-gradient(135deg,rgba(255,138,42,.22),rgba(122,26,14,.25));min-height:76px}
+.ctile.newtile.big b{font-family:var(--f-display);font-weight:400;font-size:22px}
+.ctile.newtile.big small{display:block!important;white-space:normal;text-align:center;font-size:10.5px;line-height:1.35}
+#charSeg{margin-bottom:2px}
 .mytag{position:absolute;top:4px;left:4px;font:700 9px/1 var(--f-body);font-style:normal;background:var(--blue);color:#fff;border-radius:999px;padding:2px 5px}
 .edtabs{flex:none;width:100%;max-width:960px;margin:0 auto 8px;box-sizing:border-box;padding:0 16px;gap:6px}
 .edtabs button{font-size:12.5px;padding:11px 2px;letter-spacing:-.03em}
@@ -347,6 +355,8 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
   .pickbtn{min-height:50px;padding:6px 10px}
   .seg.wide button{padding:10px 4px}
 }
+@media (orientation:landscape) and (max-height:600px){.ctiles{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}.ctile{padding:5px 2px 4px;gap:2px}.ctile img{width:36px;height:36px}.charbar .face{width:52px;height:52px}.charbar{padding:8px 10px;gap:6px 10px}}
+@media (orientation:portrait) and (max-height:720px){.ctile{padding:5px 2px 4px;gap:2px}.ctile img{width:38px;height:38px}.charbar .face{width:52px;height:52px}.charbar .trait{font-size:11px}}
 @media (prefers-reduced-motion:reduce){.sheet,.pk-panel{animation:none}.tile,.stile,.hero{transition:none}}
 @media (prefers-reduced-motion:reduce){.btn{transition:none}#bS.ready,.talk-next{animation:none}}
 </style>
@@ -475,13 +485,17 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
         <div class="col-a">
           <div class="charbar" id="charBar"></div>
           <div class="row-actions stretch">
-            <button class="btn small" id="newChar" type="button">＋ 新しく作る</button>
+            <button class="btn small primary" id="newChar" type="button">＋ 作成</button>
             <button class="btn small ghost" type="button" data-open="names">名前を変える</button>
             <button class="btn small ghost" type="button" data-open="profile">プロフィール</button>
           </div>
-          <p class="note" id="myNote"></p>
+          <p class="note" id="myNote" hidden></p>
         </div>
         <div class="col-b">
+          <div class="seg wide" id="charSeg" role="tablist" aria-label="キャラの種類">
+            <button type="button" data-v="preset">プリセット</button>
+            <button type="button" data-v="orig">オリジナル</button>
+          </div>
           <div id="myList" class="ctiles"></div>
         </div>
       </div>
@@ -603,6 +617,7 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
             <label class="lbl" for="edName">名前</label>
             <input type="text" id="edName" maxlength="10" placeholder="10文字まで" autocomplete="off">
             <span class="note" id="edNameNote"></span>
+            <span class="note trait" id="edTrait"></span>
           </div>
         </div>
         <div class="field">
@@ -631,7 +646,7 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
       <div class="edpane block" data-ep="stat" hidden>
         <div class="block-head">
           <h3>ステータス</h3>
-          <span class="pts">残り <b id="ptsLeft">0</b> / 10</span>
+          <span class="pts">残り <b id="ptsLeft">0</b> / <span id="ptsMax">10</span></span>
         </div>
         <div id="statRows" class="block" style="gap:10px"></div>
         <div class="derived" id="derived"></div>
@@ -900,7 +915,7 @@ const MEMBER_BUILD={
   sanma:{job:'sword',weapon:'hammer',stats:{atk:4,spd:0,hp:4,def:2,mp:0}},
   kazusa:{job:'gunner',weapon:'shotgun',stats:{atk:3,spd:2,hp:2,def:1,mp:2}},
   bayashi:{job:'mage',weapon:'ninjutsu',stats:{atk:2,spd:2,hp:1,def:1,mp:4}},
-  tatsuya:{job:'builder',weapon:'muscle',stats:{atk:4,spd:1,hp:3,def:1,mp:1}}, // 筋肉おばけ
+  tatsuya:{job:'builder',weapon:'muscle',stats:{atk:6,spd:2,hp:4,def:2,mp:1}}, // 筋肉おばけ（ボディビルダーなら15ポイント）
   takeru:{job:'fighter',weapon:'stegoro',stats:{atk:3,spd:0,hp:4,def:3,mp:0}},
   kojimaimo:{job:'mage',weapon:'staff',stats:{atk:2,spd:3,hp:2,def:1,mp:2}},
   allen:{job:'gunner',weapon:'akimbo',stats:{atk:2,spd:3,hp:2,def:1,mp:2}}, // 銃オタク
@@ -908,6 +923,23 @@ const MEMBER_BUILD={
   aniki:{job:'robot',weapon:'rocket',stats:{atk:3,spd:1,hp:3,def:2,mp:1}}, // 攻撃のたびに「おいタコ」
 };
 const FEMALE=new Set(['rion','kojimaimo']); // 女として登録（谷GUCCIの特効）
+/* 人物ごとの特性。job があるものはそのジョブを選んだ時だけ効く。hp/atk/spd/mpRegen は倍率、def は受けるダメージの倍率、pts はステータスの振り分け追加、sg は必殺ゲージのたまりやすさ、mpCost は技のMP消費 */
+const TRAITS={
+  yagi:{name:'しぶとい',desc:'体力1.15倍',hp:1.15},
+  sanma:{name:'剛腕',desc:'大剣ジョブを選ぶと攻撃力1.15倍',job:'sword',atk:1.15},
+  kazusa:{name:'メカ好き',desc:'ロボを選ぶと体力・攻撃・防御・速さが全部1.15倍',job:'robot',hp:1.15,atk:1.15,def:1/1.15,spd:1.15},
+  bayashi:{name:'瞑想',desc:'MPの回復が1.3倍',mpRegen:1.3},
+  tatsuya:{name:'筋肉おばけ',desc:'ボディビルダーを選ぶとステータスの振り分けが+5（15ポイント）',job:'builder',pts:5},
+  takeru:{name:'タフ',desc:'受けるダメージが0.9倍',def:0.9},
+  kojimaimo:{name:'韋駄天',desc:'速さ1.25倍',spd:1.25},
+  rion:{name:'気合い',desc:'必殺ゲージが1.25倍たまりやすい',sg:1.25},
+  allen:{name:'銃オタク',desc:'銃を選ぶと技のMP消費が0.7倍',job:'gunner',mpCost:0.7},
+  tanigucci:{name:'バケモノ',desc:'相手が女（りおん・小島妹）やと攻撃力1.75倍'},
+  aniki:{name:'おいタコ',desc:'攻撃のたびに「おいタコ」。攻撃力1.1倍',atk:1.1},
+};
+function traitInfo(person){return TRAITS[person]||null;} // 表示用（ジョブの条件は問わへん）
+function traitOf(c){const t=c&&TRAITS[c.person];if(!t)return null;if(t.job&&c.job!==t.job)return null;return t;}
+function statCap(c){const t=traitOf(c);return 10+((t&&t.pts)||0);}
 function personOf(f){return f&&f.cfg?f.cfg.person||'':'';}
 const SAMPLES=ROSTER.length?ROSTER.map(p=>Object.assign({id:'m_'+p.id,person:p.id,skin:0,name:'',member:true,sample:true},JSON.parse(JSON.stringify(MEMBER_BUILD[p.id]||{job:'fighter',weapon:'stegoro',stats:{atk:2,spd:2,hp:2,def:2,mp:2}})))):BASE_SAMPLES;
 let NAMES={};
@@ -1020,7 +1052,10 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 function derive(c){
   const j=JOBS[c.job],s=c.stats;
   const w=WEAPONS[c.weapon]||{},t=TUNE[c.weapon]||{};
-  return {maxHp:Math.round((100+j.hp+10*s.hp)*(t.hp||1)),atkMul:1+0.07*s.atk,defMul:Math.max(0.5,1-0.045*s.def)*(t.def||1),walk:j.walk*1.1*(1+0.05*s.spd)*(w.walk||1),jump:j.jump*(1+0.012*s.spd)*(w.jump||1),maxMp:40+10*s.mp,mpRegen:(8+1.0*s.mp)/60,weight:j.weight};
+  const d={maxHp:Math.round((100+j.hp+10*s.hp)*(t.hp||1)),atkMul:1+0.07*s.atk,defMul:Math.max(0.5,1-0.045*s.def)*(t.def||1),walk:j.walk*1.1*(1+0.05*s.spd)*(w.walk||1),jump:j.jump*(1+0.012*s.spd)*(w.jump||1),maxMp:40+10*s.mp,mpRegen:(8+1.0*s.mp)/60,weight:j.weight};
+  const tr=traitOf(c); // 人物の特性
+  if(tr){if(tr.hp)d.maxHp=Math.round(d.maxHp*tr.hp);if(tr.atk)d.atkMul*=tr.atk;if(tr.def)d.defMul*=tr.def;if(tr.spd){d.walk*=tr.spd;d.jump*=1+(tr.spd-1)*0.3;}if(tr.mpRegen)d.mpRegen*=tr.mpRegen;}
+  return d;
 }
 /* 武器ごとの強さの調整（CPU同士の勝率が揃うように合わせた値）。dmg=与えるダメージ、hp=体力 */
 const TUNE={stegoro:{dmg:1.072},tonfa:{dmg:1.028},kenpo:{dmg:0.996},greatsword:{dmg:0.96},katana:{dmg:0.936},hammer:{dmg:0.973},staff:{dmg:1.189},grimoire:{dmg:1.054},ninjutsu:{dmg:1.164},handgun:{dmg:1.61},shotgun:{dmg:1.378},sniper:{dmg:1.283},akimbo:{dmg:1.15},rocket:{dmg:1.118},drill:{dmg:1.046},beam:{dmg:1.156},iai:{dmg:0.724},nitoryu:{dmg:1.0},ninja:{dmg:0.946},muscle:{dmg:1,hp:0.88},hustle:{dmg:1},ishihara:{dmg:1.4,hp:0.6,fixed:true}};
@@ -1556,6 +1591,7 @@ function makeFighter(cfg,idx){
   f.mag=cfg.weapon==='handgun'?8:0;
   f.phys=!!(JOBS[cfg.job]&&JOBS[cfg.job].phys);f.justWin=cfg.weapon==='kenpo'?Math.round(JUST_PHYS*2.5):cfg.weapon==='iai'?20:f.phys?JUST_PHYS:JUST; // 拳法は受けの達人（2.5倍）、居合は見切りの達人
   f.justLock=Math.max(f.phys?30:20,Math.round(f.justWin*1.8)); // 連打で受付を出しっぱなしにでけへんように
+  {const tr=traitOf(cfg);f.sgMul=(tr&&tr.sg)||1;f.mpCost=(tr&&tr.mpCost)||1;}
   f.goat=cfg.goat||null;f.boss=!!cfg.boss;f.aiLevel=cfg.aiLevel||null;if(f.boss)f.ranged=false;
   return f;
 }
@@ -1675,11 +1711,12 @@ function startMove(f,key){
   if(air&&key!=='SL'&&(key[0]==='S'&&key!=='SP'||key==='CT')){key=key==='S3'?'K':'P';mv=f.moves[key];}
   const useAmmo=f.mag>0&&mv.proj&&key!=='SP';
   if(useAmmo&&f.ammo<=0){startReload(f);return;}
-  if(mv.mp>0&&f.mp<mv.mp){
+  const need=mv.mp>0?Math.max(1,Math.round(mv.mp*(f.mpCost||1))):0;
+  if(need>0&&f.mp<need){
     if(key[0]==='S'&&f.moves.P.mp<=f.mp){key='P';mv=f.moves.P;}
     else{Object.assign(f,{state:'attack',move:EMPTY,moveKey:'X',moveT:0,air,hits:0,lastHit:-99});sfx('empty');addText(f.x,f.y-185,'MP切れ',MPC,22);return;}
   }
-  if(mv.mp>0)f.mp-=mv.mp;
+  if(need>0)f.mp-=need;
   if(f.mag>0&&mv.proj&&key!=='SP'){const n=Math.max(1,Math.min(mv.proj.burst||1,f.ammo));f.ammo-=n;f.shotN=n;}
   Object.assign(f,{state:'attack',move:mv,moveKey:key,moveT:0,air,hits:0,lastHit:-99,armorUsed:0});
   if(personOf(f)==='aniki'&&key!=='RL'&&key!=='SL'&&G.frame-(f.takoFx||0)>18){f.takoFx=G.frame;addText(f.x+f.facing*30,f.y-205,'おいタコ','#ff8a3d',26);} // アニキ
@@ -1916,8 +1953,8 @@ function applyHit(att,def,mv,isProj,dir,pt){
   }else if(!def.onGround||mv.lift){def.state='airhit';def.onGround=false;def.vy=mv.lift||-7;def.vx=dir*(mv.kb*0.5+2)/def.weight;}
   else{def.state='hitstun';def.t=mv.hitstun;def.vx=dir*mv.kb*1.15/def.weight;}
   if(crushed){if(def.state==='hitstun')def.t=Math.max(def.t,44);def.mpFlash=40;sfx('heavy');addText(def.x,def.y-205,'ガードクラッシュ！','#ff4a3d',34);}
-  if(!mv.sp)att.sg=Math.min(100,(att.sg||0)+raw*0.8);
-  def.sg=Math.min(100,(def.sg||0)+raw*0.45);
+  if(!mv.sp)att.sg=Math.min(100,(att.sg||0)+raw*0.8*(att.sgMul||1));
+  def.sg=Math.min(100,(def.sg||0)+raw*0.45*(def.sgMul||1));
   if(def.boss&&!def.phase2&&def.hp>0&&def.hp<def.maxHp*0.5){
     def.phase2=true;def.walk*=1.2;def.aiLevel='hard';
     if(def.moves.S1.proj)def.moves.S1=Object.assign({},def.moves.S1,{proj:Object.assign({},def.moves.S1.proj,{burst:2})});
@@ -2777,7 +2814,7 @@ function renderMenu(){
   renderChara(items);
   const sel=$('#oppSel');sel.textContent='';addOpt(sel,'rand','ランダム（マミー会から）');
   const g1=document.createElement('optgroup');g1.label='マミー会';SAMPLES.forEach(c=>addOpt(g1,c.id,`${charName(c)}（${jw(c)}）`));sel.appendChild(g1);
-  if(DATA.favs.length){const g2=document.createElement('optgroup');g2.label='お気に入り';DATA.favs.forEach(c=>addOpt(g2,c.id,`${charName(c)}（${jw(c)}）`));sel.appendChild(g2);}
+  if(DATA.favs.length){const g2=document.createElement('optgroup');g2.label='オリジナル';DATA.favs.forEach(c=>addOpt(g2,c.id,`${charName(c)}（${jw(c)}）`));sel.appendChild(g2);}
   if(DATA.opp!=='rand'&&!findChar(DATA.opp))DATA.opp='rand';sel.value=DATA.opp;
   for(const b of $('#diffSeg').children){b.classList.toggle('on',b.dataset.v===DATA.diff);b.setAttribute('aria-pressed',b.dataset.v===DATA.diff);}
   for(const b of $('#numSeg').children){const on=+b.dataset.v===(DATA.players||2);b.classList.toggle('on',on);b.setAttribute('aria-pressed',String(on));}
@@ -2796,17 +2833,25 @@ function renderMenu(){
 }
 function elx(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
 function imgx(src,cls){const im=document.createElement('img');im.alt='';if(cls)im.className=cls;im.src=src;return im;}
-function renderChara(items){ // キャラ一覧（タイル）と選んだキャラの操作
+const PRESET_BY_JOB=[['fighter','tanigucci'],['sword','sanma'],['mage','bayashi'],['gunner','allen'],['robot','aniki'],['samurai','rion'],['builder','tatsuya']]; // ジョブごとの代表
+function presetChars(){const r=PRESET_BY_JOB.map(([j,id])=>findChar('m_'+id)).filter(Boolean);return r.length?r:SAMPLES.map(s=>findChar(s.id));}
+function renderChara(items){ // キャラ一覧（プリセット／オリジナル）と選んだキャラの操作
   const list=$('#myList');list.textContent='';
-  for(const c of items){
+  if(DATA.charTab!=='preset'&&DATA.charTab!=='orig')DATA.charTab='orig'; // 基本は自分で作る
+  const tab=DATA.charTab,presets=presetChars();
+  for(const b of $('#charSeg').children){const on=b.dataset.v===tab;b.classList.toggle('on',on);b.setAttribute('aria-selected',String(on));b.setAttribute('role','tab');b.textContent=b.dataset.v==='preset'?`プリセット（${presets.length}）`:`オリジナル（${DATA.favs.length}）`;}
+  if(tab==='orig'){const nb=elx('button','ctile newtile big');nb.type='button';nb.dataset.new='1';nb.append(elx('b','','＋ 作成'),elx('small','','顔・ジョブ・武器・ステータスを決めて自分のキャラを作る'));list.appendChild(nb);}
+  const shown=tab==='orig'?DATA.favs:presets;
+  for(const c of shown){
     const on=c.id===DATA.sel,b=elx('button','ctile'+(on?' sel':''));b.type='button';b.dataset.id=c.id;b.setAttribute('aria-pressed',String(on));
-    b.append(imgx(faceURL(c)),elx('span','',charName(c)),elx('small','',WEAPONS[c.weapon].name));
-    if(!c.sample)b.appendChild(elx('i','mytag','MY'));
+    b.append(imgx(faceURL(c)),elx('span','',charName(c)),elx('small','',tab==='preset'?JOBS[c.job].name:WEAPONS[c.weapon].name));
     list.appendChild(b);
   }
+
   const c=findChar(DATA.sel)||items[0],bar=$('#charBar');bar.textContent='';
-  const info=elx('div','info'),nb=elx('b','',charName(c));nb.appendChild(elx('span','chip',c.sample?(c.member?'マミー会':'サンプル'):'お気に入り'));
+  const info=elx('div','info'),nb=elx('b','',charName(c));nb.appendChild(elx('span','chip',c.sample?(c.member?'プリセット':'サンプル'):'オリジナル'));
   info.append(elx('span','','使うキャラ'),nb,elx('span','pname',jw(c)),elx('span','',STATS.map(([k,l])=>`${l.slice(0,1)}${c.stats[k]}`).join(' ')));
+  {const ti=traitInfo(c.person);if(ti){const on=!!traitOf(c);info.appendChild(elx('span','trait'+(on?'':' off'),`特性「${ti.name}」${ti.desc}`+(on?'':'（今のジョブでは無効）')));}}
   const acts=elx('div','acts');acts.append(miniBtn(c.sample?'カスタム':'編集','edit'));
   if(c.person&&personSkins(c.person).length>1)acts.append(miniBtn('スキン','skin'));
   if(!c.sample)acts.append(miniBtn('削除','del'));
@@ -2838,7 +2883,7 @@ function openPickFor(kind){
   if(kind==='opp'){
     const mk=c=>({v:c.id,label:charName(c),sub:WEAPONS[c.weapon].name,img:faceURL(c)});
     const gs=[{items:[{v:'rand',label:'ランダム',sub:'マミー会から',sw:'linear-gradient(135deg,#ffd75e,#ff7a1f)',mark:'?'}]},{label:'マミー会',items:SAMPLES.map(s=>mk(findChar(s.id)))}];
-    if(DATA.favs.length)gs.push({label:'お気に入り',items:DATA.favs.map(mk)});
+    if(DATA.favs.length)gs.push({label:'オリジナル',items:DATA.favs.map(mk)});
     openPicker('相手をえらぶ',gs,DATA.opp,v=>{DATA.opp=v;save();renderMenu();});
   }else if(kind==='stage'){
     openPicker('ステージをえらぶ',[{items:[{v:'random',label:'ランダム',sw:stageSwatch('random'),mark:'?'}].concat(STAGE_ORDER.map(k=>({v:k,label:STAGES[k].name,sw:stageSwatch(k)})))}],STAGES[DATA.stage]?DATA.stage:'random',v=>{DATA.stage=v;save();renderMenu();});
@@ -2919,6 +2964,7 @@ function renderPersonUI(){
   addOpt(ps,'__new','＋ 新しい人を追加');ps.value=ED.person||'';
   $('#edName').placeholder=ED.person?personName(ED.person):'10文字まで';
   $('#edNameNote').textContent=ED.person?'空欄ならキャラ名管理の名前を使う（変わったら一緒に変わる）':'';
+  {const ti=traitInfo(ED.person),el=$('#edTrait');el.textContent=ti?`特性「${ti.name}」：${ti.desc}`:'';el.hidden=!ti;}
   const sk=$('#edSkins');sk.textContent='';
   if(ED.person){personSkins(ED.person).forEach((u,i)=>sk.appendChild(skinBtn(u,String(i),i===(ED.skin||0),`スキン${i+1}`)));}
   else{sk.appendChild(skinBtn(defaultFace((ED.name||'new')+'|'+ED.job+'|'+(ED.id||'')),'illust',!ED.face,'イラストの顔'));if(ED.face)sk.appendChild(skinBtn(ED.face,'face',true,'選んだ写真'));}
@@ -2936,7 +2982,8 @@ function renderEditor(){
   renderStats();fillMoves($('#moveTbl'),ED.job,ED.weapon);
 }
 function renderStats(){
-  const box=$('#statRows');box.textContent='';$('#ptsLeft').textContent=10-edUsed();
+  const cap=statCap(ED);while(edUsed()>cap){let mk=null;for(const [k] of STATS)if(!mk||ED.stats[k]>ED.stats[mk])mk=k;ED.stats[mk]--;} // 上限が下がったら削る
+  const box=$('#statRows');box.textContent='';$('#ptsLeft').textContent=cap-edUsed();$('#ptsMax').textContent=cap;
   for(const [k,l] of STATS){
     const row=document.createElement('div');row.className='stat';
     const lab=document.createElement('span');lab.className='sl';lab.textContent=l;
@@ -3423,7 +3470,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='31';
+const GAME_VER='32';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
@@ -3633,7 +3680,8 @@ function unpackCfg(o){
   const rp=rosterPerson(o.p),person=rp?rp.id:'',skin=rp?Math.max(0,Math.min(rp.skins.length-1,o.k|0)):0;
   const job=JOBS[o.j]&&!JOBS[o.j].hidden?o.j:'fighter',okW=JOBS[job].weapons.filter(w=>wpnOK(w,person)),weapon=okW.includes(o.w)?o.w:okW[0];
   const arr=Array.isArray(o.s)?o.s:[],stats={};let sum=0;
-  STATS.forEach(([k],i)=>{let v=Math.max(0,Math.min(10,Math.floor(+arr[i]||0)));if(sum+v>10)v=10-sum;sum+=v;stats[k]=v;});
+  const cap=statCap({person,job});
+  STATS.forEach(([k],i)=>{let v=Math.max(0,Math.min(10,Math.floor(+arr[i]||0)));if(sum+v>cap)v=cap-sum;sum+=v;stats[k]=v;});
   let name=ns(o.n);if(!person&&!name)name='名無し';
   return {id:'net',name,person,skin,face:null,job,weapon,stats};
 }
@@ -3969,7 +4017,8 @@ function init(){
   initNames();renderPadStatus();
 
   $('#newChar').addEventListener('click',()=>openEditor(null,false));
-  $('#myList').addEventListener('click',e=>{const t=e.target.closest('.ctile');if(!t)return;DATA.sel=t.dataset.id;save();renderMenu();});
+  $('#myList').addEventListener('click',e=>{const t=e.target.closest('.ctile');if(!t)return;if(t.dataset.new){openEditor(null,false);return;}DATA.sel=t.dataset.id;save();renderMenu();});
+  $('#charSeg').addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(!b)return;DATA.charTab=b.dataset.v;save();renderMenu();});
   $('#charBar').addEventListener('click',e=>{
     const btn=e.target.closest('[data-act]');if(!btn)return;const id=DATA.sel,c=findChar(id);if(!c)return;const a=btn.dataset.act;
     if(a==='edit'){openEditor(c,!!c.sample);return;}
@@ -4069,7 +4118,7 @@ function init(){
   $('#statRows').addEventListener('click',e=>{
     const b=e.target.closest('button');if(!b)return;const k=b.dataset.k,others=edUsed()-ED.stats[k];
     let nv;if(b.classList.contains('pip')){const v=+b.dataset.i+1;nv=ED.stats[k]===v?v-1:v;}else nv=ED.stats[k]+(+b.dataset.d);
-    nv=Math.max(0,Math.min(10-others,nv));if(nv===ED.stats[k]&&b.dataset.d==='1')toast('ポイントが残ってへん');
+    nv=Math.max(0,Math.min(statCap(ED)-others,nv));if(nv===ED.stats[k]&&b.dataset.d==='1')toast('ポイントが残ってへん');
     ED.stats[k]=nv;renderStats();
   });
   $('#edFile').addEventListener('change',e=>loadPhoto(e.target.files&&e.target.files[0]));
@@ -4096,8 +4145,8 @@ function init(){
   });
   $('#edSave').addEventListener('click',()=>{
     const c=edResult();if(!c.id){c.id='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);DATA.favs.push(c);}else{const i=DATA.favs.findIndex(x=>x.id===c.id);if(i>=0)DATA.favs[i]=c;else DATA.favs.push(c);}
-    ED.id=c.id;ED.name=c.name;$('#edName').value=c.name;DATA.sel=c.id;$('#edTitle').textContent='キャラ編集';
-    toast(save()?'お気に入りに保存した':'この画面を閉じるまでは残るけど、ブラウザに保存はできへんかった');
+    ED.id=c.id;ED.name=c.name;$('#edName').value=c.name;DATA.sel=c.id;DATA.charTab='orig';$('#edTitle').textContent='キャラ編集';
+    toast(save()?'保存した（オリジナルに入った）':'この画面を閉じるまでは残るけど、ブラウザに保存はできへんかった');
   });
   $('#edFight').addEventListener('click',()=>{if(NET.role){netSetMyChar(edResult());showLobby();return;}
     if(EDFROM==='kumite'){const c=edResult();if(c.id&&DATA.favs.some(x=>x.id===c.id)){DATA.sel=c.id;save();}kumiteStart(c);return;}
