@@ -1272,7 +1272,7 @@ function makeFighter(cfg,idx){
 }
 function resetFighter(f){
   const sx=(SPAWN[G.f.length]||SPAWN[2])[f.idx]||W/2;
-  Object.assign(f,{x:sx,y:GROUND,vx:0,vy:0,onGround:true,facing:sx<W/2?1:-1,out:false,tx:undefined,ty:undefined,hp:f.maxHp,hpShow:f.maxHp,mp:f.maxMp,state:'idle',t:0,move:null,moveT:0,air:false,hits:0,lastHit:-99,inv:0,hist:[],buf:null,rel:5,dir:5,combo:0,comboShow:0,comboT:0,ko:false,flash:0,guardCrouch:false,ai:{cd:0,hold:0,dir:5},moveKey:null,wallB:false,trail:[],comboDmg:0,gBtn:false,gPrev:false,gPress:-99,justUntil:-1,mpFlash:0,sg:0,gone:false,spin:0,phase2:false,ammo:f.mag||0,shotN:0,slideBuf:0,slideCd:0,pump:0,hustle:0,armorUsed:0,dblUsed:false,upEdge:false,lastHurt:0});
+  Object.assign(f,{x:sx,y:GROUND,vx:0,vy:0,onGround:true,facing:sx<W/2?1:-1,out:false,tx:undefined,ty:undefined,hp:f.maxHp,hpShow:f.maxHp,mp:f.maxMp,state:'idle',t:0,move:null,moveT:0,air:false,hits:0,lastHit:-99,inv:0,hist:[],buf:null,rel:5,dir:5,combo:0,comboShow:0,comboT:0,ko:false,flash:0,guardCrouch:false,ai:{cd:0,hold:0,dir:5},moveKey:null,wallB:false,trail:[],comboDmg:0,gBtn:false,gPrev:false,gPress:-99,justUntil:-1,mpFlash:0,sg:0,gone:false,spin:0,phase2:false,ammo:f.mag||0,shotN:0,slideBuf:0,slideCd:0,pump:0,hustle:0,star:0,starFx:0,armorUsed:0,dblUsed:false,upEdge:false,lastHurt:0});
 }
 function newGame(c1,c2,diff,opts){
   opts=opts||{};
@@ -1372,7 +1372,8 @@ function clampX(f){f.x=Math.max(30,Math.min(W-30,f.x));}
 function startMove(f,key){
   if(key==='SP'){
     if(!f.moves.SP||(f.sg||0)<100||!f.onGround)return;
-    f.sg=0;G.cutin={f,name:f.moves.SP.name,t:0,life:58};G.hitstop=Math.max(G.hitstop,48);G.shake=Math.max(G.shake,4);sfx('super');
+    f.sg=0;G.cutin={f,name:f.moves.SP.name,t:0,life:58};
+    if(f.job==='fighter'){f.star=300;banner('無敵モード！');} // 格闘は必殺技で5秒間無敵G.hitstop=Math.max(G.hitstop,48);G.shake=Math.max(G.shake,4);sfx('super');
   }
   let mv=f.moves[key];const air=!f.onGround;
   if(!mv)return;
@@ -1432,7 +1433,7 @@ function attackUpdate(f){
 function doWarp(f,mv){addSmoke(f.x,f.y-60,6);f.x=Math.max(40,Math.min(W-40,f.x+f.facing*mv.warp));addSmoke(f.x,f.y-60,6);}
 function updateFighter(f){
   if(f.inv>0)f.inv--;if(f.flash>0)f.flash--;if(f.comboT>0)f.comboT--;
-  if(f.mpFlash>0)f.mpFlash--;if(f.pump>0)f.pump--;if(f.hustle>0)f.hustle--;
+  if(f.mpFlash>0)f.mpFlash--;if(f.pump>0)f.pump--;if(f.hustle>0)f.hustle--;if(f.star>0)f.star--;
   if(f.state!=='ko'&&f.state!=='blockstun')f.mp=Math.min(f.maxMp,f.mp+f.mpRegen);
   if(f.buf&&G.frame-f.buf.f>12)f.buf=null;
   switch(f.state){
@@ -1524,6 +1525,7 @@ function meleeCheck(att,def){
 function applyHit(att,def,mv,isProj,dir,pt){
   if(G.phase!=='fight')return false;
   if(def.inv>0||def.state==='down'||def.state==='getup'||def.state==='ko'||def.state==='launch')return false;
+  if(def.star>0){if(G.frame-(def.starFx||0)>8){def.starFx=G.frame;addSpark(pt.x,pt.y,'#ffffff');addText(def.x,def.y-200,'無敵！','#ffd23f',26);}return false;}
   const proj=isProj||mv.kind==='beam';
   const ironBody=def.weapon==='ishihara'&&def.onGround&&['idle','walk','crouch','attack','land'].includes(def.state);
   if((ironBody||(def.state==='attack'&&def.move&&def.move.armor&&def.moveT<def.move.startup+def.move.active&&(def.armorUsed||0)<def.move.armor))&&!mv.throw&&mv.kind!=='cstrike'&&!mv.sp){ // アーマー（石原は常時）
@@ -2055,6 +2057,7 @@ function drawFighter(f){
   if(f.gone)return;
   const P=poseOf(f),robot=f.job==='robot';
   if(f.phase2){const pl=beatPulse(),g=ctx.createRadialGradient(f.x,f.y-80,10,f.x,f.y-80,120);g.addColorStop(0,`rgba(255,60,30,${(0.35+0.25*pl).toFixed(3)})`);g.addColorStop(1,'rgba(255,60,30,0)');ctx.fillStyle=g;ctx.fillRect(f.x-130,f.y-210,260,250);}
+  if(f.star>0){const hue=(G.frame*14)%360,a=f.star<60&&(G.frame>>2)%2?0.15:0.5,g=ctx.createRadialGradient(f.x,f.y-80,10,f.x,f.y-80,130);g.addColorStop(0,`hsla(${hue},100%,65%,${a})`);g.addColorStop(0.6,`hsla(${(hue+120)%360},100%,60%,${a*0.6})`);g.addColorStop(1,'hsla(0,0%,100%,0)');ctx.fillStyle=g;ctx.fillRect(f.x-140,f.y-215,280,255);}
   if(f.pump>0||f.hustle>0||f.weapon==='ishihara'){const c=f.weapon==='ishihara'?'255,200,40':f.pump>0?'255,110,50':'255,215,60',pl=0.25+0.2*Math.sin(G.frame*0.3),g=ctx.createRadialGradient(f.x,f.y-80,10,f.x,f.y-80,115);g.addColorStop(0,`rgba(${c},${pl.toFixed(3)})`);g.addColorStop(1,`rgba(${c},0)`);ctx.fillStyle=g;ctx.fillRect(f.x-125,f.y-200,250,240);}
   f.fistOut=G.projs.some(p=>p.owner===f&&p.kind==='fist');
   const hgt=GROUND-f.y;ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.ellipse(f.x,GROUND+3,Math.max(12,30-hgt*0.08),5,0,0,Math.PI*2);ctx.fill();
@@ -2453,7 +2456,7 @@ function fillMoves(tb,job,weapon){
   c1.className='cmd';c1.textContent='攻撃に合わせてガード';c2.textContent=mv.CS.name+'（カウンター）';c3.textContent='反撃して浮かせる・弾やビームははね返す'+(JOBS[job]&&JOBS[job].phys?'・物理キャラは受付が長い':'');
   tr.append(c1,c2,c3);tb.appendChild(tr);
   if(mv.SP){const r=document.createElement('tr'),a=document.createElement('td'),b=document.createElement('td'),c=document.createElement('td');
-    a.className='cmd';a.textContent='ゲージ満タンで「必殺」';b.textContent=mv.SP.name;c.textContent='必殺技・大ダメージ';r.append(a,b,c);tb.appendChild(r);}
+    a.className='cmd';a.textContent='ゲージ満タンで「必殺」';b.textContent=mv.SP.name;c.textContent='必殺技・大ダメージ'+(job==='fighter'?'・出したら5秒間無敵':'');r.append(a,b,c);tb.appendChild(r);}
 }
 
 /* ---- エディタ ---- */
@@ -2961,7 +2964,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='18';
+const GAME_VER='19';
 const TABS=['battle','kumite','story','chara','settings'];
 function showTab(t){
   if(!TABS.includes(t))t='battle';DATA.tab=t;
@@ -3394,7 +3397,7 @@ function netRec(a){
   a.unshift(++NET.fxSeq,G.frame);NET.fx.push(a);if(NET.fx.length>48)NET.fx.shift();
 }
 function encF(f){
-  return [nr(f.x,10),nr(f.y,10),nr(f.vx,10),nr(f.vy,10),f.facing<0?-1:1,nr(f.hp,10),nr(f.mp,10),nr(f.sg),f.state,f.moveKey||0,f.moveT|0,f.air?1:0,f.inv|0,nr(f.t),nr(f.flash,100),f.guardCrouch?1:0,f.gBtn?1:0,f.rel|0,Math.max(0,f.justUntil-G.frame),f.comboShow|0,f.comboT|0,nr(f.comboDmg),f.ko?1:0,f.gone?1:0,nr(f.spin,100),f.mpFlash|0,f.phase2?1:0,f.onGround?1:0,f.out?1:0,f.wallB?1:0,f.ammo|0,(f.pump>0?1:0)|(f.hustle>0?2:0)];
+  return [nr(f.x,10),nr(f.y,10),nr(f.vx,10),nr(f.vy,10),f.facing<0?-1:1,nr(f.hp,10),nr(f.mp,10),nr(f.sg),f.state,f.moveKey||0,f.moveT|0,f.air?1:0,f.inv|0,nr(f.t),nr(f.flash,100),f.guardCrouch?1:0,f.gBtn?1:0,f.rel|0,Math.max(0,f.justUntil-G.frame),f.comboShow|0,f.comboT|0,nr(f.comboDmg),f.ko?1:0,f.gone?1:0,nr(f.spin,100),f.mpFlash|0,f.phase2?1:0,f.onGround?1:0,f.out?1:0,f.wallB?1:0,f.ammo|0,(f.pump>0?1:0)|(f.hustle>0?2:0)|(f.star>0?4:0)];
 }
 function encP(p){return [p.kind,nr(p.x,10),nr(p.y,10),nr(p.vx,10),nr(p.vy,10),nr(p.w),nr(p.h),String(p.color||'#fff').slice(0,24),p.t|0,p.owner?p.owner.idx:-1];}
 function u8len(t){let n=0;for(let i=0;i<t.length;i++){const c=t.charCodeAt(i);n+=c<128?1:c<2048?2:(c>=0xd800&&c<0xdc00)?(i++,4):3;}return n;}
@@ -3457,7 +3460,7 @@ function applySnap(s){
       moveT:a[10]|0,air:!!a[11],inv:a[12]|0,t:+a[13]||0,flash:+a[14]||0,guardCrouch:!!a[15],gBtn:!!a[16],rel:(a[17]|0)||5,justUntil:G.frame+(a[18]|0),comboShow:a[19]|0,comboT:a[20]|0,comboDmg:+a[21]||0,
       ko:!!a[22],gone:!!a[23],spin:+a[24]||0,mpFlash:a[25]|0,phase2:!!a[26],onGround:!!a[27],out:!!a[28],wallB:!!a[29]});
     f.ammo=a.length>30?Math.max(0,Math.min(f.mag,a[30]|0)):f.ammo;
-    if(a.length>31){f.pump=(a[31]&1)?60:0;f.hustle=(a[31]&2)?60:0;}
+    if(a.length>31){f.pump=(a[31]&1)?60:0;f.hustle=(a[31]&2)?60:0;f.star=(a[31]&4)?120:0;}
     f.move=mk==='X'?EMPTY:mk?(f.moves[mk]||null):null;
     if(st==='attack'&&!f.move)f.state='idle';
   });
