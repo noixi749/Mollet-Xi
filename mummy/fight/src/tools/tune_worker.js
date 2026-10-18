@@ -6,7 +6,7 @@ const tune=JSON.parse(fs.readFileSync(tuneFile,'utf8'));
 vm.runInNewContext(code+`
 onMatchEnd=()=>{};
 Object.assign(TUNE,${JSON.stringify(tune)});
-const WPS=[];for(const [j,v] of Object.entries(JOBS))if(!v.hidden)for(const w of v.weapons)WPS.push([j,w]);
+const WPS=[];for(const [j,v] of Object.entries(JOBS))if(!v.hidden)for(const w of v.weapons)if(!(TUNE[w]&&TUNE[w].fixed))WPS.push([j,w]);
 const res={};for(const [j,w] of WPS)res[w]=[0,0];
 let k=0;
 for(let a=0;a<WPS.length;a++)for(let b=a+1;b<WPS.length;b++)for(let r=0;r<${+reps||2};r++){
