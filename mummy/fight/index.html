@@ -946,10 +946,11 @@ const TRAITS={
   kojimaimo:{name:'韋駄天',desc:'速さ1.25倍',spd:1.25},
   rion:{name:'気合い',desc:'必殺ゲージが1.25倍たまりやすい',sg:1.25},
   allen:{name:'銃オタク',desc:'銃を選ぶと技のMP消費が0.7倍',job:'gunner',mpCost:0.7},
-  tanigucci:{name:'バケモノ',desc:'相手が女（りおん・小島妹）やと攻撃力1.75倍'},
+  tanigucci:{name:'バケモノ',desc:'相手が女（りおん・小島妹）なら攻撃力1.25倍／刃物の武器なら攻撃力1.1倍／体力0.9倍',hp:0.9,blade:1.1},
   yusei:{name:'因縁',desc:'相手が谷GUCCIなら速さ1.25倍／たつーやならMP回復1.1倍／小島妹なら必殺技で覚醒しとる間（伝説の剣など）の攻撃力がさらに1.25倍'},
   aniki:{name:'おいタコ',desc:'攻撃のたびに「おいタコ」。体力1/3以下で攻撃力1.3倍、1/5以下で1.75倍'},
 };
+const BLADES=new Set(['greatsword','katana','gunblade','iai','nitoryu','ninja','onehand']); // 刃物系の武器
 function traitInfo(person){return TRAITS[person]||null;} // 表示用（ジョブの条件は問わへん）
 function traitOf(c){const t=c&&TRAITS[c.person];if(!t)return null;if(t.job&&c.job!==t.job)return null;return t;}
 function statCap(c){const t=traitOf(c);return 10+((t&&t.pts)||0);}
@@ -1069,7 +1070,7 @@ function derive(c){
   const d={maxHp:Math.round((100+j.hp+10*s.hp)*(t.hp||1)),atkMul:1+0.07*s.atk,defMul:Math.max(0.5,1-0.045*s.def)*(t.def||1),walk:j.walk*1.1*(1+0.05*s.spd)*(w.walk||1),jump:j.jump*(1+0.012*s.spd)*(w.jump||1),maxMp:40+10*s.mp,mpRegen:(8+1.0*s.mp)/60,weight:j.weight};
   const tr=traitOf(c); // 人物の特性
   const tw=tr&&tr.wpn&&tr.wpn[c.weapon];if(tw&&tw.spd){d.walk*=tw.spd;d.jump*=1+(tw.spd-1)*0.3;}
-  if(tr){if(tr.hp)d.maxHp=Math.round(d.maxHp*tr.hp);if(tr.atk)d.atkMul*=tr.atk;if(tr.def)d.defMul*=tr.def;if(tr.spd){d.walk*=tr.spd;d.jump*=1+(tr.spd-1)*0.3;}if(tr.mpRegen)d.mpRegen*=tr.mpRegen;}
+  if(tr){if(tr.hp)d.maxHp=Math.round(d.maxHp*tr.hp);if(tr.atk)d.atkMul*=tr.atk;if(tr.blade&&BLADES.has(c.weapon))d.atkMul*=tr.blade;if(tr.def)d.defMul*=tr.def;if(tr.spd){d.walk*=tr.spd;d.jump*=1+(tr.spd-1)*0.3;}if(tr.mpRegen)d.mpRegen*=tr.mpRegen;}
   return d;
 }
 /* 武器ごとの強さの調整（CPU同士の勝率が揃うように合わせた値）。dmg=与えるダメージ、hp=体力 */
@@ -1998,9 +1999,9 @@ function applyHit(att,def,mv,isProj,dir,pt){
   }
   const guarding=def.onGround&&['idle','walk','crouch','blockstun','land'].includes(def.state)&&(def.gBtn||def.rel===4||def.rel===1);
   if(guarding&&G.frame<=def.justUntil&&mv.kind!=='cstrike'&&!mv.throw&&!mv.unblock){def.justUntil=-1;return doCounter(att,def,mv,isProj,dir,pt);}
-  const gucci=personOf(att)==='tanigucci'&&FEMALE.has(personOf(def)); // 谷GUCCI：相手が女やと攻撃力1.75倍のバケモノ
-  const raw=Math.max(1,Math.round(mv.dmg*att.atkMul*(att.pump>0?1.25:1)*def.defMul*(def.pump>0?0.85:1)*(gucci?1.75:1)*anikiRage(att)*(att.engine>0?1.25:1)*(att.legend?1.25:1)*(personOf(att)==='yusei'&&personOf(def)==='kojimaimo'&&att.legend?1.25:1)));
-  if(gucci&&G.frame-(att.gucciFx||0)>24){att.gucciFx=G.frame;addText(def.x,def.y-232,'×1.75','#ff4a3d',26);}
+  const gucci=personOf(att)==='tanigucci'&&FEMALE.has(personOf(def)); // 谷GUCCI：相手が女やと攻撃力1.25倍
+  const raw=Math.max(1,Math.round(mv.dmg*att.atkMul*(att.pump>0?1.25:1)*def.defMul*(def.pump>0?0.85:1)*(gucci?1.25:1)*anikiRage(att)*(att.engine>0?1.25:1)*(att.legend?1.25:1)*(personOf(att)==='yusei'&&personOf(def)==='kojimaimo'&&att.legend?1.25:1)));
+  if(gucci&&G.frame-(att.gucciFx||0)>24){att.gucciFx=G.frame;addText(def.x,def.y-232,'×1.25','#ff4a3d',26);}
   let crushed=false;
   if(guarding&&!mv.throw&&!mv.unblock){
     const cost=def.shield?0:guardCost(raw); // 勇者は盾で受けるのでMPが減らへん
@@ -3602,7 +3603,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='38';
+const GAME_VER='39';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
