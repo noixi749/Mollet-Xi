@@ -6,7 +6,7 @@ assert s.count("const BUILD_GH=false;")==1
 s=s.replace("const BUILD_GH=false;","const BUILD_GH=true;")
 old='<p class="note credit">製作者 Naohisa Akiyama　／　BGM：魔王魂・オリジナル</p>'
 assert s.count(old)==1
-s=s.replace(old,'<p class="note credit"><a href="../">マミー会ローリング・ストーンズへ</a>　／　製作者 Naohisa Akiyama　／　BGM：魔王魂</p>')
+s=s.replace(old,'<p class="note credit"><a href="../">マミー会ローリング・ストーンズへ</a>　／　製作者 Naohisa Akiyama　／　BGM：魔王魂・オリジナル</p>')
 s=s.replace('<meta name="claude:viewport-fit-sides" content="cover">\n','')
 head='''<!doctype html>
 <html lang="ja">
