@@ -3493,8 +3493,8 @@ function loop(ts){
 
 /* ================= ロゴ・タイトル画面・OP（曲：魔王魂「ハルジオン」を90秒に編集＝op.mp3） =================
    BPM152、1小節≒1.58秒（opBar(n)＝n小節目の秒）。曲は頭〜サビ終わり(82.6秒)＋曲のエンディングをつないである。
-   0〜3 イントロ（河原の影）／4〜10 メンバー紹介（2人ずつ）／11 集結／12〜13 ロゴ（20秒）／14〜21 各章
-   22〜35 黒幕「ヤギの野望」／36〜43 サビ：バトル／44〜47.5 必殺技カットイン連打／47.5〜51 全員集合／52〜 ラストのロゴ */
+   0〜3 イントロ（河原の影）／4〜10 メンバー紹介（2人ずつ）／11 集結／12 ロゴ（20秒）／13〜20 各章
+   21〜35 黒幕「ヤギの野望」／36〜43 サビ：バトル／44〜47.5 必殺技カットイン連打／47.5〜51 全員集合／52〜 ラストのロゴ */
 const OPS={b0:0.455,beat:60/152.005};OPS.bar=OPS.beat*4;
 const opBar=b=>OPS.b0+b*OPS.bar;
 const OP_LEN=90;
@@ -3684,7 +3684,7 @@ function opLogoHit(u,t){
   opPetals(t,24);
   const bp=((t-OPS.b0)/OPS.beat)%1,s=u<0.14?2.4-1.4*(u/0.14):1+0.025*Math.max(0,1-bp*4),sh=u<0.5?(1-u/0.5)*14:0;
   ctx.save();ctx.translate((Math.random()-0.5)*sh,(Math.random()-0.5)*sh);drawLogoAt(W/2,H/2-24,700*s);ctx.restore();
-  if(u>0.9){ctx.globalAlpha=opCl((u-0.9)/0.4);opTxt('河原で笑って、拳で語れ。',W/2,H-62,30,'#ffffff',INK,'center',8);ctx.globalAlpha=1;}
+  if(u>0.45){ctx.globalAlpha=opCl((u-0.45)/0.25);opTxt('河原で笑って、拳で語れ。',W/2,H-62,30,'#ffffff',INK,'center',8);ctx.globalAlpha=1;}
   opFlash(1-u*3.5);
 }
 /* ---- 14〜21小節：各章 ---- */
@@ -3699,7 +3699,7 @@ function opChapter(i,u,t){
 }
 /* ---- 22〜35小節：黒幕「ヤギの野望」 ---- */
 function opVillain(t){
-  const v=(t-opBar(22))/OPS.bar,ph=Math.floor(v/2),u=(v-ph*2)*OPS.bar,bt=((t-OPS.b0)/OPS.beat)%1;
+  const v=(t-opBar(21))/OPS.bar,ph=Math.floor(v/2),u=(v-ph*2)*OPS.bar,bt=((t-OPS.b0)/OPS.beat)%1;
   if(ph===0){ // その頃――
     opDrawBg('castle',1.1+u*0.02,0,0);ctx.fillStyle='rgba(18,0,30,.72)';ctx.fillRect(0,0,W,H);
     ctx.strokeStyle='rgba(180,170,220,.35)';ctx.lineWidth=1.5;for(let i=0;i<70;i++){const x=(i*137+t*900)%(W+200)-100,y=(i*89+t*1400)%(H+100)-50;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-14,y+30);ctx.stroke();}
@@ -3826,8 +3826,8 @@ function opDraw(t){
   if(t<opBar(4))opIntro(t);
   else if(t<opBar(11)){const P=opPairs(),d=(opBar(11)-opBar(4))/P.length,i=Math.min(P.length-1,Math.floor((t-opBar(4))/d));opPair(i,P[i],t-opBar(4)-i*d,d,t);}
   else if(t<opBar(12))opGroup(t-opBar(11),t);
-  else if(t<opBar(14))opLogoHit(t-opBar(12),t);
-  else if(t<opBar(22)){const i=Math.floor((t-opBar(14))/(OPS.bar*2));opChapter(i,t-opBar(14+i*2),t);}
+  else if(t<opBar(13))opLogoHit(t-opBar(12),t);
+  else if(t<opBar(21)){const i=Math.floor((t-opBar(13))/(OPS.bar*2));opChapter(i,t-opBar(13+i*2),t);}
   else if(t<opBar(36))opVillain(t);
   else if(t<opBar(44)){const i=Math.floor((t-opBar(36))/(OPS.bar*2));opBattle(i,t-opBar(36+i*2),t);}
   else if(t<opBar(47.5)){const i=Math.floor((t-opBar(44))/(OPS.bar/2));opSpRush(i,t-opBar(44+i/2),t);}
@@ -4538,7 +4538,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='51';
+const GAME_VER='52';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
