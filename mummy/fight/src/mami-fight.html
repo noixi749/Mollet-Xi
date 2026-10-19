@@ -925,6 +925,7 @@ const MEMBER_BUILD={
   allen:{job:'gunner',weapon:'akimbo',stats:{atk:2,spd:3,hp:2,def:1,mp:2}}, // 銃オタク
   tanigucci:{job:'fighter',weapon:'kenpo',stats:{atk:4,spd:2,hp:2,def:1,mp:1}}, // 生粋のストリートファイター
   aniki:{job:'robot',weapon:'rocket',stats:{atk:3,spd:1,hp:3,def:2,mp:1}}, // 攻撃のたびに「おいタコ」
+  yusei:{job:'hero',weapon:'onehand',stats:{atk:2,spd:2,hp:3,def:2,mp:1}}, // 勇者
 };
 const FEMALE=new Set(['rion','kojimaimo']); // 女として登録（谷GUCCIの特効）
 /* 人物ごとの特性。job があるものはそのジョブを選んだ時だけ効く。hp/atk/spd/mpRegen は倍率、def は受けるダメージの倍率、pts はステータスの振り分け追加、sg は必殺ゲージのたまりやすさ、mpCost は技のMP消費 */
@@ -939,6 +940,7 @@ const TRAITS={
   rion:{name:'気合い',desc:'必殺ゲージが1.25倍たまりやすい',sg:1.25},
   allen:{name:'銃オタク',desc:'銃を選ぶと技のMP消費が0.7倍',job:'gunner',mpCost:0.7},
   tanigucci:{name:'バケモノ',desc:'相手が女（りおん・小島妹）やと攻撃力1.75倍'},
+  yusei:{name:'因縁',desc:'相手が谷GUCCIなら速さ1.25倍／たつーやならMP回復1.1倍／小島妹なら必殺技で覚醒しとる間（伝説の剣など）の攻撃力がさらに1.25倍'},
   aniki:{name:'おいタコ',desc:'攻撃のたびに「おいタコ」。体力1/3以下で攻撃力1.3倍、1/5以下で1.75倍'},
 };
 function traitInfo(person){return TRAITS[person]||null;} // 表示用（ジョブの条件は問わへん）
@@ -1846,6 +1848,7 @@ function clonesTick(){
 }
 function doWarp(f,mv){addSmoke(f.x,f.y-60,6);f.x=Math.max(40,Math.min(W-40,f.x+f.facing*mv.warp));addSmoke(f.x,f.y-60,6);}
 function updateFighter(f){
+  if(personOf(f)==='yusei'){const foes=allF().filter(o=>o!==f&&!o.out&&!sameTeam(o,f));f.vsSpd=foes.some(o=>personOf(o)==='tanigucci')?1.25:1;f.vsMp=foes.some(o=>personOf(o)==='tatsuya')?1.1:1;} // ゆうせいの因縁
   if(f.stun>0){ // マヒ中：何もできへん
     f.stun--;if(f.flash>0)f.flash--;if(f.comboT>0)f.comboT--;if(f.inv>0)f.inv--;
     if(f.onGround&&f.state!=='down'&&f.state!=='ko'&&f.state!=='airhit'&&f.state!=='launch'){f.state=f.stun>0?'stun':'idle';f.vx*=0.8;f.move=null;}
@@ -1860,7 +1863,7 @@ function updateFighter(f){
     if(G.phase==='fight'&&--f.armorT<=0){f.armorG=0;f.armorBroken=false;addText(f.x,f.y-200,'アーマー切れ','#ff8a3d',26);}
     else if(f.armorBroken){f.armorG+=0.3;if(f.armorG>=100){f.armorG=100;f.armorBroken=false;addText(f.x,f.y-200,'アーマー復活','#ffd23f',24);}}else f.armorG=Math.min(100,f.armorG+0.06);
   }
-  if(f.state!=='ko'&&f.state!=='blockstun')f.mp=Math.min(f.maxMp,f.mp+f.mpRegen);
+  if(f.state!=='ko'&&f.state!=='blockstun')f.mp=Math.min(f.maxMp,f.mp+f.mpRegen*(f.vsMp||1));
   if(f.buf&&G.frame-f.buf.f>12)f.buf=null;
   switch(f.state){
     case 'idle':case 'walk':case 'crouch':{
@@ -1869,8 +1872,8 @@ function updateFighter(f){
       if(f.slideBuf&&G.frame-f.slideBuf<=8&&r===3&&!f.gBtn&&f.onGround&&G.frame>=f.slideCd){f.slideBuf=0;startMove(f,'SL');break;}
       if(f.gBtn){f.vx=0;f.state=r<=3?'crouch':'idle';break;}
       const gb=f.weapon==='gunblade'?(f.form==='gun'?0.8:1.15):1; // 変形銃剣：剣は身軽、銃は少し重い
-      const wk=f.walk*(f.hustle>0?1.4:1)*gb*(f.legend?1.05:1);
-      if(r>=7){f.state='jump';f.onGround=false;f.vy=f.jump*(gb>1?1.04:gb<1?0.92:1);f.vx=r===9?f.facing*wk*1.15:r===7?-f.facing*wk:0;break;}
+      const wk=f.walk*(f.hustle>0?1.4:1)*gb*(f.legend?1.05:1)*(f.vsSpd||1);
+      if(r>=7){f.state='jump';f.onGround=false;f.vy=f.jump*(gb>1?1.04:gb<1?0.92:1)*(1+((f.vsSpd||1)-1)*0.3);f.vx=r===9?f.facing*wk*1.15:r===7?-f.facing*wk:0;break;}
       if(r<=3){f.state='crouch';f.vx=0;break;}
       if(r===6){f.state='walk';f.vx=f.facing*wk;}
       else if(r===4){f.state='walk';f.vx=-f.facing*wk*0.75;}
@@ -1989,7 +1992,7 @@ function applyHit(att,def,mv,isProj,dir,pt){
   const guarding=def.onGround&&['idle','walk','crouch','blockstun','land'].includes(def.state)&&(def.gBtn||def.rel===4||def.rel===1);
   if(guarding&&G.frame<=def.justUntil&&mv.kind!=='cstrike'&&!mv.throw&&!mv.unblock){def.justUntil=-1;return doCounter(att,def,mv,isProj,dir,pt);}
   const gucci=personOf(att)==='tanigucci'&&FEMALE.has(personOf(def)); // 谷GUCCI：相手が女やと攻撃力1.75倍のバケモノ
-  const raw=Math.max(1,Math.round(mv.dmg*att.atkMul*(att.pump>0?1.25:1)*def.defMul*(def.pump>0?0.85:1)*(gucci?1.75:1)*anikiRage(att)*(att.engine>0?1.25:1)*(att.legend?1.25:1)));
+  const raw=Math.max(1,Math.round(mv.dmg*att.atkMul*(att.pump>0?1.25:1)*def.defMul*(def.pump>0?0.85:1)*(gucci?1.75:1)*anikiRage(att)*(att.engine>0?1.25:1)*(att.legend?1.25:1)*(personOf(att)==='yusei'&&personOf(def)==='kojimaimo'&&att.legend?1.25:1)));
   if(gucci&&G.frame-(att.gucciFx||0)>24){att.gucciFx=G.frame;addText(def.x,def.y-232,'×1.75','#ff4a3d',26);}
   let crushed=false;
   if(guarding&&!mv.throw&&!mv.unblock){
@@ -2953,7 +2956,7 @@ function renderMenu(){
 }
 function elx(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
 function imgx(src,cls){const im=document.createElement('img');im.alt='';if(cls)im.className=cls;im.src=src;return im;}
-const PRESET_BY_JOB=[['fighter','tanigucci'],['sword','sanma'],['mage','bayashi'],['gunner','allen'],['robot','aniki'],['samurai','rion'],['builder','tatsuya']]; // ジョブごとの代表
+const PRESET_BY_JOB=[['fighter','tanigucci'],['sword','sanma'],['mage','bayashi'],['gunner','allen'],['robot','aniki'],['samurai','rion'],['builder','tatsuya'],['hero','yusei']]; // ジョブごとの代表
 function presetChars(){const r=PRESET_BY_JOB.map(([j,id])=>findChar('m_'+id)).filter(Boolean);return r.length?r:SAMPLES.map(s=>findChar(s.id));}
 function renderChara(items){ // キャラ一覧（プリセット／オリジナル）と選んだキャラの操作
   const list=$('#myList');list.textContent='';
@@ -3592,7 +3595,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='37';
+const GAME_VER='38';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
