@@ -929,7 +929,7 @@ const JOBS={
   fighter:{name:'格闘',hp:0,walk:4.3,jump:-15.5,weight:1.0,phys:true,weapons:['stegoro','tonfa','kenpo'],desc:'手数で押すタイプ。足が速い。物理キャラなのでカウンターの受付が長い。'},
   sword:{name:'大剣',hp:10,walk:3.2,jump:-14.6,weight:1.1,phys:true,weapons:['greatsword','katana','hammer','boosthammer','gunblade'],desc:'リーチと一撃の重さ。足は遅め。変形銃剣やエンジン付きハンマーもある。物理キャラなのでカウンターの受付が長い。'},
   mage:{name:'魔法',hp:-15,walk:3.4,jump:-15,weight:0.9,weapons:['staff','grimoire','ninjutsu','thunder'],desc:'飛び道具とワープ。打たれ弱い。'},
-  gunner:{name:'銃',hp:-10,walk:3.6,jump:-15,weight:0.95,weapons:['handgun','shotgun','sniper','akimbo'],desc:'撃ちまくり。MPが弾の代わりで、切れたら回復待ち。キックはナイフ。'},
+  gunner:{name:'銃',hp:-10,walk:3.6,jump:-15,weight:0.95,weapons:['handgun','shotgun','sniper','akimbo','crossbow'],desc:'撃ちまくり。MPが弾の代わりで、切れたら回復待ち。キックはナイフ。'},
   robot:{name:'ロボ',hp:30,walk:3.4,jump:-13.4,weight:1.4,phys:true,weapons:['rocket','drill','beam'],desc:'硬くて重いけど、動きはキビキビ速い。物理キャラなのでカウンターの受付が長い。'},
   samurai:{name:'侍',hp:5,walk:3.9,jump:-15.2,weight:1.0,phys:true,weapons:['iai','nitoryu','ninja'],desc:'刀の達人。出が速くて踏み込みが鋭い。物理キャラなのでカウンターの受付が長い。'},
   builder:{name:'ボディビルダー',hp:8,walk:4.4,jump:-15.6,weight:1.12,phys:true,weapons:['muscle','hustle','ishihara'],desc:'筋肉で全部解決する。マッチョは速い。物理キャラなのでカウンターの受付が長い。'},
@@ -955,6 +955,7 @@ const WEAPONS={
   shotgun:{name:'ショットガン',desc:'射程は短いけど散弾が痛い'},
   sniper:{name:'スナイパー',desc:'画面の端まで届く。1発がとにかく重い'},
   akimbo:{name:'二丁拳銃',desc:'射程は短め。動きが軽くて、近づいて撃ちまくる。キックは大型サバイバルナイフ',walk:1.3,jump:1.05},
+  crossbow:{name:'クロスボウ',desc:'谷GUCCI専用。重いボルトを撃ち込む。キックは拳法仕込みの足技で、蹴り上げから対空ボルトにつながる。炸裂ボルトと、必殺技はボルトの連射'},
   rocket:{name:'ロケットパンチ型',desc:'拳が飛ぶ'},
   drill:{name:'ドリル型',desc:'密着で連続ヒット'},
   beam:{name:'ビーム型',desc:'画面の端まで届くビーム。MP大食い'},
@@ -1034,7 +1035,7 @@ function personName(id){const n=NAMES[id];if(n&&n.name)return n.name;const p=per
 function personSkins(id){const p=personById(id);if(!p)return [];return (p.skins||[]).concat((DATA.extraSkins&&DATA.extraSkins[id])||[]);}
 function charName(c){const n=(c.name||'').trim();return n||(c.person?personName(c.person):'名無し');}
 /* 専用武器：石原はたつーや（マミー会の人物）でしか選べへん */
-const ONLY_PERSON={ishihara:'tatsuya'};
+const ONLY_PERSON={ishihara:'tatsuya',crossbow:'tanigucci'};
 function wpnOK(wk,person){const p=ONLY_PERSON[wk];return !p||person===p;}
 function fixWpn(c){if(c&&JOBS[c.job]&&!wpnOK(c.weapon,c.person)){const ws=JOBS[c.job].weapons.filter(w=>wpnOK(w,c.person));c.weapon=ws[0];}return c;}
 function cleanName(s){return String(s==null?'':s).replace(/[\u0000-\u001f\u007f-\u009f\u200b\u200e\u200f\u2028-\u202e\u2060-\u2064\u2066-\u2069\ufeff]/g,'').trim().slice(0,12);}
@@ -1255,7 +1256,7 @@ function derive(c){
   return d;
 }
 /* 武器ごとの強さの調整（CPU同士の勝率が揃うように合わせた値）。dmg=与えるダメージ、hp=体力 */
-const TUNE={stegoro:{dmg:1.072},tonfa:{dmg:1.028},kenpo:{dmg:1.1},greatsword:{dmg:0.96},katana:{dmg:0.936},hammer:{dmg:0.973},onehand:{dmg:1.45},boosthammer:{dmg:1.04},gunblade:{dmg:1},staff:{dmg:1.189},grimoire:{dmg:1.054},ninjutsu:{dmg:1.164},thunder:{dmg:1.1,hp:0.85},handgun:{dmg:1.61},shotgun:{dmg:1.378},sniper:{dmg:1.283},akimbo:{dmg:1.15},rocket:{dmg:1.118},drill:{dmg:1.046},beam:{dmg:1.156},bow:{dmg:1.3},iai:{dmg:0.724},nitoryu:{dmg:1.0},ninja:{dmg:0.946},muscle:{dmg:1,hp:0.95},hustle:{dmg:1},ishihara:{dmg:1.4,hp:0.6,fixed:true}};
+const TUNE={crossbow:{dmg:1.1},stegoro:{dmg:1.072},tonfa:{dmg:1.028},kenpo:{dmg:1.1},greatsword:{dmg:0.96},katana:{dmg:0.936},hammer:{dmg:0.973},onehand:{dmg:1.45},boosthammer:{dmg:1.04},gunblade:{dmg:1},staff:{dmg:1.189},grimoire:{dmg:1.054},ninjutsu:{dmg:1.164},thunder:{dmg:1.1,hp:0.85},handgun:{dmg:1.61},shotgun:{dmg:1.378},sniper:{dmg:1.283},akimbo:{dmg:1.15},rocket:{dmg:1.118},drill:{dmg:1.046},beam:{dmg:1.156},bow:{dmg:1.3},iai:{dmg:0.724},nitoryu:{dmg:1.0},ninja:{dmg:0.946},muscle:{dmg:1,hp:0.95},hustle:{dmg:1},ishihara:{dmg:1.4,hp:0.6,fixed:true}};
 function M(o){return Object.assign({name:'',kind:'melee',startup:6,active:4,recovery:10,dmg:5,hb:null,kb:4,hitstun:15,lift:0,mp:0,dash:0,rise:0,multi:1,inv:0,proj:null,pose:'punch',sfx:'hit',fx:null,fxColor:'#e8452c'},o);}
 const EMPTY=M({kind:'none',startup:0,active:0,recovery:12,pose:'idle'});
 
@@ -1386,7 +1387,7 @@ function buildMoves(job,weapon){
     m.K3=M({name:'回し蹴り',startup:7,active:5,recovery:16,dmg:11,hb:{x:56,y:96,w:56,h:34},kb:10,hitstun:22,pose:'kick'});
     { // パンチ連打：撃つ → 銃で殴る → とどめ
       const butt=n=>M({name:n,startup:5,active:3,recovery:12,dmg:8,hb:{x:46,y:112,w:46,h:30},kb:5,hitstun:16,pose:'swing',next:'P3',nextBtn:'P'});
-      m.P.next='P2';m.P.nextBtn='P';
+      if(m.P){m.P.next='P2';m.P.nextBtn='P';}
       if(weapon==='handgun'){m.P2=butt('銃床打ち');m.P3=M({name:'ゼロ距離射撃',startup:6,active:3,recovery:18,dmg:12,hb:{x:52,y:112,w:52,h:30},kb:8,hitstun:20,pose:'shoot',sfx:'gun'});}
       if(weapon==='shotgun'){m.P2=butt('ストック打ち');m.P3=M({name:'至近散弾',kind:'proj',startup:7,active:1,recovery:20,mp:14,pose:'shoot',sfx:'gun',proj:Object.assign({speed:12,w:12,h:8,dmg:5,life:12,count:6,spread:1.8,hitstun:18,kb:7},B)});}
       if(weapon==='sniper'){m.P2=butt('銃床打ち');m.P3=M({name:'ゼロ距離狙撃',startup:8,active:3,recovery:22,dmg:18,hb:{x:56,y:112,w:56,h:30},kb:13,hitstun:24,pose:'shoot',sfx:'gun'});}
@@ -1397,6 +1398,18 @@ function buildMoves(job,weapon){
     m.S3=M({name:'グレネード',kind:'proj',startup:10,active:1,recovery:20,mp:18,pose:'cast',sfx:'whiff',proj:{speed:6,vy:-9,grav:0.45,y:130,w:16,h:16,dmg:14,life:120,kind:'grenade',color:'#3b5b2e',kb:7,lift:-8,hitstun:22,boom:72}});
     if(weapon==='akimbo'){Object.assign(m.K,{startup:4,name:'サバイバルナイフ連撃',multi:2,active:7,dmg:7,kb:5,hb:{x:58,y:104,w:68,h:30},bigKnife:true});
       Object.assign(m.K2,{name:'逆手斬り上げ',hb:{x:56,y:120,w:66,h:40},bigKnife:true});Object.assign(m.K3,{name:'飛び膝蹴り',dash:6,pose:'kick'});}
+    if(weapon==='crossbow'){ // クロスボウ（谷GUCCI専用）：重いボルト＋拳法仕込みの足技
+      const XB={kind:'arrow',color:'#7a4a2a',len:36};
+      m.P=M({name:'ボルト射撃',kind:'proj',startup:7,active:1,recovery:13,mp:12,pose:'shoot',sfx:'whiff',next:'P2',nextBtn:'P',proj:Object.assign({speed:18,y:112,w:34,h:7,dmg:8,life:44,hitstun:16,kb:5},XB)});
+      m.P2=M({name:'クロスボウ打ち',startup:5,active:3,recovery:12,dmg:8,hb:{x:48,y:112,w:50,h:32},kb:5,hitstun:16,pose:'swing',sfx:'hit',next:'P3',nextBtn:'P'});
+      m.P3=M({name:'零距離ボルト',kind:'proj',startup:7,active:1,recovery:20,mp:12,pose:'shoot',sfx:'boom',proj:Object.assign({speed:22,y:112,w:44,h:10,dmg:15,life:14,hitstun:22,kb:13,lift:-6},XB,{color:'#c63a2f'})});
+      m.S1=M({name:'連弩・三連射',kind:'proj',startup:8,active:1,recovery:18,mp:24,pose:'shoot',sfx:'whiff',proj:Object.assign({speed:18,y:112,w:30,h:6,dmg:6,life:44,burst:3,hitstun:14,kb:4},XB)});
+      m.S2=M({name:'対空ボルト',kind:'proj',startup:6,active:1,recovery:18,mp:10,pose:'shootUp',sfx:'whiff',proj:Object.assign({speed:12,vy:-12,y:125,w:14,h:14,dmg:10,life:34,hitstun:22,kb:3,lift:-10},XB)});
+      m.S3=M({name:'炸裂ボルト',kind:'proj',startup:11,active:1,recovery:20,mp:20,pose:'shoot',sfx:'whiff',proj:Object.assign({speed:13,vy:-3,grav:0.12,y:118,w:30,h:10,dmg:12,life:80,kb:8,lift:-8,hitstun:24,boom:64},XB,{color:'#e8452c'})});
+      m.K=M({name:'ストリートキック',startup:5,active:4,recovery:10,dmg:8,hb:{x:54,y:96,w:58,h:30},kb:5,hitstun:16,pose:'kick',sfx:'hit',next:'K2',nextBtn:'K'});
+      m.K2=M({name:'旋風脚',startup:7,active:5,recovery:13,dmg:10,dash:2,hb:{x:56,y:100,w:66,h:46},kb:6,hitstun:18,pose:'spinKick',sfx:'hit',fx:'arc',fxColor:'#ffe2b8',next:'K3',nextBtn:'K'});
+      m.K3=M({name:'蹴り上げ',startup:6,active:4,recovery:16,dmg:10,hb:{x:40,y:140,w:56,h:90},kb:3,lift:-12,hitstun:28,pose:'kickUp',sfx:'hit',fx:'arc',fxColor:'#ffe2b8'});
+    }
   }
   if(job==='robot'){
     m.P=M({name:'鉄拳',startup:8,active:4,recovery:14,dmg:11,hb:{x:52,y:108,w:46,h:32},kb:6,hitstun:17,pose:'punch'});
@@ -1562,6 +1575,7 @@ function buildMoves(job,weapon){
     nitoryu:{name:'奥義・ソニックブーム三連',kind:'proj',startup:6,active:17,recovery:22,inv:16,pose:'swing',sfx:'slash',projRep:3,projGap:8,proj:{speed:13,y:110,w:46,h:112,dmg:15,life:70,kind:'sonic',color:'#bfefff',kb:8,hitstun:22,pierce:true}},
     ninja:{name:'影分身の術',kind:'clone',startup:10,active:1,recovery:16,dmg:0,inv:20,pose:'sign',sfx:'warp'},
     beam:{name:'奥義・ギガメガビーム',kind:'beam',startup:14,active:34,recovery:24,multi:6,dmg:8,beamH:110,kb:10,hitstun:30,inv:14,pose:'punch',sfx:'boom',shout:'ギガメガビーム！'},
+    crossbow:{name:'連弩・ボルトガトリング',kind:'proj',startup:8,active:30,recovery:22,inv:16,pose:'shoot',sfx:'whiff',projRep:10,projGap:3,proj:{speed:20,y:112,w:34,h:8,len:36,dmg:6,life:50,kind:'arrow',color:'#c63a2f',kb:3,hitstun:20}},
     thunder:{name:'雷神降臨',kind:'volt',startup:16,active:1,recovery:12,dmg:0,inv:30,pose:'pray',sfx:'super'},
     drill:{name:'奥義・超螺旋ドリル突撃',startup:6,active:30,recovery:22,dash:12,multi:8,dmg:6,hb:{x:60,y:108,w:84,h:64},kb:8,lift:-10,hitstun:34,inv:20,pose:'punch',sfx:'boom'},
   }[weapon];
@@ -2658,6 +2672,7 @@ const STANCE_DEF={
   handgun:{name:'ウィーバースタンス',note:'両手で銃を握り、支える側の肘を下げて目の高さで狙う',p:{hip:[0,-61],neck:[6,-117],head:[10,-141],fe:[24,-112],fh:[44,-122],be:[18,-104],bh:[38,-118],fk:[14,-31],ff:[22,0],bk:[-14,-31],bf:[-26,0],w:-0.04}},
   shotgun:{name:'ローレディ',note:'銃床を肩に付けたまま銃口を少し下げ、すぐ撃てる姿勢',p:{hip:[0,-61],neck:[3,-118],head:[6,-142],fe:[16,-98],fh:[30,-110],be:[18,-100],bh:[38,-98],fk:[14,-31],ff:[22,0],bk:[-14,-31],bf:[-26,0],w:0.45}},
   sniper:{name:'肩付け立ち撃ち',note:'銃床を肩に当て、前の手で銃身の下を支えて狙う',p:{hip:[0,-61],neck:[5,-117],head:[8,-141],fe:[18,-106],fh:[30,-114],be:[22,-100],bh:[44,-112],fk:[14,-31],ff:[24,0],bk:[-14,-31],bf:[-26,0],w:0.02}},
+  crossbow:{name:'クロスボウ構え',note:'台座を肩に当てて、前の手でクロスボウを支えて狙う',p:{hip:[0,-61],neck:[5,-117],head:[8,-141],fe:[18,-106],fh:[30,-114],be:[22,-100],bh:[44,-112],fk:[14,-31],ff:[24,0],bk:[-14,-31],bf:[-26,0],w:0.02}},
   akimbo:{name:'ガン=カタ風',note:'片方の銃は前へ、もう片方は頭の後ろで天井に向ける',p:{hip:[-2,-56],neck:[4,-112],head:[8,-136],fe:[24,-108],fh:[46,-112],be:[-16,-104],bh:[-30,-118],fk:[18,-28],ff:[30,0],bk:[-18,-28],bf:[-32,0],w:0,w2:-1.45}},
   rocket:{name:'ファイティングポーズ',note:'鋼鉄の拳を顔の前に上げて、どっしり構える',p:{hip:[0,-58],neck:[4,-112],head:[7,-137],fe:[24,-98],fh:[44,-112],be:[16,-94],bh:[36,-104],fk:[18,-30],ff:[28,0],bk:[-16,-30],bf:[-28,0]}},
   drill:{name:'ドリル突き出し',note:'ドリルの腕を前に出し、後ろの腕でバランスを取る',p:{hip:[0,-60],neck:[3,-118],head:[6,-142],fe:[24,-104],fh:[44,-100],be:[-8,-100],bh:[-14,-82],fk:[16,-30],ff:[26,0],bk:[-14,-30],bf:[-26,0],w:0.1}},
@@ -3043,7 +3058,7 @@ function drawWeapon(f,P){
     ctx.restore();return;
   }if(wp==='hustle'){ctx.save();ctx.translate(P.fh[0],P.fh[1]);ctx.rotate(P.w||0);drawBarbell();ctx.restore();return;} // ハッスルはいつもバーベル
   if(wp==='stegoro'||wp==='kenpo'||wp==='ninjutsu'||wp==='tonfa'||wp==='muscle'||wp==='hustle'||wp==='ishihara')return;
-  const knife=f.job==='gunner'&&f.state==='attack'&&(f.moveKey==='K'||f.moveKey==='K2');
+  const knife=f.job==='gunner'&&wp!=='crossbow'&&f.state==='attack'&&(f.moveKey==='K'||f.moveKey==='K2');
   if(wp==='akimbo'||wp==='nitoryu'){ // 後ろの手にも持つ
     ctx.save();ctx.translate(P.bh[0],P.bh[1]);ctx.rotate(f.state==='attack'?P.w+(wp==='nitoryu'?0.5:0.08):(P.w2!=null?P.w2:P.w+0.5));ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle=INK;ctx.lineWidth=3;
     if(wp==='akimbo'&&!knife)drawPistol();else if(wp==='nitoryu')drawBlade(58,'#d5dae3');ctx.restore();
@@ -3097,6 +3112,14 @@ function drawWeapon(f,P){
       const o=(G.frame*(f.state==='attack'?3:0.5))%10;ctx.beginPath();for(let x=4+o;x<40;x+=10){const hh=14*(1-x/46);ctx.moveTo(x,-hh);ctx.lineTo(x+5,hh);}ctx.stroke();break;}
     case 'rocket':ctx.fillStyle='#8b93a6';ctx.beginPath();ctx.rect(-2,-11,22,22);ctx.fill();ctx.stroke();break;
     case 'thunder':{const fl=(G.frame>>1)%3;ctx.fillStyle='rgba(255,240,140,.5)';ctx.beginPath();ctx.arc(4,0,8+fl,0,7);ctx.fill();ctx.strokeStyle='#ffe14a';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(0,-10);ctx.lineTo(7+fl,-3);ctx.lineTo(2,2);ctx.lineTo(11,10-fl);ctx.stroke();break;}
+    case 'crossbow':{const mv=f.move,shot=f.state==='attack'&&mv&&(mv.proj||mv.projRep)&&f.moveT>=mv.startup,nx=shot?28:6; // クロスボウ：撃った後は弦が前に戻る
+      ctx.fillStyle='#7a4a2a';ctx.beginPath();ctx.rect(-28,-4,64,8);ctx.fill();ctx.stroke();ctx.beginPath();ctx.rect(-32,-4,12,13);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#3a3f4d';ctx.beginPath();ctx.rect(-4,3,5,9);ctx.fill();ctx.stroke();
+      ctx.lineWidth=7;ctx.strokeStyle=INK;ctx.beginPath();ctx.moveTo(28,-30);ctx.quadraticCurveTo(44,-14,36,0);ctx.quadraticCurveTo(44,14,28,30);ctx.stroke();ctx.lineWidth=3.5;ctx.strokeStyle='#8b93a6';ctx.stroke();
+      ctx.strokeStyle='rgba(31,36,51,.85)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(28,-30);ctx.lineTo(nx,-5);ctx.lineTo(28,30);ctx.stroke();
+      if(!shot){ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=4.5;ctx.beginPath();ctx.moveTo(nx,-6);ctx.lineTo(48,-6);ctx.stroke();ctx.strokeStyle='#c63a2f';ctx.lineWidth=2.2;ctx.stroke();
+        ctx.fillStyle='#d6dbe3';ctx.strokeStyle=INK;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(57,-6);ctx.lineTo(47,-11);ctx.lineTo(47,-1);ctx.closePath();ctx.fill();ctx.stroke();}
+      ctx.strokeStyle=INK;ctx.lineWidth=3;break;}
     case 'bow':{const mv=f.move,sh=f.state==='attack'&&mv&&(mv.proj||mv.kind==='rain')&&f.moveT<mv.startup+3,pull=sh?Math.min(1,f.moveT/Math.max(1,mv.startup)):0,sx=-6-pull*20; // 弓：引いて射る
       ctx.lineCap='round';ctx.strokeStyle=INK;ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(-6,-42);ctx.quadraticCurveTo(18,-26,3,0);ctx.quadraticCurveTo(18,26,-6,42);ctx.stroke();
       ctx.strokeStyle='#f6f1e4';ctx.lineWidth=3.5;ctx.stroke();ctx.strokeStyle='#ffd23f';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(-4,-38);ctx.quadraticCurveTo(14,-24,4,-6);ctx.stroke();ctx.beginPath();ctx.moveTo(-4,38);ctx.quadraticCurveTo(14,24,4,6);ctx.stroke();
@@ -3486,7 +3509,7 @@ function loop(ts){
 
 /* ================= ロゴ・タイトル画面・OP（曲：魔王魂「ハルジオン」を90秒に編集＝op.mp3） =================
    BPM152、1小節≒1.58秒（opBar(n)＝n小節目の秒）。曲は頭〜サビ終わり(82.6秒)＋曲のエンディングをつないである。
-   0〜3 イントロ（河原の影）／4〜10 メンバー紹介（2人ずつ）／11 集結／12 ロゴ（20秒）／13〜20 各章
+   0〜3 イントロ（河原の影）／4〜10 メンバー紹介（2人ずつ）／11 集結／12 3・2・1・FIGHT!!（20秒）／13〜20 各章
    21〜35 黒幕「ヤギの野望」／36〜43 サビ：バトル／44〜47.5 必殺技カットイン連打／47.5〜51 全員集合／52〜 ラストのロゴ */
 const OPS={b0:0.455,beat:60/152.005};OPS.bar=OPS.beat*4;
 const opBar=b=>OPS.b0+b*OPS.bar;
@@ -3680,6 +3703,22 @@ function opLogoHit(u,t){
   if(u>0.45){ctx.globalAlpha=opCl((u-0.45)/0.25);opTxt('河原で笑って、拳で語れ。',W/2,H-62,30,'#ffffff',INK,'center',8);ctx.globalAlpha=1;}
   opFlash(1-u*3.5);
 }
+/* ---- 12小節：3・2・1・FIGHT!!（1拍ずつ音にハメる） ---- */
+function opCount(u,t){
+  const b=Math.min(3,Math.floor(u/OPS.beat)),ub=u-b*OPS.beat,e8=((u/(OPS.beat/2))%1),fight=b===3;
+  const z=1.08+0.035*b+0.025*Math.max(0,1-ub*6);opDrawBg('sunset',z,0,-10);
+  ctx.fillStyle=fight?'rgba(120,10,0,.35)':`rgba(10,4,16,${(0.5-b*0.08).toFixed(2)})`;ctx.fillRect(0,0,W,H);
+  opSpeed(t,fight?'rgba(255,230,140,.45)':'rgba(255,255,255,.18)');
+  const sh=Math.max(0,1-e8*5)*(fight?14:5);ctx.save();ctx.translate((Math.random()-0.5)*sh,(Math.random()-0.5)*sh);
+  opDrawGroup(opLine(),t,opLinePos(GROUND+4,0.66),fight?null:'rgba(20,8,14,.92)');
+  const col=['#3fa7ff','#3fd47a','#ffb02e','#ff3b2f'][b],txt=['3','2','1','FIGHT!!'][b],k=opE(ub/0.09),sc=2.6-1.6*k;
+  for(let r=0;r<2;r++){const rr=(ub*900+r*120);ctx.strokeStyle=`rgba(255,255,255,${Math.max(0,0.7-ub*2.2-r*0.2).toFixed(3)})`;ctx.lineWidth=10-r*4;ctx.beginPath();ctx.arc(W/2,H/2-30,rr,0,7);ctx.stroke();}
+  ctx.translate(W/2,H/2-30);ctx.scale(sc,sc);ctx.globalAlpha=k;
+  if(fight){opTxt(txt,0,0,150,'#ffd23f',INK,'center',26);opTxt(txt,0,0,150,'rgba(255,255,255,.0)','#ff3b2f','center',8);}
+  else opTxt(txt,0,0,210,'#ffffff',col,'center',34);
+  ctx.restore();ctx.globalAlpha=1;
+  opFlash((fight?0.9:0.55)-ub*(fight?3:5));
+}
 /* ---- 14〜21小節：各章 ---- */
 function opChapter(i,u,t){
   const [st,pid,desc]=OP_CH[i%OP_CH.length],arc=STORY_ARCS[i]||{title:'',sub:''};opDrawBg(st,1.06+u*0.025,-u*8,0);
@@ -3819,7 +3858,7 @@ function opDraw(t){
   if(t<opBar(4))opIntro(t);
   else if(t<opBar(11)){const P=opPairs(),d=(opBar(11)-opBar(4))/P.length,i=Math.min(P.length-1,Math.floor((t-opBar(4))/d));opPair(i,P[i],t-opBar(4)-i*d,d,t);}
   else if(t<opBar(12))opGroup(t-opBar(11),t);
-  else if(t<opBar(13))opLogoHit(t-opBar(12),t);
+  else if(t<opBar(13))opCount(t-opBar(12),t);
   else if(t<opBar(21)){const i=Math.floor((t-opBar(13))/(OPS.bar*2));opChapter(i,t-opBar(13+i*2),t);}
   else if(t<opBar(36))opVillain(t);
   else if(t<opBar(44)){const i=Math.floor((t-opBar(36))/(OPS.bar*2));opBattle(i,t-opBar(36+i*2),t);}
@@ -4531,7 +4570,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='52';
+const GAME_VER='53';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
@@ -4565,6 +4604,8 @@ function saveProfile(){
 }
 /* ---- ランキング（組手で何人抜いたか。claude.ai では db、GitHub 版は Firebase で全員と共有） ---- */
 const NEWS=[ // 新しいお知らせを先頭に足す（id を増やすと、まだ見てへん人に1回だけ出る）
+  {id:2,d:'2026/10/19',t:'谷GUCCI専用武器「クロスボウ」とオープニング',b:'谷GUCCI専用の武器「クロスボウ」が増えました（ジョブ「銃」で、人物を谷GUCCIにすると選べる）。重いボルト・拳法仕込みの足技・炸裂ボルト、必殺技は「連弩・ボルトガトリング」。それと、ゲームを開いたらオープニングムービーが流れるようになりました。',
+   list:['谷GUCCI専用武器「クロスボウ」','ロゴ・タイトル画面・オープニングムービー（曲：ハルジオン。設定で「起動時にOPを流す」をオフにできる）','組手ランキングをリセット（「げきつよ」「やぎつよ」が増えたため）','新ジョブ「天使」（弓）と新メンバー「レイカ」','新武器「雷」と新メンバー「シュン・マツカワ」','ストーリー第3章・第4章']},
   {id:1,d:'2026/10/19',t:'組手ランキングをリセットしました',b:'CPUの強さに「げきつよ」「やぎつよ」が増えて、組手は12人目から「げきつよ」が出るようになりました。条件が変わったので、組手のランキングと自己ベストをリセットしました。もう一回、何人抜けるか挑戦してな！',
    list:['ロゴ・タイトル画面・オープニングムービー（曲：ハルジオン。設定からいつでも見られる）','新ジョブ「天使」（弓）と新メンバー「レイカ」','新武器「雷」と新メンバー「シュン・マツカワ」','全キャラにステップ（←← か →→、十字キーの上のボタン）','ストーリー第3章「ヤギ・ワールドツアー」・第4章「陰キャの王」','剣系の攻撃モーションを作り直し','メニューとバトルのBGM・効果音（設定で音量を変えられる）','オンラインの観戦モード']},
 ];
