@@ -173,6 +173,9 @@ table.moves{border-collapse:collapse;width:100%;font-size:14px}
 .pv{font-size:13px;color:var(--marker);white-space:nowrap}
 .padopt{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:700}
 #battle.padmode .ctl:not(#sysBtns){display:none}
+#battle.watching .ctl:not(#sysBtns){display:none}
+#watchTag{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 74px);transform:translateX(-50%);font:700 13px/1 var(--f-body);color:#fff;background:rgba(200,30,30,.85);border-radius:999px;padding:6px 12px;pointer-events:none;display:none}
+#battle.watching #watchTag{display:block}
 .skins{display:flex;flex-wrap:wrap;gap:8px}
 .skin{width:58px;height:58px;border-radius:50%;padding:0;border:3px solid var(--ink-soft);background:var(--card);overflow:hidden;cursor:pointer;flex:none;box-sizing:border-box}
 .skin img{width:100%;height:100%;object-fit:cover;display:block}
@@ -415,6 +418,8 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
               <button type="button" data-v="easy">よわい</button>
               <button type="button" data-v="normal">ふつう</button>
               <button type="button" data-v="hard">つよい</button>
+              <button type="button" data-v="geki">げきつよ</button>
+              <button type="button" data-v="yagi">やぎつよ</button>
             </div>
           </div>
           <button class="btn primary start" id="fightBtn" type="button">たたかう</button>
@@ -427,7 +432,7 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
       <div class="sh-body two" id="onBlock">
         <div class="col-a">
           <div class="nowchar"></div>
-          <p class="note">同じ合言葉を入れた人と、最大4人で対戦できる。部屋を作った人がホストになる。キャラは部屋の中でも変えられる。</p>
+          <p class="note">同じ合言葉を入れた人と、最大4人で対戦できる。部屋を作った人がホストになる。キャラは部屋の中でも変えられる。「観戦する」は戦わんと見るだけ（何人でも入れる）。</p>
         </div>
         <div class="col-b">
           <div class="field">
@@ -437,6 +442,7 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
           <div class="row-actions stretch">
             <button class="btn" id="onCreate" type="button">部屋を作る</button>
             <button class="btn primary" id="onJoin" type="button">部屋に入る</button>
+            <button class="btn ghost" id="onWatch" type="button">観戦する</button>
           </div>
           <p class="note" id="onOff" hidden>この画面ではオンライン対戦が使えへん。claude.ai にログインして、このページを開き直してな。</p>
         </div>
@@ -747,6 +753,7 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
     <button class="act ctl" id="bJ" type="button">ジャンプ</button>
     <button class="act ctl" id="bG" type="button">ガード</button>
     <button class="act ctl" id="bS" type="button">必殺</button>
+    <div id="watchTag">● 観戦中</div>
     <div id="stepBtns" class="ctl">
       <button class="stp" type="button" data-k="STL" aria-label="左にステップ">◀ ステップ</button>
       <button class="stp" type="button" data-k="STR" aria-label="右にステップ">ステップ ▶</button>
@@ -922,7 +929,7 @@ const SPEED_ALL=1.15; // ゲーム全体のキャラの移動速度（殿下：�
 const HOVER_MP=0.38; // 天使の浮遊で1フレームに減るMP
 const JUST=8,JUST_PHYS=15; // ジャストガードの受付（フレーム）。物理キャラ（格闘・大剣・ロボ）は長い
 const MIRROR={1:3,2:2,3:1,4:6,5:5,6:4,7:9,8:8,9:7};
-const DIFF={easy:{react:22,guard:0.15,aa:0.15,aggr:0.35,special:0.15,just:0.04},normal:{react:12,guard:0.45,aa:0.4,aggr:0.55,special:0.3,just:0.12},hard:{react:6,guard:0.75,aa:0.7,aggr:0.75,special:0.45,just:0.25}};
+const DIFF={easy:{react:22,guard:0.15,aa:0.15,aggr:0.35,special:0.15,just:0.04},normal:{react:12,guard:0.45,aa:0.4,aggr:0.55,special:0.3,just:0.12},hard:{react:6,guard:0.75,aa:0.7,aggr:0.75,special:0.45,just:0.25},geki:{react:3,guard:0.88,aa:0.85,aggr:0.85,special:0.55,just:0.45},yagi:{react:1,guard:0.96,aa:0.95,aggr:0.92,special:0.6,just:0.7,boost:true}}; // やぎつよ：反応も読みも最強＋能力もドーピング
 const BASE_SAMPLES=[
   {id:'s1',name:'サンプル拳',job:'fighter',weapon:'kenpo',stats:{atk:3,spd:3,hp:2,def:1,mp:1},sample:true},
   {id:'s2',name:'サンプル剣',job:'sword',weapon:'greatsword',stats:{atk:4,spd:1,hp:3,def:2,mp:0},sample:true},
@@ -1905,6 +1912,7 @@ function newGame(c1,c2,diff,opts){
      story:!!opts.story,need:opts.need||2,stage:opts.stage||'sunset',title:opts.title||null,cutin:null,mid:opts.mid||null,pinch:opts.pinch||null,pinched:false,pendingTalk:null};
   G.f=cfgs.map((c,i)=>makeFighter(c,i));G.bgm=pickBgm(opts);
   for(const f of G.f)applyVs(f,G.f);
+  for(const f of G.f){const lv=DIFF[f.aiLevel||G.diff];if(lv&&lv.boost&&(G.ctrl[f.idx]||'cpu')==='cpu'){f.maxHp=Math.round(f.maxHp*1.3);f.atkMul*=1.3;f.defMul*=0.8;f.walk*=1.15;f.mpRegen*=1.6;f.sgMul=(f.sgMul||1)*1.4;f.yagiTsuyo=true;}} // やぎつよのCPU
   resetRound();
   if(typeof document!=='undefined'&&bgC&&cv)buildBg();
 }
@@ -1968,7 +1976,7 @@ function step(){
   fxUpdate();
   for(const f of G.f){f.hpShow+=(f.hp-f.hpShow)*0.06;if(Math.abs(f.hpShow-f.hp)<0.3)f.hpShow=f.hp;}
   if(G.shake>0)G.shake*=0.86;
-  if(G.phase==='intro'){if(G.phaseT===62)sfx('bell');if(G.phaseT===72)for(const f of G.f){if(f.vsBoost)addText(f.x,f.y-215,'天敵！ 全ステ×'+f.vsBoost,'#ff4a3d',26);if(f.vsDefFx)addText(f.x,f.y-190,'苦手な相手… 防御×'+f.vsDefFx,'#7fb6ff',22);}if(G.phaseT>=100){G.phase='fight';G.phaseT=0;sfx('fight');}}
+  if(G.phase==='intro'){if(G.phaseT===62)sfx('bell');if(G.phaseT===72)for(const f of G.f){if(f.yagiTsuyo)addText(f.x,f.y-240,'やぎつよ','#ff2a1a',30);if(f.vsBoost)addText(f.x,f.y-215,'天敵！ 全ステ×'+f.vsBoost,'#ff4a3d',26);if(f.vsDefFx)addText(f.x,f.y-190,'苦手な相手… 防御×'+f.vsDefFx,'#7fb6ff',22);}if(G.phaseT>=100){G.phase='fight';G.phaseT=0;sfx('fight');}}
   else if(G.phase==='fight'){if(G.practice)practiceTick();else if(--G.timer<=0)timeUp();}
   else if(G.phase==='ko'||G.phase==='timeup'){
     if(G.phaseT>70&&G.winner>=0){const w=G.f[G.winner];if(w.onGround&&(w.state==='idle'||w.state==='walk'||w.state==='crouch'||w.state==='land')){w.state='win';w.vx=0;}}
@@ -3395,6 +3403,7 @@ function render(){
   if(G.cutin)drawCutin();
 }
 function drawMeMark(){
+  if(G.watch)return; // 観戦中は「あなた」を出さへん
   const f=G.f[G.me||0];if(!f||f.gone||f.out||f.state==='launch')return;
   const P=poseOf(f),x=f.x+f.facing*P.head[0],y=f.y+P.head[1]-4-46+Math.sin(G.frame*0.12)*3;
   ctx.save();ctx.fillStyle=HUDC[f.idx];ctx.strokeStyle='#14070a';ctx.lineWidth=3;ctx.lineJoin='round';
@@ -3723,7 +3732,7 @@ function runBattle(){
   newGame(clone(lastCfgs),null,DATA.diff,{stage:pickStage(lastStage)});
   battleGo();
 }
-function toMenu(){PRACTICE=null;if(NET.role)netLeave();if(KUMITE&&!KUMITE.done)kumiteRecord();KUMITE=null;G=null;STORYS=null;talkEnd();$('#pause').hidden=true;$('#result').hidden=true;show('menu');renderMenu();}
+function toMenu(){PRACTICE=null;$('#battle').classList.remove('watching');if(NET.role)netLeave();if(KUMITE&&!KUMITE.done)kumiteRecord();KUMITE=null;G=null;STORYS=null;talkEnd();$('#pause').hidden=true;$('#result').hidden=true;show('menu');renderMenu();}
 function setPause(on){
   if(!G||G.over)return;
   const me=G.f[G.me||0];
@@ -3735,12 +3744,12 @@ function setPause(on){
 }
 function matchWinner(){const mx=Math.max(...G.wins),top=G.wins.map((w,i)=>w===mx?i:-1).filter(i=>i>=0);return top.length===1?top[0]:-1;}
 function showResult(){
-  const me=G.me||0,N=G.f.length,win=matchWinner();bgmJingle(win===me);
-  $('#resTitle').textContent=win===me?(N>2?'優勝！':'勝ち！'):win<0?'引き分け':'負け…';
+  const me=G.me||0,N=G.f.length,win=matchWinner();bgmJingle(G.watch?win>=0:win===me);
+  $('#resTitle').textContent=G.watch?(win>=0?`${G.f[win].name} の勝ち！`:'引き分け'):win===me?(N>2?'優勝！':'勝ち！'):win<0?'引き分け':'負け…';
   $('#resSub').textContent=N===2?`${G.wins[0]} - ${G.wins[1]}　${G.f[0].name} vs ${G.f[1].name}`:(win>=0?`${G.f[win].name} の優勝　`:'')+G.f.map(f=>`${f.name} ${G.wins[f.idx]}勝`).join(' / ');
   if(G.net){
     const host=!!G.net.host;$('#resAgain').hidden=!host;$('#resAgain').textContent='もう一回';$('#resMenu').textContent=host?'ロビーに戻る':'部屋から抜ける';
-    if(!host)$('#resSub').textContent+='　（ホストが次を決めるまで待ってな）';
+    if(!host)$('#resSub').textContent+=G.watch?'　（次の試合が始まったら、そのまま観戦できる）':'　（ホストが次を決めるまで待ってな）';
   }else{$('#resAgain').hidden=false;$('#resAgain').textContent='もう一回';$('#resMenu').textContent='メニューへ';}
   setTimeout(()=>{if(G&&G.over)$('#result').hidden=false;},300);
 }
@@ -3851,7 +3860,7 @@ let STORYS=null,TALK=null;
 function arcCleared(a){const A=STORY_ARCS[a];if(!A)return 0;return A.id==='c1'?(DATA.story||0):((DATA.storyP||{})[A.id]||0);}
 function arcSetCleared(a,n){const A=STORY_ARCS[a];if(!A)return;n=Math.min(A.eps.length,n);if(A.id==='c1')DATA.story=Math.max(DATA.story||0,n);else{DATA.storyP=DATA.storyP||{};DATA.storyP[A.id]=Math.max(DATA.storyP[A.id]||0,n);}save();}
 function curEp(){return STORYS?STORY_ARCS[STORYS.arc].eps[STORYS.ch]:null;}
-function storyLevel(){const L=['easy','normal','hard'],i=Math.max(0,L.indexOf(DATA.diff));return L[Math.max(0,Math.min(2,i+curEp().lv))];}
+function storyLevel(){const L=['easy','normal','hard','geki','yagi'],i=Math.max(0,L.indexOf(DATA.diff));return L[Math.max(0,Math.min(4,i+curEp().lv))];}
 const CAST_POOL=['takeru','sanma','kazusa','bayashi','tatsuya','kojimaimo','rion'];
 function storyCast(p1,arc){
   const me=p1&&p1.person,A=STORY_ARCS[arc||0];
@@ -4129,7 +4138,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='47';
+const GAME_VER='48';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
@@ -4200,7 +4209,7 @@ async function pushRank(score,cname,force,cfg){
 }
 /* ---- 組手（勝ち抜き） ---- */
 let KUMITE=null;
-function kumiteDiff(n){return n<3?'easy':n<7?'normal':'hard';}
+function kumiteDiff(n){return n<3?'easy':n<7?'normal':n<12?'hard':'geki';}
 function kumiteOpp(){
   const s=SAMPLES[(Math.random()*SAMPLES.length)|0],jobs=Object.keys(JOBS).filter(k=>!JOBS[k].hidden),j=jobs[(Math.random()*jobs.length)|0],ws=JOBS[j].weapons.filter(x=>wpnOK(x,s.person)),w=ws[(Math.random()*ws.length)|0];
   const st={atk:0,spd:0,hp:0,def:0,mp:0},ks=Object.keys(st);for(let i=0;i<10;i++)st[ks[(Math.random()*5)|0]]++;
@@ -4226,7 +4235,7 @@ function kumiteEnd(){
   if(won){ // 勝ったら確認なしで次の相手（倒れるまで続く）
     KUMITE.n++;KUMITE.hp=Math.min(f.maxHp,f.hp+f.maxHp*0.3);kumiteNext();return;
     $('#resTitle').textContent=`${KUMITE.n}人抜き！`;
-    $('#resSub').textContent=`体力を少し回復して次へ（${Math.round(KUMITE.hp)} / ${f.maxHp}）。次の相手は「${{easy:'よわい',normal:'ふつう',hard:'つよい'}[kumiteDiff(KUMITE.n)]}」`;
+    $('#resSub').textContent=`体力を少し回復して次へ（${Math.round(KUMITE.hp)} / ${f.maxHp}）。次の相手は「${{easy:'よわい',normal:'ふつう',hard:'つよい',geki:'げきつよ'}[kumiteDiff(KUMITE.n)]}」`;
     $('#resAgain').textContent='次の相手へ';$('#resMenu').textContent='ここでやめる';
   }else{
     const n=KUMITE.n,prev=kumiteRecord();
@@ -4303,6 +4312,7 @@ function renderLobbyMe(){
 }
 function netSetMyChar(c){
   if(!NET.role||!c)return;NET.myCfg=clone(c);
+  if(NET.role==='watch')return;
   if(NET.role==='guest')NET.room.presence({g:myG()}).catch(()=>{});else hostSync(true);
   renderLobby();
 }
@@ -4350,14 +4360,14 @@ async function lobbyRoom(){
   return LOBBY_ROOM;
 }
 function onSet(msg){const el=$('#onStatus');if(el)el.textContent=msg||'';}
-function onBusy(b){for(const id of ['#onCreate','#onJoin'])$(id).disabled=b;}
+function onBusy(b){for(const id of ['#onCreate','#onJoin','#onWatch'])$(id).disabled=b;}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function netPeers(){return NET.room?NET.room.peers():[];}
 function myPeer(){const p=netPeers().find(x=>x.sameTab);return p?p.peer:null;}
 function hostPeers(){return netPeers().filter(p=>!p.sameTab&&p.kind==='viewer'&&p.presence&&p.presence.h&&p.presence.h.v===1).sort((a,b)=>a.peer<b.peer?-1:1);}
 function findHost(){return hostPeers()[0]||null;}
 
-async function netEnter(create){
+async function netEnter(create,watch){
   if(NET.role)return;
   let code=normCode($('#onCode').value);
   if(!code){if(!create){toast('合言葉を入れてな');return;}code=String(1000+Math.floor(Math.random()*9000));}
@@ -4370,7 +4380,7 @@ async function netEnter(create){
     if(!lobby){onBusy(false);onSet('');$('#onOff').hidden=false;toast('この画面ではオンライン対戦が使えへん');return;}
     try{room=await lobby.join(roomName(code));}catch(e){onBusy(false);onSet('');toast(e&&e.code==='not_permitted'?'オンライン対戦の権限がない':'部屋につなげへんかった。もう一回試してな');return;}
   }
-  Object.assign(NET,{role:create?'host':'guest',room,code,myCfg:clone(findChar(DATA.sel)||SAMPLES[0]),order:[],m:0,mc:null,ms:null,stg:null,
+  Object.assign(NET,{role:create?'host':watch?'watch':'guest',room,code,myCfg:clone(findChar(DATA.sel)||SAMPLES[0]),order:[],m:0,mc:null,ms:null,stg:null,
     stage:DATA.stage||'random',need:2,cpu:0,lastEv:{},seq:0,evq:[],hist:[],lf:0,lastSig:'',fx:[],fxSeq:0,rec:false,sentAt:0,snapObj:null,pendingSnap:null,seenFx:-1,since:0,hostPeer:null,hostSeen:false,unsub:[],conn:true,leaving:false,lobbySig:'',lostAt:0,miss:{}});
   clearInterval(NET.watch);NET.watch=setInterval(netWatch,700);
   NET.unsub.push(room.onPeers(()=>netOnPeers(),e=>netFail(e)));
@@ -4386,7 +4396,7 @@ async function netEnter(create){
     if(NET.room!==room)return;
     if(!findHost()){toast('部屋が見つからへん。合言葉を確かめてな');netLeave();return;}
     NET.hostPeer=findHost().peer;NET.hostSeen=true;
-    room.presence({g:myG()}).catch(()=>{});
+    room.presence({g:watch?{v:2,w:1,pn:profName()}:myG()}).catch(()=>{}); // 観戦の人は v:2（参加者には数えへん）
   }
   onBusy(false);onSet('');
   showLobby();
@@ -4406,9 +4416,9 @@ function netLeave(){
   if(r)r.leave().catch(()=>{});
   onBusy(false);onSet('');
 }
-function goMenuFromNet(){G=null;STORYS=null;talkEnd();$('#pause').hidden=true;$('#result').hidden=true;show('menu');renderMenu();}
+function goMenuFromNet(){$('#battle').classList.remove('watching');G=null;STORYS=null;talkEnd();$('#pause').hidden=true;$('#result').hidden=true;show('menu');renderMenu();}
 function showLobby(){
-  G=null;$('#pause').hidden=true;$('#result').hidden=true;
+  $('#battle').classList.remove('watching');G=null;$('#pause').hidden=true;$('#result').hidden=true;
   show('lobby');window.scrollTo(0,0);
   const sg=$('#lbStage');if(!sg.options.length){addOpt(sg,'random','ランダム');STAGE_ORDER.forEach(k=>addOpt(sg,k,STAGES[k].name));}
   renderLobby();
@@ -4450,7 +4460,9 @@ function netOnPeers(){
   if(!host)return;
   NET.hostPeer=host.peer;NET.hostSeen=true;
   const h=host.presence.h,mp=myPeer();
-  if(h.m&&h.m!==NET.m&&Array.isArray(h.ms)&&mp&&h.ms.includes(mp)&&Array.isArray(h.mc)){
+  if(NET.role==='watch'&&h.m&&h.m!==NET.m&&Array.isArray(h.ms)&&Array.isArray(h.mc)){ // 観戦：試合が始まったら（途中からでも）見る
+    NET.m=h.m;NET.mc=h.mc;NET.ms=h.ms;NET.stg=h.stg;NET.need=h.nd===1?1:2;beginNetMatch();
+  }else if(h.m&&h.m!==NET.m&&Array.isArray(h.ms)&&mp&&h.ms.includes(mp)&&Array.isArray(h.mc)){
     NET.m=h.m;NET.mc=h.mc;NET.ms=h.ms;NET.stg=h.stg;NET.need=h.nd===1?1:2;beginNetMatch();
   }else if(!h.m&&NET.m){
     NET.m=0;NET.mc=null;NET.ms=null;showLobby();
@@ -4462,7 +4474,7 @@ function netOnPeers(){
 function netWatch(){
   if(!NET.role||!NET.room)return;
   const now=performance.now(),ps=netPeers();
-  if(NET.role==='guest'){
+  if(NET.role!=='host'){
     const ok=NET.hostPeer&&ps.some(p=>p.peer===NET.hostPeer&&p.presence&&p.presence.h);
     if(ok)NET.lostAt=0;else if(!NET.lostAt)NET.lostAt=now;
     else if(now-NET.lostAt>4500){toast('ホストが抜けた。メニューに戻る');netLeave();goMenuFromNet();}
@@ -4523,6 +4535,10 @@ function renderLobby(){
     const st=STAGES[h.st]?STAGES[h.st].name:'ランダム';
     $('#lbInfo').textContent=`ステージ：${st}　${h.nd===1?'1本':'2本'}先取`;
   }
+  const wn=netPeers().filter(p=>p.presence&&p.presence.g&&p.presence.g.w).length;
+  if(NET.role==='watch')note=(NET.lobbyH&&NET.lobbyH.m)?'今は対戦中。すぐ観戦画面になる…':'観戦モード。ホストが「対戦開始」を押したら、そのまま試合が見られる。';
+  if(wn)note+=`（観戦 ${wn}人）`;
+  $('#lbMeBlock').hidden=NET.role==='watch'||!!NET.m;
   $('#lbHost').hidden=!host;$('#lbInfo').hidden=host;$('#lbStart').hidden=!host;
   $('#lbNote').textContent=note;
 }
@@ -4545,17 +4561,18 @@ function netToLobby(){
   hostSync(true);showLobby();
 }
 function beginNetMatch(){
-  const host=NET.role==='host',mp=myPeer();
+  const host=NET.role==='host',watch=NET.role==='watch',mp=myPeer();
   const cfgs=NET.mc.map(unpackCfg);
-  const me=host?0:NET.ms.indexOf(mp);if(me<0)return;
-  const ctrl=NET.ms.map((s,i)=>i===me?'local':host?(s==='C'?'cpu':'net:'+s):'remote');
+  const me=host?0:watch?0:NET.ms.indexOf(mp);if(me<0)return;
+  const ctrl=NET.ms.map((s,i)=>i===me&&!watch?'local':host?(s==='C'?'cpu':'net:'+s):'remote');
   STORYS=null;battleReset();
   newGame(cfgs,null,DATA.diff,{stage:STAGES[NET.stg]?NET.stg:'sunset',need:NET.need===1?1:2,me,ctrl,net:{host,guest:!host,m:NET.m}});
-  G.f[me].img=faceImage(NET.myCfg);
+  if(!watch)G.f[me].img=faceImage(NET.myCfg);
+  G.watch=watch;$('#battle').classList.toggle('watching',watch);
   NET.hist=[];NET.evq=[];NET.seq=0;NET.lf=0;NET.lastSig='';NET.pendingSnap=null;NET.snapObj=null;NET.seenFx=-1;NET.since=0;NET.lastF=0;
-  if(!host)NET.room.presence({i:{m:NET.m,d:5,g:0,e:[]}}).catch(()=>{});
+  if(!host&&!watch)NET.room.presence({i:{m:NET.m,d:5,g:0,e:[]}}).catch(()=>{});
   battleGo();
-  toast(host?'対戦開始！':'ホストが対戦を始めた！');
+  toast(host?'対戦開始！':watch?'観戦中（見てるだけ）':'ホストが対戦を始めた！');
 }
 /* ---- ホスト：入力を読む ---- */
 function netInput(idx){
@@ -4607,7 +4624,7 @@ function netGuestStep(){
   const evs=(inp.raw||[]).map(netResolve).concat(inp.keys||[]);
   for(const k of evs){NET.seq++;NET.evq.push([NET.seq,k]);if(NET.evq.length>12)NET.evq.shift();if(k[0]==='S')NET.hist=[{d:rel,f:NET.lf}];}
   const g=inp.g?1:0,sig=inp.dir+'|'+g+'|'+NET.seq;
-  if(sig!==NET.lastSig&&!G.over){NET.lastSig=sig;NET.room.presence({i:{m:NET.m,d:inp.dir,g,e:NET.evq.slice()}}).catch(()=>{});}
+  if(NET.role!=='watch'&&sig!==NET.lastSig&&!G.over){NET.lastSig=sig;NET.room.presence({i:{m:NET.m,d:inp.dir,g,e:NET.evq.slice()}}).catch(()=>{});}
   // 見た目だけ自分の画面で進める
   G.frame++;fxTick();partsUpdate();fxUpdate();
   if(G.shake>0)G.shake*=0.86;
@@ -4766,6 +4783,7 @@ function init(){
   $('#lbEdit').addEventListener('click',()=>{const c=findChar(DATA.sel);openEditor(c,!!(c&&c.sample));});
   $('#onCreate').addEventListener('click',()=>{aInit();netEnter(true);});
   $('#onJoin').addEventListener('click',()=>{aInit();netEnter(false);});
+  $('#onWatch').addEventListener('click',()=>{aInit();netEnter(false,true);});
   $('#onCode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();aInit();netEnter(false);}});
   $('#lbLeave').addEventListener('click',()=>{netLeave();goMenuFromNet();});
   $('#lbStart').addEventListener('click',()=>{aInit();netStart();});

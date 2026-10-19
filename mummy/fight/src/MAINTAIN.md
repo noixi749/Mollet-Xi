@@ -70,6 +70,9 @@ node src/tools/tune_master.js src/mami-fight.html 4 10   # 勝率の調整（TUN
 - 組手ランキングは使ったキャラ名・ジョブ・武器も保存して表示（rank の `c` `j` `w`）
 - 画面の確認は Playwright（`/opt/pw-browsers/chromium`）で。Google Fonts は route で止めてよい
 
+- CPUの強さ：よわい・ふつう・つよい・げきつよ（`geki`）・やぎつよ（`yagi`、`DIFF.yagi.boost`：CPUだけ体力1.3・攻撃1.3・被ダメ0.8・速さ1.15・MP回復1.6・ゲージ1.4、試合開始に「やぎつよ」表示）。組手は12人目からげきつよ
+- 観戦モード：オンラインの「観戦する」（`NET.role='watch'`）。プレゼンスは `g:{v:2,w:1}` で参加者に数えへん。試合中に入っても `h.m` を見てそのまま観戦画面に入る。入力は送らへん。`#battle.watching` でボタンを隠して「● 観戦中」
+
 ## 画面の作り（v24〜）
 
 - メニューは「ホーム」1枚（スクロールなし）＋タップで開くパネル（`.sheet`、`data-pane`）。パネルは `showTab(名前, 重ねるか)` で開いて、← で1つ前に戻る（`SHEETS` が重なり）
