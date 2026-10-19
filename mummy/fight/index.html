@@ -1264,7 +1264,7 @@ function derive(c){
   return d;
 }
 /* 武器ごとの強さの調整（CPU同士の勝率が揃うように合わせた値）。dmg=与えるダメージ、hp=体力 */
-const TUNE={crossbow:{dmg:1.1},stegoro:{dmg:1.12},tonfa:{dmg:1.08},kenpo:{dmg:1.1},greatsword:{dmg:0.96},katana:{dmg:0.936},hammer:{dmg:0.973},onehand:{dmg:1.45},boosthammer:{dmg:1.04},gunblade:{dmg:1},staff:{dmg:1.189},grimoire:{dmg:1.054},ninjutsu:{dmg:1.164},thunder:{dmg:1.1,hp:0.85},handgun:{dmg:1.61},shotgun:{dmg:1.378},sniper:{dmg:1.283},akimbo:{dmg:1.15},rocket:{dmg:1.118},drill:{dmg:1.046},beam:{dmg:1.156},bow:{dmg:1.3},iai:{dmg:0.724},nitoryu:{dmg:1.0},ninja:{dmg:0.946},muscle:{dmg:1,hp:0.95},hustle:{dmg:1},ishihara:{dmg:1.4,hp:0.6,fixed:true}};
+const TUNE={crossbow:{dmg:1.1},stegoro:{dmg:1.12},tonfa:{dmg:1.08},kenpo:{dmg:1.1},greatsword:{dmg:0.96},katana:{dmg:0.936},hammer:{dmg:0.973},onehand:{dmg:1.45},boosthammer:{dmg:1.04},gunblade:{dmg:1},staff:{dmg:1.189},grimoire:{dmg:1.054},ninjutsu:{dmg:1.164},thunder:{dmg:1.1,hp:0.85},handgun:{dmg:1.61},shotgun:{dmg:1.378},sniper:{dmg:1.283},akimbo:{dmg:1.15},rocket:{dmg:1.118},drill:{dmg:1.046},beam:{dmg:1.156},bow:{dmg:1.3},iai:{dmg:0.724},nitoryu:{dmg:1.0},ninja:{dmg:0.946},muscle:{dmg:1,hp:1.05},hustle:{dmg:1},ishihara:{dmg:1.4,hp:0.6,fixed:true}};
 function M(o){return Object.assign({name:'',kind:'melee',startup:6,active:4,recovery:10,dmg:5,hb:null,kb:4,hitstun:15,lift:0,mp:0,dash:0,rise:0,multi:1,inv:0,proj:null,pose:'punch',sfx:'hit',fx:null,fxColor:'#e8452c'},o);}
 const EMPTY=M({kind:'none',startup:0,active:0,recovery:12,pose:'idle'});
 
@@ -1508,7 +1508,7 @@ function buildMoves(job,weapon){
       m.K2=M({name:'マッスルタックル',startup:9,active:14,recovery:20,dash:10,dmg:15,hb:{x:40,y:100,w:56,h:70},kb:12,hitstun:22,pose:'thrust',sfx:'boom',armor:2,next:'K3',nextBtn:'K'});
       m.K3=M({name:'マッスルドロップキック',startup:10,active:10,recovery:24,dash:9,dmg:16,hb:{x:52,y:90,w:62,h:44},kb:14,lift:-6,hitstun:24,pose:'kick',sfx:'boom'});
       m.S1=M({name:'ダンベル投げ',kind:'proj',startup:10,active:1,recovery:18,mp:15,pose:'cast',sfx:'whiff',proj:{speed:8,vy:-6,grav:0.28,y:140,w:30,h:18,dmg:14,life:120,kind:'dumbbell',color:'#5a5f6e',kb:8,hitstun:20}});
-      m.S2=M({name:'マッスルスロー',startup:4,active:4,recovery:18,dmg:14,hb:{x:42,y:100,w:56,h:96},kb:2,hitstun:36,throw:true,hurl:true,pose:'upper',sfx:'boom'}); // つかんで壁までぶん投げる（近い壁ならマヒ）
+      m.S2=M({name:'マッスルスロー',startup:4,active:4,recovery:18,dmg:14,hb:{x:42,y:100,w:56,h:96},kb:2,hitstun:36,throw:true,hurl:true,pose:'upper',sfx:'boom'}); // つかんで壁までぶん投げる
       m.S3=M({name:'パンプアップ',startup:14,active:6,recovery:14,dmg:8,hb:{x:0,y:100,w:160,h:150},kb:9,hitstun:20,buff:'pump',pose:'flex',sfx:'boom',fx:'burst',fxColor:'#ff7a3d'});
     }
     if(weapon==='hustle'){
@@ -2257,11 +2257,10 @@ function physics(f){
     if(s.t>=s.dur||a.out||a.state!=='attack'||f.ko){f.swing=null;f.spin=0;f.x=Math.max(40,Math.min(W-40,a.x+s.dir*70));f.hurl={x0:f.x};f.vx=s.dir*30/Math.max(0.8,f.weight);f.vy=-4;addText(f.x,f.y-150,'ぶん投げ！','#ff8a3d',30);G.shake=Math.max(G.shake,8);}
     return;
   }
-  if(f.hurl&&f.state==='airhit'){ // 壁まで一直線。進んだ距離がステージの半分以下ならマヒ
+  if(f.hurl&&f.state==='airhit'){ // 壁まで一直線（マヒはなし：ハメ防止）
     f.vy=Math.min(f.vy+GRAV*0.12,3);f.x+=f.vx;f.y=Math.min(GROUND-40,f.y+f.vy);f.onGround=false;
     if(f.x<=30||f.x>=W-30){const left=f.x<=30,wx=left?24:W-24,dist=Math.abs(f.x-f.hurl.x0);f.x=left?30:W-30;f.hurl=null;f.wallB=true;f.vx=(left?1:-1)*3;f.vy=-6;
-      G.shake=Math.max(G.shake,14);sfx('heavy');addRing(wx,f.y-90,'#ff8a3d');addText(wx+(left?66:-66),f.y-140,'ドガァン！',INK,42);
-      if(dist<=W/2&&!f.ko){f.stun=90;addText(f.x+(left?70:-70),f.y-192,'マヒ！','#ffd23f',30);}}
+      G.shake=Math.max(G.shake,14);sfx('heavy');addRing(wx,f.y-90,'#ff8a3d');addText(wx+(left?66:-66),f.y-140,'ドガァン！',INK,42);}
     return;
   }
   if(f.state==='launch'){
@@ -4028,7 +4027,7 @@ function fillMoves(tb,job,weapon){
   const rows=[['P','K','S1','S2','S3']];if(mv.GP)rows.push(['GP','GK','GS1','GS2']);
   for(const keys of rows){if(keys[0]==='GP'){const r=document.createElement('tr'),a=document.createElement('td');a.colSpan=3;a.className='cmd';a.textContent='― 銃モード（技3で変形）―';r.appendChild(a);tb.appendChild(r);}
   for(const k of keys){
-    const m=mv[k],notes=[];if(m.kind==='transform')notes.push('剣モード⇔銃モードに変形');if(m.hurl)notes.push('壁までぶっ飛ばす（飛んだ距離がステージの半分以下ならマヒ）');if(m.buff==='engine')notes.push('しばらく攻撃力アップ（エンジン全開）');
+    const m=mv[k],notes=[];if(m.kind==='transform')notes.push('剣モード⇔銃モードに変形');if(m.hurl)notes.push('壁までぶっ飛ばす');if(m.buff==='engine')notes.push('しばらく攻撃力アップ（エンジン全開）');
     if(m.proj||m.kind==='beam'||m.swords)notes.push('飛び道具');if(m.mp)notes.push('MP'+m.mp);if(m.inv&&k==='S2')notes.push('出だし無敵');
     if(m.multi>1)notes.push(m.multi+'段');if(m.proj&&m.proj.noDown)notes.push('ダウンなし');if(m.proj&&m.proj.boom)notes.push('爆発');if(weapon==='handgun'&&m.proj&&k!=='S3')notes.push('8発でリロード');if(m.kind==='warp')notes.push('すり抜け');if(m.pass)notes.push('相手をすり抜けて斬る');if(m.kind==='stance')notes.push('近づいた相手を自動で一閃');if(m.cutProj)notes.push('弾を斬り落とす');if(m.warpBehind)notes.push('相手の背後に回る');if(m.armor)notes.push('アーマー（殴られても止まらへん）');if(m.throw)notes.push('ガード不能の投げ');if(m.kind==='beam'&&m.beamH)notes.push('画面の端まで届く極太ビーム');if(m.proj&&m.proj.thru)notes.push('何人でも貫通');if(m.swords)notes.push('相手の頭上に剣の雨');if(m.buff==='pump')notes.push('しばらく攻撃力アップ・被ダメ減');if(m.buff==='hustle')notes.push('しばらく足が速い');if(m.lift)notes.push('浮かせる');if(m.bolt)notes.push(m.kind==='call'?'相手の頭上に大きい雷':'蹴り上げて雷が落ちる');if(m.elec)notes.push('電撃');if(m.dry)notes.push('MP切れなら素手');if(m.pose==='sign')notes.push('溜めあり');
     const tr=document.createElement('tr');const c1=document.createElement('td');c1.className='cmd';c1.textContent=CMD[k.replace(/^G/,'')];
@@ -4044,7 +4043,7 @@ function fillMoves(tb,job,weapon){
   c1.className='cmd';c1.textContent='攻撃に合わせてガード';c2.textContent=mv.CS.name+'（カウンター）';c3.textContent='反撃して浮かせる・弾やビームははね返す'+(job==='hero'?'・盾でガードするのでMPが減らへん':'')+(weapon==='kenpo'?'・拳法は受付がいちばん長い（物理キャラの2.5倍）':weapon==='iai'?'・居合は受付が長め':JOBS[job]&&JOBS[job].phys?'・物理キャラは受付が長い':'');
   tr.append(c1,c2,c3);tb.appendChild(tr);
   if(mv.SP){const r=document.createElement('tr'),a=document.createElement('td'),b=document.createElement('td'),c=document.createElement('td');
-    a.className='cmd';a.textContent='ゲージ満タンで「必殺」';b.textContent=mv.SP.name;c.textContent=({gym:'相手全員を1秒マヒさせる',legend:'地面から伝説の剣を引き抜く。そのラウンドの間ずっと攻撃1.25倍・速さ1.05倍・黄色いオーラ（ゲージはたまりにくい）',melee:mv.SP.swingGrab?'つかんでブン回して壁までぶん投げる（ガード不能・近い壁ならマヒ）':undefined,zip:'画面の端から端まで一瞬で駆け抜けて斬る（ガード不能）',clone:'5秒間、分身が一緒に戦う（分身は3発で消える）',volt:'自分に雷を落として5秒間帯電。殴った相手も触れた相手も感電してマヒ',heal:'地上で使うと体力を'+Math.round((mv.SP.heal||0.3)*100)+'%回復'+(mv.SPA?'。浮遊中に使うと「'+mv.SPA.name+'」：相手の頭上に矢の雨を降らせる':'')}[mv.SP.kind]||(mv.SP.proj&&mv.SP.proj.kind==='slashwave'?'巨大な斬撃が地をはって飛ぶ（何人でも貫通）':mv.SP.proj&&mv.SP.proj.kind==='sonic'?'ソニックブームを3連発で飛ばす':mv.SP.proj&&mv.SP.proj.ret?'超大型手裏剣が行って戻ってくる（往復で2回当たる）':'必殺技・大ダメージ'))+(job==='fighter'?'・出したら5秒間スーパーアーマー（ひるまへん）＋攻撃1.15倍':'');r.append(a,b,c);tb.appendChild(r);}
+    a.className='cmd';a.textContent='ゲージ満タンで「必殺」';b.textContent=mv.SP.name;c.textContent=({gym:'相手全員を1秒マヒさせる',legend:'地面から伝説の剣を引き抜く。そのラウンドの間ずっと攻撃1.25倍・速さ1.05倍・黄色いオーラ（ゲージはたまりにくい）',melee:mv.SP.swingGrab?'つかんでブン回して壁までぶん投げる（ガード不能）':undefined,zip:'画面の端から端まで一瞬で駆け抜けて斬る（ガード不能）',clone:'5秒間、分身が一緒に戦う（分身は3発で消える）',volt:'自分に雷を落として5秒間帯電。殴った相手も触れた相手も感電してマヒ',heal:'地上で使うと体力を'+Math.round((mv.SP.heal||0.3)*100)+'%回復'+(mv.SPA?'。浮遊中に使うと「'+mv.SPA.name+'」：相手の頭上に矢の雨を降らせる':'')}[mv.SP.kind]||(mv.SP.proj&&mv.SP.proj.kind==='slashwave'?'巨大な斬撃が地をはって飛ぶ（何人でも貫通）':mv.SP.proj&&mv.SP.proj.kind==='sonic'?'ソニックブームを3連発で飛ばす':mv.SP.proj&&mv.SP.proj.ret?'超大型手裏剣が行って戻ってくる（往復で2回当たる）':'必殺技・大ダメージ'))+(job==='fighter'?'・出したら5秒間スーパーアーマー（ひるまへん）＋攻撃1.15倍':'');r.append(a,b,c);tb.appendChild(r);}
 }
 
 /* ---- エディタ ---- */
@@ -4615,7 +4614,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='56';
+const GAME_VER='57';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
