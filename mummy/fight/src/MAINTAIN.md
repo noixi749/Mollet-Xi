@@ -13,6 +13,8 @@
 | `roster.js` | マミー会の顔写真（顔だけ切り抜いたもの）。`window.ROSTER=[{id,name,skins:[dataURL]}]` |
 | `bgm.mp3` | 魔王魂のBGM（maou_08_burning_heart。クレジット表記：BGM：魔王魂） |
 
+曲：メニューはオリジナル合成曲「河原の放課後」、バトルは魔王魂（`maou`）・「河原ファイト」（`battle1`）・「ネオン・ラッシュ」（`battle2`）から毎回ちがうのを選ぶ（`pickBgm`）、ストーリーの最終話は「ラスボスのテーマ」（`boss`）。合成曲は `SONGS`（`step(bar,s,t,sp)` で16分ごとに鳴らす）と `MEL`。画面が変わると `show()`→`bgmSync()` で切り替わる。結果画面は `bgmJingle`。メニューのボタンは `uiSfx`（tap/open/back/pick/go/toggle/talk、通信には流さへん）。音量は設定の BGM／効果音スライダー（`DATA.vb`/`DATA.vs`→`applyVol`）
+
 ## 公開先（2か所とも更新する）
 
 - GitHub Pages：https://noixi749.github.io/Mollet-Xi/mummy/fight/ （main に push すると反映）

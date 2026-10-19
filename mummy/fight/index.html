@@ -63,6 +63,7 @@ select{font:700 15px var(--f-body);color:var(--ink);background:var(--card);borde
 .row-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
 .setting{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card);border:2px solid var(--ink);border-radius:12px;padding:12px 14px}
 .setting>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.setting.vol{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);gap:8px 10px;align-items:center}.setting.vol label{font:700 13px/1 var(--f-body)}.setting.vol input{width:100%;min-width:0;accent-color:var(--hot)}
 .toggle{font:700 14px/1 var(--f-body);min-width:64px;padding:10px 12px;border-radius:999px;border:2px solid var(--ink);background:var(--card);color:var(--ink);cursor:pointer;flex:none}
 .toggle[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
 details.howto{background:var(--card);border:2px dashed var(--ink-soft);border-radius:12px;padding:12px 14px}
@@ -544,6 +545,10 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
           <div class="setting">
             <div><b>音</b><span class="note">BGMと効果音</span></div>
             <button class="toggle" id="soundBtn" type="button" aria-pressed="true">ON</button>
+          </div>
+          <div class="setting vol">
+            <label for="volBgm">BGM</label><input type="range" id="volBgm" min="0" max="1" step="0.05" value="1">
+            <label for="volSfx">効果音</label><input type="range" id="volSfx" min="0" max="1" step="0.05" value="1">
           </div>
           <div class="setting">
             <div><b>技ショートカット</b><span class="note">コマンド技を1タッチで出すボタン</span></div>
@@ -1585,8 +1590,8 @@ function aInit(){
       const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
       A.ctx=new AC();A.master=A.ctx.createGain();A.master.gain.value=0.8;A.master.connect(A.ctx.destination);
       A.sfx=A.ctx.createGain();A.sfx.gain.value=0.9;A.sfx.connect(A.master);
-      A.bgm=A.ctx.createGain();A.bgm.gain.value=0.33;A.bgm.connect(A.master);
-      A.music=A.ctx.createGain();A.music.gain.value=0.55;A.music.connect(A.master);
+      A.bgm=A.ctx.createGain();A.bgm.gain.value=1.4;{const cp=A.ctx.createDynamicsCompressor();cp.threshold.value=-20;cp.knee.value=10;cp.ratio.value=4;cp.attack.value=0.005;cp.release.value=0.2;A.bgm.connect(cp);cp.connect(A.master);} // 合成曲はコンプで音量をそろえる
+      A.music=A.ctx.createGain();A.music.gain.value=0.55;A.music.connect(A.master);applyVol();
       const len=A.ctx.sampleRate*2,b=A.ctx.createBuffer(1,len,A.ctx.sampleRate),d=b.getChannelData(0);
       for(let i=0;i<len;i++)d[i]=Math.random()*2-1;A.noise=b;
     }catch(e){A.ctx=null;return;}
@@ -1636,16 +1641,111 @@ function sfx(n,p){
     case 'twinkle':tone({type:'sine',f0:2093,dur:0.3,gain:0.2});tone({type:'sine',f0:3136,dur:0.5,gain:0.16,delay:0.09});break;
     case 'super':tone({type:'sawtooth',f0:180,f1:1400,dur:0.55,gain:0.16,lp:3200});noise({ftype:'bandpass',f0:600,f1:4000,q:0.8,dur:0.55,gain:0.45});tone({type:'sine',f0:90,f1:38,dur:0.7,gain:0.8,delay:0.5});break;
     case 'thud':noise({ftype:'lowpass',f0:500,f1:80,dur:0.2,gain:0.5});break;
+    case 'fight':noise({ftype:'bandpass',f0:400,f1:5000,q:0.9,dur:0.3,gain:0.35});tone({type:'square',f0:523,f1:1046,dur:0.18,gain:0.08,lp:3000});tone({type:'sine',f0:120,f1:40,dur:0.3,gain:0.7});break;
     case 'bell':tone({type:'sine',f0:880,dur:0.6,gain:0.25});tone({type:'sine',f0:1320,dur:0.5,gain:0.12});break;
     case 'ko':[110,173,237,331,452].forEach((fq,i)=>tone({type:'sine',f0:fq,dur:2.2-i*0.25,gain:0.32/(i+1)}));break;
   }}catch(e){}
 }
-/* BGM：Am-F-G-E の4小節ループ */
-const LEAD=[{0:69,2:72,4:76,6:72,8:74,10:76,12:79,14:76},{0:77,2:76,4:72,6:69,8:72,10:74,12:72,14:69},{0:71,2:74,4:79,6:74,8:76,10:79,12:83,14:79},{0:80,2:76,4:71,6:68,8:71,10:74,12:76,14:80}];
-const BGM={on:false,step:0,next:0,timer:null};
+/* ===== BGM：メニューとバトルで曲を切り替える。maou＝魔王魂のmp3、ほかはオリジナルの合成曲 ===== */
 const mf=n=>440*Math.pow(2,(n-69)/12);
-function synthStart(){if(!A.ctx||!A.on||BGM.on)return;BGM.on=true;BGM.step=0;BGM.next=A.ctx.currentTime+0.1;BGM.timer=setInterval(bgmTick,25);}
-function synthStop(){BGM.on=false;if(BGM.timer)clearInterval(BGM.timer);BGM.timer=null;}
+const BG={cur:null,last:null,started:false};
+const SEQ={song:null,step:0,next:0,t0:0,timer:null};
+function bT(o){o.dest=A.bgm;tone(o);}
+function bN(o){o.dest=A.bgm;noise(o);}
+const DR={k:(t,g)=>bT({type:'sine',f0:150,f1:42,dur:0.16,gain:g||0.7,at:t}),
+  s:(t,g)=>{g=g||0.22;bN({ftype:'highpass',f0:1400,dur:0.14,gain:g,at:t});bT({type:'triangle',f0:190,dur:0.07,gain:g*0.5,at:t});},
+  c:(t,g)=>bN({ftype:'bandpass',f0:1300,q:0.9,dur:0.1,gain:g||0.2,at:t}),
+  h:(t,g,open)=>bN({ftype:'highpass',f0:7500,dur:open?0.14:0.03,gain:g||0.05,at:t}),
+  tom:(t,f,g)=>bT({type:'sine',f0:f,f1:f*0.5,dur:0.2,gain:g||0.4,at:t})};
+function chordAt(t,ns,dur,o){for(const n of ns)bT(Object.assign({f0:mf(n),dur,at:t},o));}
+function melody(bar,s,t,sp,mel,o){const m=mel[bar%mel.length],n=m&&m[s];if(n){let L=1;while(L<4&&s+L<16&&m[s+L]==null)L++;bT(Object.assign({f0:mf(n),dur:sp*L*0.92,at:t},o));}}
+/* メロディ：小節ごとに {16分の位置:ノート番号} */
+const MEL={
+  menu:[{0:72,4:74,6:76,8:79,12:76},{0:74,4:71,8:74,10:76,12:74},{0:71,4:72,6:74,8:76,12:79},{0:81,4:79,8:76,12:74},{0:72,2:74,4:77,8:76,12:74},{0:74,4:79,8:77,12:74},{0:76,4:74,8:72,12:67},{0:72}],
+  battle1:[{0:69,2:72,4:76,6:79,8:81,12:79,14:76},{0:77,2:76,4:74,6:72,8:74,12:76},{0:77,4:76,6:77,8:81,12:79},{0:79,2:77,4:76,6:74,8:71,12:74},{0:69,2:72,4:76,6:79,8:84,12:83,14:81},{0:79,4:76,8:74,10:76,12:77},{0:77,2:79,4:81,8:77,12:72},{0:76,4:80,8:83,12:80,14:76}],
+  battle2:[{0:74,8:77},{0:74,8:70},{0:72,8:76},{0:73,8:76,12:81},{0:81,8:79},{0:77,8:74},{0:76,8:79},{0:76,4:73,8:69}],
+  boss:[{0:72,6:75,8:79,12:80},{0:79,4:77,8:75,12:74},{0:75,6:77,8:80,12:84},{0:82,4:80,8:79,12:77},{0:72,6:75,8:79,12:84},{0:83,4:84,8:79,12:75},{0:80,4:79,8:77,12:75},{0:74,4:71,8:67,12:71}],
+};
+const SONGS={
+  menu:{name:'河原の放課後',bpm:96,bars:8,step(bar,s,t,sp){ // メニュー：ゆるい夕方の河原
+    const CH=[[53,57,60,64],[55,59,62,65],[52,55,59,62],[57,60,64,67],[50,53,57,60],[55,59,62,65],[48,52,55,59],[48,52,55,60]],BS=[41,43,40,45,38,43,36,36];
+    if(s===0)chordAt(t,CH[bar],sp*16,{type:'triangle',gain:0.055,att:0.12,lp:1600});
+    if(s===4||s===10||s===12)chordAt(t,CH[bar].slice(1),sp*1.2,{type:'sine',gain:0.045});
+    if(s===0||s===8)bT({type:'triangle',f0:mf(BS[bar]),dur:sp*3,gain:0.24,lp:500,at:t});
+    if(s===6||s===14)bT({type:'triangle',f0:mf(BS[bar]+12),dur:sp*1.4,gain:0.14,lp:600,at:t});
+    melody(bar,s,t,sp,MEL.menu,{type:'triangle',gain:0.11,lp:3000});
+    if(s===0||s===8||(s===10&&bar%2))DR.k(t,0.42);
+    if(s===4||s===12)DR.c(t,0.11);
+    if(s%2===0)DR.h(t+(s%4===2?sp*0.14:0),0.035);}},
+  battle1:{name:'河原ファイト',bpm:152,bars:8,step(bar,s,t,sp){ // バトル：Am のロック
+    const CH=[[57,64,69],[57,64,69],[53,60,65],[55,62,67],[57,64,69],[57,64,69],[53,60,65],[52,59,64]],BS=[33,33,29,31,33,33,29,28];
+    if(s%2===0)bT({type:'sawtooth',f0:mf(BS[bar]+(s===6||s===14?12:0)),dur:sp*1.6,gain:0.16,lp:800,at:t});
+    if(s===0||s===3||s===6||(s===10&&bar%2))chordAt(t,CH[bar],sp*(s===6?3:1.5),{type:'sawtooth',gain:0.035,lp:2200});
+    melody(bar,s,t,sp,MEL.battle1,{type:'square',gain:0.05,lp:3200});
+    if(s===0||s===6||s===8||s===11)DR.k(t,0.7);
+    if(s===4||s===12)DR.s(t,0.25);
+    if(s%2===0)DR.h(t,0.05,s===14);
+    if(bar===7&&s>=12)DR.s(t,0.14);}},
+  battle2:{name:'ネオン・ラッシュ',bpm:138,bars:8,step(bar,s,t,sp){ // バトル：Dm のシンセウェーブ
+    const CH=[[62,65,69,74],[58,62,65,70],[60,64,67,72],[57,61,64,69]],BS=[38,34,36,33],c=bar%4,arp=[0,1,2,3,2,1,0,1];
+    bT({type:'square',f0:mf(CH[c][arp[s%8]]+12),dur:sp*0.8,gain:0.026,lp:2600,at:t});
+    if(s%2===0)bT({type:'sawtooth',f0:mf(BS[c]+(s%4===2?12:0)),dur:sp*1.5,gain:0.15,lp:700,at:t});
+    if(s===0)chordAt(t,CH[c],sp*16,{type:'sawtooth',gain:0.018,att:0.2,lp:1200});
+    melody(bar,s,t,sp,MEL.battle2,{type:'sawtooth',gain:0.04,lp:2000,att:0.03});
+    if(s%4===0)DR.k(t,0.7);if(s===4||s===12)DR.s(t,0.22);if(s%4===2)DR.h(t,0.06,true);}},
+  boss:{name:'ラスボスのテーマ',bpm:126,bars:8,step(bar,s,t,sp){ // ストーリーの最終話：Cm で重く
+    const CH=[[60,63,67],[60,63,67],[56,60,63],[58,62,65],[60,63,67],[60,63,67],[56,60,63],[55,59,62]],BS=[36,36,32,34,36,36,32,31];
+    bT({type:'sawtooth',f0:mf(BS[bar]),dur:sp*0.9,gain:s%4===0?0.17:0.1,lp:600,at:t});
+    if(s===0)chordAt(t,CH[bar].map(n=>n-12).concat(CH[bar]),sp*16,{type:'sawtooth',gain:0.02,att:0.25,lp:1300});
+    melody(bar,s,t,sp,MEL.boss,{type:'sawtooth',gain:0.05,lp:2600});
+    if(s===0||s===3||s===8||s===11)DR.k(t,0.8);if(s===4||s===12)DR.s(t,0.26);if(s%2===1)DR.h(t,0.03);
+    if(bar===7&&s>=12)DR.tom(t,[220,180,150,120][s-12]);}},
+};
+function seqStart(name){const sg=SONGS[name];if(!sg||!A.ctx)return;seqStop();SEQ.song=sg;SEQ.step=0;SEQ.next=A.ctx.currentTime+0.08;SEQ.t0=SEQ.next;SEQ.timer=setInterval(seqTick,25);}
+function seqStop(){if(SEQ.timer)clearInterval(SEQ.timer);SEQ.timer=null;SEQ.song=null;}
+function seqTick(){
+  if(!A.ctx||!SEQ.song)return;const sg=SEQ.song,sp=60/sg.bpm/4,now=A.ctx.currentTime;
+  if(SEQ.next<now-0.2)SEQ.next=now+0.05;
+  while(SEQ.next<now+0.15){const st=SEQ.step;try{sg.step(((st/16)|0)%sg.bars,st%16,SEQ.next,sp);}catch(e){}SEQ.step=(st+1)%(16*sg.bars);SEQ.next+=sp;}
+}
+function pickBgm(o){ // 試合の曲：ストーリーのボス戦は専用、ほかは3曲から（前と同じのは避ける）
+  if(o&&o.story&&typeof curEp==='function'&&STORYS){const S=curEp();if(S&&S.boss)return 'boss';}
+  const L=['maou','battle1','battle2'].filter(x=>x!==BG.last),b=L[(Math.random()*L.length)|0];BG.last=b;return b;
+}
+function bgmWanted(){return G&&typeof document!=='undefined'&&!$('#battle').hidden?(G.bgm||'maou'):'menu';}
+function bgmHalt(){
+  MUSIC.want=false;if(MUSIC.mode==='el'&&MUSIC.el){try{MUSIC.el.pause();}catch(e){}}
+  if(MUSIC.src){try{MUSIC.src.stop();}catch(e){}MUSIC.src=null;}
+  seqStop();BG.cur=null;
+}
+function bgmPlay(name){
+  if(!A.ctx||!A.on)return;
+  if(BG.cur===name)return;
+  bgmHalt();BG.cur=name;
+  if(name==='maou'){musicInit();MUSIC.want=true;MUSIC.off=0;if(MUSIC.mode==='el'){try{MUSIC.el.currentTime=0;}catch(e){}}musicPlay();}
+  else seqStart(name);
+}
+function bgmSync(){if(A.ctx&&A.on&&BG.started)bgmPlay(bgmWanted());}
+function bgmJingle(win){ // 試合の結果：勝ちはファンファーレ、負けはしょんぼり
+  if(!A.ctx||!A.on)return;bgmHalt();BG.cur='jingle';const t=A.ctx.currentTime+0.3;
+  if(win){[72,76,79,84].forEach((n,i)=>bT({type:'square',f0:mf(n),dur:0.13,gain:0.07,lp:3000,at:t+i*0.11}));for(let i=0;i<4;i++)DR.s(t+i*0.11,0.07);
+    chordAt(t+0.46,[72,76,79,84],1.2,{type:'triangle',gain:0.07});chordAt(t+0.46,[48,60,67],1.2,{type:'sawtooth',gain:0.04,lp:1500});DR.k(t+0.46,0.6);DR.s(t+0.46,0.25);}
+  else{[67,63,60,55].forEach((n,i)=>bT({type:'triangle',f0:mf(n),dur:0.32,gain:0.08,at:t+i*0.28}));chordAt(t+1.12,[48,51,55],1.4,{type:'sawtooth',gain:0.03,lp:900});}
+}
+/* 効果音（メニュー用。通信には流さへん） */
+function uiSfx(n){
+  if(!A.ctx||!A.on)return;
+  try{switch(n){
+    case 'tap':tone({type:'sine',f0:900,f1:1250,dur:0.05,gain:0.12});break;
+    case 'open':tone({type:'triangle',f0:660,dur:0.06,gain:0.13});tone({type:'triangle',f0:990,dur:0.08,gain:0.13,delay:0.05});break;
+    case 'back':tone({type:'triangle',f0:780,f1:420,dur:0.09,gain:0.13});break;
+    case 'pick':tone({type:'square',f0:1320,dur:0.04,gain:0.05});tone({type:'sine',f0:1760,dur:0.07,gain:0.08,delay:0.03});break;
+    case 'go':[523,659,784,1047].forEach((f,i)=>tone({type:'square',f0:f,dur:0.07,gain:0.06,delay:i*0.055,lp:3500}));break;
+    case 'toggle':tone({type:'square',f0:1500,dur:0.025,gain:0.06});break;
+    case 'talk':tone({type:'sine',f0:1150,dur:0.03,gain:0.05});break;
+  }}catch(e){}
+}
+function applyVol(){if(!A.ctx)return;const vb=DATA.vb!=null?+DATA.vb:1,vs=DATA.vs!=null?+DATA.vs:1;A.sfx.gain.value=0.9*vs;A.bgm.gain.value=1.4*vb;A.music.gain.value=0.55*vb;}
 /* 魔王魂のBGM（bgm.mp3）。読めへん時は合成BGMに切り替える */
 const MUSIC={el:null,mode:null,buf:null,src:null,off:0,t0:0,want:false};
 function musicInit(){
@@ -1662,45 +1762,24 @@ function musicFallback(){
   fetch('bgm.mp3').then(r=>{if(!r.ok)throw new Error('load');return r.arrayBuffer();})
     .then(ab=>new Promise((res,rej)=>A.ctx.decodeAudioData(ab,res,rej)))
     .then(b=>{MUSIC.buf=b;MUSIC.mode='buf';if(MUSIC.want)musicPlay();})
-    .catch(()=>{MUSIC.mode='synth';if(MUSIC.want)synthStart();});
+    .catch(()=>{MUSIC.mode='synth';if(MUSIC.want)musicPlay();});
 }
 function musicPlay(){
   if(MUSIC.mode==='el'){const p=MUSIC.el.play();if(p&&p.catch)p.catch(err=>{if(err&&err.name==='NotSupportedError'&&MUSIC.mode==='el')musicFallback();});}
   else if(MUSIC.mode==='buf'&&!MUSIC.src){const s=A.ctx.createBufferSource();s.buffer=MUSIC.buf;s.loop=true;s.connect(A.music);const off=MUSIC.off%MUSIC.buf.duration;s.start(0,off);MUSIC.src=s;MUSIC.t0=A.ctx.currentTime-off;}
-  else if(MUSIC.mode==='synth')synthStart();
+  else if(MUSIC.mode==='synth')seqStart('battle1'); // mp3が読めへん時は合成曲
 }
-function bgmStart(fromTop){
-  if(!A.ctx||!A.on)return;musicInit();MUSIC.want=true;
-  if(fromTop){MUSIC.off=0;if(MUSIC.mode==='el'){try{MUSIC.el.currentTime=0;}catch(e){}}}
-  musicPlay();
-}
-function bgmStop(){
-  MUSIC.want=false;
-  if(MUSIC.mode==='el'&&MUSIC.el){try{MUSIC.el.pause();}catch(e){}}
-  if(MUSIC.src){MUSIC.off=A.ctx.currentTime-MUSIC.t0;try{MUSIC.src.stop();}catch(e){}MUSIC.src=null;}
-  synthStop();
-}
+function bgmStart(){bgmPlay(bgmWanted());}
+function bgmStop(){bgmHalt();}
 function musicPos(){
   if(MUSIC.mode==='el'&&MUSIC.el&&!MUSIC.el.paused)return MUSIC.el.currentTime;
   if(MUSIC.src)return (A.ctx.currentTime-MUSIC.t0)%MUSIC.buf.duration;
   return null;
 }
 function beatPulse(){
+  if(SEQ.song&&A.ctx){const per=60/SEQ.song.bpm,ph=(((A.ctx.currentTime-SEQ.t0)/per)%1+1)%1;return Math.exp(-ph*4.5);}
   const p=musicPos(),t=p==null?(typeof performance!=='undefined'?performance.now()/1000:0):p,per=60/BPM;
   const ph=(((t-BEAT0)/per)%1+1)%1;return Math.exp(-ph*4.5);
-}
-function bgmTick(){
-  if(!A.ctx||!BGM.on)return;const sp=60/150/4,now=A.ctx.currentTime;
-  if(BGM.next<now-0.2)BGM.next=now+0.05;
-  while(BGM.next<now+0.15){try{bgmStep(BGM.step,BGM.next,sp);}catch(e){}BGM.step=(BGM.step+1)%64;BGM.next+=sp;}
-}
-function bgmStep(st,t,sp){
-  const bar=(st/16)|0,s=st%16,r=[45,41,43,40][bar],d=A.bgm;
-  if(s%2===0)tone({type:'sawtooth',f0:mf(r+((s===6||s===14)?12:0)),dur:sp*1.8,gain:0.16,at:t,dest:d,lp:700});
-  if(s===0||s===6||s===8||s===11)tone({type:'sine',f0:150,f1:45,dur:0.14,gain:0.55,at:t,dest:d});
-  if(s===4||s===12){noise({ftype:'highpass',f0:1500,dur:0.12,gain:0.22,at:t,dest:d});tone({type:'triangle',f0:190,dur:0.07,gain:0.12,at:t,dest:d});}
-  if(s%2===0)noise({ftype:'highpass',f0:7000,dur:0.03,gain:0.05,at:t,dest:d});
-  const n=LEAD[bar][s];if(n)tone({type:'square',f0:mf(n),dur:sp*1.6,gain:0.05,at:t,dest:d,lp:2600});
 }
 
 /* ================= 入力 ================= */
@@ -1831,7 +1910,7 @@ function newGame(c1,c2,diff,opts){
   const cfgs=Array.isArray(c1)?c1:[c1,c2];
   G={frame:0,round:1,wins:cfgs.map(()=>0),phase:'intro',me:opts.me||0,ctrl:opts.ctrl||cfgs.map((c,i)=>i===0?'local':'cpu'),net:opts.net||null,phaseT:0,timer:3600,projs:[],parts:[],hitstop:0,shake:0,diff:diff||'normal',winner:-1,paused:false,over:false,cpuBoth:false,
      story:!!opts.story,need:opts.need||2,stage:opts.stage||'sunset',title:opts.title||null,cutin:null,mid:opts.mid||null,pinch:opts.pinch||null,pinched:false,pendingTalk:null};
-  G.f=cfgs.map((c,i)=>makeFighter(c,i));
+  G.f=cfgs.map((c,i)=>makeFighter(c,i));G.bgm=pickBgm(opts);
   for(const f of G.f)applyVs(f,G.f);
   resetRound();
   if(typeof document!=='undefined'&&bgC&&cv)buildBg();
@@ -1896,7 +1975,7 @@ function step(){
   fxUpdate();
   for(const f of G.f){f.hpShow+=(f.hp-f.hpShow)*0.06;if(Math.abs(f.hpShow-f.hp)<0.3)f.hpShow=f.hp;}
   if(G.shake>0)G.shake*=0.86;
-  if(G.phase==='intro'){if(G.phaseT===62)sfx('bell');if(G.phaseT===72)for(const f of G.f){if(f.vsBoost)addText(f.x,f.y-215,'天敵！ 全ステ×'+f.vsBoost,'#ff4a3d',26);if(f.vsDefFx)addText(f.x,f.y-190,'苦手な相手… 防御×'+f.vsDefFx,'#7fb6ff',22);}if(G.phaseT>=100){G.phase='fight';G.phaseT=0;}}
+  if(G.phase==='intro'){if(G.phaseT===62)sfx('bell');if(G.phaseT===72)for(const f of G.f){if(f.vsBoost)addText(f.x,f.y-215,'天敵！ 全ステ×'+f.vsBoost,'#ff4a3d',26);if(f.vsDefFx)addText(f.x,f.y-190,'苦手な相手… 防御×'+f.vsDefFx,'#7fb6ff',22);}if(G.phaseT>=100){G.phase='fight';G.phaseT=0;sfx('fight');}}
   else if(G.phase==='fight'){if(G.practice)practiceTick();else if(--G.timer<=0)timeUp();}
   else if(G.phase==='ko'||G.phase==='timeup'){
     if(G.phaseT>70&&G.winner>=0){const w=G.f[G.winner];if(w.onGround&&(w.state==='idle'||w.state==='walk'||w.state==='crouch'||w.state==='land')){w.state='win';w.vx=0;}}
@@ -3359,7 +3438,7 @@ function loop(ts){
 /* ================= 画面 ================= */
 const $=s=>document.querySelector(s);
 function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.tm);toast.tm=setTimeout(()=>{t.hidden=true;},1800);}
-function show(id){for(const s of ['menu','editor','battle','lobby'])$('#'+s).hidden=s!==id;document.body.style.overflow=id==='battle'?'hidden':'';if(id==='battle')resize();}
+function show(id){for(const s of ['menu','editor','battle','lobby'])$('#'+s).hidden=s!==id;document.body.style.overflow=id==='battle'?'hidden':'';if(id==='battle')resize();setTimeout(bgmSync,0);} // 画面に合わせて曲を切り替える
 function resize(){
   if(!cv)return;
   const bt=$('#battle'),winPortrait=window.innerHeight>window.innerWidth,rot=!!DATA.rot&&winPortrait;
@@ -3663,7 +3742,7 @@ function setPause(on){
 }
 function matchWinner(){const mx=Math.max(...G.wins),top=G.wins.map((w,i)=>w===mx?i:-1).filter(i=>i>=0);return top.length===1?top[0]:-1;}
 function showResult(){
-  const me=G.me||0,N=G.f.length,win=matchWinner();
+  const me=G.me||0,N=G.f.length,win=matchWinner();bgmJingle(win===me);
   $('#resTitle').textContent=win===me?(N>2?'優勝！':'勝ち！'):win<0?'引き分け':'負け…';
   $('#resSub').textContent=N===2?`${G.wins[0]} - ${G.wins[1]}　${G.f[0].name} vs ${G.f[1].name}`:(win>=0?`${G.f[win].name} の優勝　`:'')+G.f.map(f=>`${f.name} ${G.wins[f.idx]}勝`).join(' / ');
   if(G.net){
@@ -3688,7 +3767,7 @@ onMatchEnd=()=>{
   showResult();
   if(G.net&&G.net.host)netSendSnap(true);
 };
-function toggleSound(){A.on=!A.on;DATA.sound=A.on;save();updateSoundBtns();if(!A.on)bgmStop();else{aInit();bgmStart();}}
+function toggleSound(){A.on=!A.on;DATA.sound=A.on;save();updateSoundBtns();if(!A.on)bgmStop();else{aInit();BG.started=true;bgmStart();}}
 
 function setupShortcuts(){
   const f=G.f[G.me||0];
@@ -3861,7 +3940,7 @@ function talkShow(){
   TALK.text=fillText(text);TALK.shown=0;$('#talkText').textContent='';
 }
 function talkNext(){
-  if(!TALK)return;
+  if(!TALK)return;uiSfx('talk');
   if(TALK.shown<TALK.text.length){TALK.shown=TALK.text.length;$('#talkText').textContent=TALK.text;return;}
   if(++TALK.i>=TALK.lines.length){const d=TALK.done;talkEnd();if(d)d();return;}
   talkShow();
@@ -4057,7 +4136,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='46';
+const GAME_VER='47';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
@@ -4251,7 +4330,7 @@ const NET_KEYS=new Set(['P','K','S1','S2','S3','SP','STL','STR']);
 const NET_STATES=new Set(['stun','idle','walk','crouch','jump','fall','land','attack','hitstun','blockstun','airhit','down','getup','ko','win','launch']);
 const NET_MK=new Set(['P','K','S1','S2','S3','CS','SP','X','SL','RL','P2','P3','K2','K3','IA','GP','GP2','GP3','GK','GK2','GK3','GS1','GS2','AP','AK','SPA','PD','KD','STF','STB']);
 const NET_PK=new Set(['sonic','slashwave','fire','orb','bullet','slug','rocket','wave','fist','grenade','shuriken','dumbbell','barbell','disc','sword','arrow','feather','zap']);
-const NET_SFX=new Set(['hit','slash','heavy','counter','stance','magic','gun','boom','pop','beam','guard','whiff','warp','empty','thud','bell','ko','mee','twinkle','super','zap','none']);
+const NET_SFX=new Set(['hit','slash','heavy','counter','stance','magic','gun','boom','pop','beam','guard','whiff','warp','empty','thud','bell','ko','mee','twinkle','super','zap','fight','none']);
 function nr(v,k){v=+v;if(!isFinite(v))return 0;const m=k||1;return Math.round(v*m)/m;}
 function ns(v,n){return typeof v==='string'?cleanName(v).slice(0,n||12):'';}
 function normCode(t){return String(t||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase().slice(0,16);}
@@ -4624,6 +4703,9 @@ function init(){
   $('#numSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;DATA.players=+b.dataset.v;save();renderMenu();});
   $('#stageSel').addEventListener('change',e=>{DATA.stage=e.target.value;save();});
   $('#soundBtn').addEventListener('click',toggleSound);
+  $('#volBgm').value=DATA.vb!=null?DATA.vb:1;$('#volSfx').value=DATA.vs!=null?DATA.vs:1;
+  $('#volBgm').addEventListener('input',e=>{DATA.vb=+e.target.value;applyVol();save();});
+  $('#volSfx').addEventListener('input',e=>{DATA.vs=+e.target.value;applyVol();save();});$('#volSfx').addEventListener('change',()=>uiSfx('pick'));
   $('#pSound').addEventListener('click',toggleSound);
   $('#scToggle').addEventListener('click',toggleSc);
   $('#pSc').addEventListener('click',toggleSc);
@@ -4804,8 +4886,10 @@ function init(){
   window.addEventListener('keyup',e=>{if(KM[e.code])keys.delete(KM[e.code]);});
   window.addEventListener('blur',()=>keys.clear());
   window.addEventListener('resize',()=>{if(!$('#battle').hidden)resize();});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden&&G&&!G.over&&!G.paused&&!G.net&&!$('#battle').hidden)setPause(true);if(document.hidden){if(MUSIC.want){bgmStop();MUSIC.resume=true;}}else if(MUSIC.resume&&A.on){MUSIC.resume=false;bgmStart();}});
-  const firstTouch=()=>{aInit();if(A.on&&!MUSIC.want)bgmStart();}; // ブラウザは最初のタップまで音を出させてくれへんので、最初の操作でBGMを始める
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&G&&!G.over&&!G.paused&&!G.net&&!$('#battle').hidden)setPause(true);if(document.hidden){if(BG.cur){bgmStop();MUSIC.resume=true;}}else if(MUSIC.resume&&A.on){MUSIC.resume=false;bgmStart();}});
+  document.addEventListener('click',e=>{const b=e.target.closest('button,.pk,.ctile,.chap,label.skin');if(!b||b.closest('#battle .ctl')||b.closest('#talk')||b.disabled)return;
+    let n='tap';if(b.matches('.sh-back,[aria-label="戻る"]'))n='back';else if(b.closest('[data-open]'))n='open';else if(b.matches('.pk,.ctile,.chap,.skin,.wpn,.seg button,.tile,.stile'))n='pick';else if(b.matches('.btn.start,#edFight,#resAgain,#pResume,.hero'))n='go';else if(b.matches('.toggle'))n='toggle';uiSfx(n);},true);
+  const firstTouch=()=>{aInit();BG.started=true;if(A.on&&!BG.cur)bgmStart();}; // ブラウザは最初のタップまで音を出させてくれへんので、最初の操作でBGMを始める
   document.addEventListener('pointerdown',firstTouch,true);document.addEventListener('keydown',firstTouch,true);
   if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(!$('#battle').hidden)buildBg();});
   requestAnimationFrame(loop);
