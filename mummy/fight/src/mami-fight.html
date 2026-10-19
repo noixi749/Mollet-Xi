@@ -288,6 +288,7 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
 .pk span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pk small{font-size:10.5px;color:var(--ink-soft);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pk.on{border-color:var(--hot);box-shadow:0 0 0 2px rgba(255,106,26,.45)}
+.pk-grid.compact{grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:6px}.pk-grid.compact .pk{padding:6px 4px;gap:3px;font-size:11.5px;border-radius:10px}.pk-grid.compact .sw{height:34px}
 .pk-group{grid-column:1/-1;font-size:12px;font-weight:700;color:var(--ink-soft);margin-top:4px}
 .nb{position:absolute;top:-8px;right:-4px;font:400 10px/1 var(--f-display);font-style:normal;background:var(--marker);color:var(--on-hot);border-radius:999px;padding:3px 6px}
 .nb.ok{background:var(--jump)}
@@ -978,8 +979,16 @@ const STAGES={
   city:{name:'ネオンの高架下',scene:'city',sky:['#05030f','#1a0a33','#4a0f4f','#7a1250','#7a1250'],sun:['#fff','#fff'],glow:'255,80,200',river:['#000','#000','#000'],refl:'255,255,255',sil:'0,0,0',cloud:'0,0,0',bank:'#000',ground:['#1a1424','#07050c'],rim:'255,90,200',body:{x:480,y:-300,r:1}},
   thunder:{name:'雷鳴の河原',sky:['#07060f','#17142b','#2c2244','#4a2c4f','#73404f'],sun:['#ffe6e6','#c94a5a'],glow:'220,100,140',river:['#5a3450','#24162e','#0a0712'],refl:'230,190,220',sil:'8,5,14',cloud:'36,28,56',bank:'#0e0916',ground:['#130b12','#050305'],rim:'200,110,190',body:{x:230,y:150,r:30},rain:true},
   fire:{name:'燃える河原',sky:['#0f0303','#3b0606','#8a0f0a','#e0300f','#ff8a1f'],sun:['#fff0b0','#ff5a1a'],glow:'255,120,50',river:['#ff6a1a','#9e1a0e','#2a0505'],refl:'255,220,150',sil:'20,3,3',cloud:'34,4,4',bank:'#1c0404',ground:['#1d0705','#080202'],rim:'255,90,30',body:{x:480,y:GROUND-118,r:128},ember:true,embers2:true},
+  /* 第3章：世界のステージ（scene で専用の背景を描く） */
+  ny:{name:'ニューヨーク',scene:'ny',sky:['#070a24','#141a45','#2a2d6a','#4a3d7f','#7a5a8f'],sun:['#fffbe8','#e6e0ff'],glow:'200,200,255',ground:['#4a4d5a','#1c1d24'],rim:'200,200,255',body:{x:830,y:92,r:34}},
+  greatwall:{name:'万里の長城',scene:'greatwall',sky:['#8fa9c9','#b6c7dc','#dcd6cc','#f3dfc4','#fbeedb'],sun:['#fffaf0','#ffe2b0'],glow:'255,236,200',ground:['#b39b74','#6e5b40'],rim:'255,240,210',body:{x:700,y:190,r:46}},
+  desert:{name:'ピラミッド',scene:'desert',sky:['#3b1d4a','#a8433f','#f08a3c','#ffc46b','#ffe3a3'],sun:['#fff6d0','#ffb347'],glow:'255,200,120',ground:['#dda25a','#93592b'],rim:'255,210,140',body:{x:640,y:GROUND-150,r:66},dust:true},
+  castle:{name:'古城',scene:'castle',sky:['#3f6fb0','#6f9ad2','#aecbea','#dde9f6','#f5efe3'],sun:['#ffffff','#fff3c8'],glow:'255,250,225',ground:['#a39d90','#5b564d'],rim:'255,255,240',body:{x:150,y:100,r:38}},
+  sky:{name:'雲の上',scene:'sky',sky:['#1d63c8','#3a86dd','#6fb0ee','#acd5f6','#e6f3ff'],sun:['#ffffff','#fff8d6'],glow:'255,255,235',ground:['#ffffff','#bcd5ee'],rim:'255,255,255',body:{x:770,y:105,r:44},wisp:true},
+  launch:{name:'ロケット基地',scene:'launch',sky:['#02040f','#091331','#172856','#283b6c','#3a4c7b'],sun:['#fffbe8','#d6dbff'],glow:'190,205,255',ground:['#4b505c','#1f2128'],rim:'255,210,90',body:{x:120,y:84,r:22},search:true},
+  moon:{name:'月面',scene:'moon',sky:['#000004','#01010a','#040516','#080a20','#0e1129'],sun:['#7fb6ff','#2a6fd1'],glow:'110,160,255',ground:['#9b9da4','#45474e'],rim:'230,230,240',body:{x:760,y:128,r:66}},
 };
-const STAGE_ORDER=['sunset','noon','sakura','night','snow','dawn','thunder','fire','city'];
+const STAGE_ORDER=['sunset','noon','sakura','night','snow','dawn','thunder','fire','city','ny','greatwall','desert','castle','sky','launch','moon'];
 const NEON=[{x:170,y:250,w:150,h:46,text:'マミー会',rgb:'255,60,170'},{x:500,y:205,w:110,h:40,text:'ヤギ',rgb:'60,230,255'},{x:800,y:262,w:210,h:42,text:'ジンギスカン',rgb:'255,200,60'}];
 const GOATS={kid:{horn:'#efe4cf',ear:'#fbf6ee',hs:0.7},black:{horn:'#2a262e',ear:'#4b4552',hs:1},mecha:{horn:'#9aa3b2',ear:'#b9c1cc',hs:1},boss:{horn:'#d9c7a0',ear:'#efe5d6',hs:1.35}};
 /* ストーリー。話し手：'P'=自分、'E'=相手、'A1'〜'A3'=仲間、'F'=操られる友、null=ナレーション。{P}{E}{F}{A1}… は名前に置き換わる */
@@ -1053,12 +1062,67 @@ const STORY2=[
    pinch:[['A1','{P}！ 立てぇぇ！！'],['@tatsuya','まだいける。お前の筋肉は、まだ泣いてへん！'],['@rion','……負けんな。'],['@kazusa','援護する。いけ！'],['@bayashi','全員の分、乗せたれ！！'],['P','……おう。聞こえとるで、みんなの声……！'],['P','これが……マミー会の――全員分の拳やぁぁぁ！！']],
    post:[['E','メェェェェェ〜〜〜〜〜〜！！！'],[null,'――ヤギは、巨大な鍋ごと夕日の向こうへ消えた。'],['A2','やった……！ 今度こそ、やったで！！'],['@tatsuya','ええ一撃やった。'],['P','……なあ、みんな。'],['P','あいつ、寂しかった言うてたな。'],['A3','……うん。'],['P','次は、最初から呼んだろか。ジンギスカン。'],[null,'（次の週、ヤギは普通に帰ってきた。鍋を持って）'],['@yagi','メェ。……来たで。'],['P','……おう。座れや。']]},
 ];
+/* 第3章：世界編。ヤギが世界中で「国際ヤギ連合（IGU）」を作って、新メンバーをスカウトしとる */
+const STORY3=[
+  {stage:'sunset',title:'第1話',sub:'エアメール',tag:'旅立ちの河原',lv:-1,
+   enemy:{name:'子ヤギ特派員',job:'fighter',weapon:'tonfa',stats:{atk:2,spd:4,hp:2,def:1,mp:1},goat:'kid'},
+   pre:[[null,'――みんなで鍋を囲んだあの日から、一か月。'],['A1','{P}！ えらいこっちゃ！ テレビ見てみ！'],[null,'「速報です。世界各地で、頭にヤギの角を生やした謎の集団が暴れています。集団は『国際ヤギ連合』を名乗り……」'],['A2','国際ヤギ連合……？'],['A3','略してIGU。ロゴまである。無駄に本格的。'],['P','……あいつ、また何かやっとるな。'],
+        ['E','メェ〜！ エアメールのお届けや！ ヤギ様からの招待状やで！'],['P','……「世界中から仲間を集めて、地球まるごとジンギスカン鍋にする。月で待っとるで。ヤギより」'],['A1','月！？ 月でなにすんねん！'],['E','月を地球のフタにして、グツグツ煮込むんや！ メェッヘッヘ！'],['A3','スケールが大きすぎて、逆に何も伝わってこない。'],
+        ['A2','ほな行こか。世界一周……ジム巡りの旅や。'],['A1','ジムちゃうわ！'],['P','パスポートより先に、まずはお前を鍋の具にしたるわ！']],
+   post:[['E','メェェ……特派員やのに……'],['A3','子ヤギのカバンから、航空券が出てきた。'],['P','ニューヨーク行き……。なんで俺らの分まであんねん。'],['E','ヤギ様が「どうせ来るやろ」言うて……'],['A1','読まれとる！！'],['P','上等や。招待されたからには、世界中ぜんぶぶっ飛ばしに行ったる！']]},
+  {stage:'ny',title:'第2話',sub:'摩天楼の屋上',tag:'IGU・ニューヨーク支部長',lv:0,
+   enemy:{person:'allen',member:true,goat:'black',noLaunch:true,alt:'IGU・銃オタク'},
+   pre:[[null,'――ニューヨーク。摩天楼の屋上で、男が銃を磨いている。'],['E','……来たか。ジャパニーズ・マミー会。'],['A1','なんやあいつ！ 角生えとるで！'],['E','俺は{E}。IGUニューヨーク支部長……そして、ただの銃オタクや。'],['A3','自分で言った。'],
+        ['E','見てくれ、この二丁拳銃。ヤギ様がくれた、世界に3丁しかない限定モデルや。銃身にヤギの刻印まで入っとる。'],['A2','3丁しかないのに、二丁拳銃で使うてもうたら……'],['E','残りの1丁は、観賞用や。'],['A1','ガチのオタクや！！'],
+        ['E','ここは俺の射撃場や。弾幕の中で、踊ってもらうで。'],['P','ほな、その限定モデルごとぶっ飛ばしたる！']],
+   post:[['E','……くっ、リロードの隙を突かれるとはな……'],['P','目ぇ覚めたか、{E}。'],['@allen','……ああ。気づいたら角が生えとった。限定モデルに目がくらんでもうた。'],['@allen','IGUの次の支部は万里の長城や。あそこには、拳ひとつで世界をとった男がおる。'],['A2','拳ひとつ……ええ筋肉しとりそうやな。'],['@allen','筋肉どころやない。……あいつは、バケモノや。']]},
+  {stage:'greatwall',title:'第3話',sub:'万里の長城',tag:'IGU・長城の拳王',lv:0,
+   enemy:{person:'tanigucci',member:true,goat:'black',noLaunch:true,alt:'IGU・拳王'},
+   pre:[[null,'――万里の長城。朝霧の中、ひとりの男が拳を突き出している。'],['E','……ハァッ！！ ……よう来たな。'],['P','{E}！ お前もか！'],['E','ヤギ様は言うた。「世界中の強いヤツと戦わせたる」と。……ほんで、ほんまに強いヤツしか来ぉへん。最高や。'],
+        ['@allen','気ぃつけろ！ あいつは生粋のストリートファイターや。カウンターの受付が異常に長い！'],['A3','つまり、雑に殴ったら返される。'],['E','せや。拳法は、受けてからが本番や。'],['A1','なんか普通にカッコええこと言うてる……'],['P','ほな、受けきられへんくらい殴ったるわ！']],
+   mid:[['E','……ええ拳や。久しぶりに、本気出せそうや。'],['E','長城の石畳が割れるまで、殴り合おうや！'],['P','石畳は割るな！ 世界遺産やぞ！！']],
+   post:[['E','……負けた。ええ勝負やった。'],['@tanigucci','角、取れたわ。すまんかったな。強いヤツと戦えるって聞いて、つい。'],['A3','……世界遺産、ちょっと欠けてない？'],['@tanigucci','見んかったことにしよ。'],['@tanigucci','次の支部はエジプトや。ピラミッドの前で、ずっと誰かを「タコ」呼ばわりしとる男がおる。'],['A1','嫌な予感しかせえへん。']]},
+  {stage:'desert',title:'第4話',sub:'ピラミッドの砂漠',tag:'IGU・砂漠の鉄人',lv:0,
+   enemy:{person:'aniki',member:true,goat:'black',noLaunch:true,alt:'IGU・鉄人'},
+   pre:[[null,'――エジプト。灼熱の砂漠に、ピラミッドがそびえる。'],['E','おいタコ。'],['P','いきなりタコ言われた！'],['E','おいタコ。ここは俺のシマや。おいタコ。'],['A2','語尾みたいになっとる。'],
+        ['@tanigucci','{E}や。ヤギに「ピラミッドのてっぺんで日の出見せたる」言われて、ついてきた男や。'],['A3','釣られ方が、ちょっとロマンチック。'],['E','おいタコ。俺は追い込まれるほどキレる。体力が減ってきたら覚悟しとけよ。おいタコ。'],['A1','自分から弱点みたいなん言うてくれた！'],['P','ほな、キレる前に決めたる！ 砂漠ごと吹っ飛べ！']],
+   post:[['E','……おいタコ。ええパンチやったで、タコ。'],['P','褒めとんのか、けなしとんのか、どっちやねん。'],['@aniki','おいタコ。日の出、一緒に見るか。'],['A2','ええ人やん。'],['@aniki','おいタコ。次はヨーロッパの古城や。伝説の剣を探しとる勇者がおる。'],['@tanigucci','……勇者か。あいつとは、昔からちょっとな。'],['A3','因縁がありそうな顔してる。']]},
+  {stage:'castle',title:'第5話',sub:'ヨーロッパの古城',tag:'IGU・古城の勇者',lv:0,
+   enemy:{person:'yusei',member:true,goat:'black',noLaunch:true,alt:'IGU・勇者'},
+   pre:[[null,'――ヨーロッパ。雪山にかこまれた古城の中庭。'],['E','……来たか。待っとったで。'],['E','ヤギ様は言うた。「この城の地下に、伝説の剣が眠っとる」と。'],['A1','また釣られとる！ 今度はメシちゃうけど！'],
+        ['E','……ん？ そこにおるのは……{@tanigucci}！'],['@tanigucci','久しぶりやな、{E}。'],['E','お前だけは……お前だけは許さへん！'],['@tanigucci','何をしたか、まったく覚えてへんねんけど。'],
+        ['E','{@tatsuya}もおるな。お前の顔を見ると、なんか魔力がみなぎってくる。'],['E','そして{@kojimaimo}……お前には、伝説の剣の本気を見せたる。'],['A3','因縁、多すぎない？'],['P','因縁でも何でもええ！ まとめて俺が相手や！']],
+   mid:[['E','……くっ、ならば！ 伝説の剣、ここで抜く！！'],['A1','剣、普通に持っとったんかい！'],['P','抜く前に殴ったる！！']],
+   post:[['E','……伝説の剣は、ただの剣やった……'],['@yusei','地下を掘ったら、出てきたんは物干し竿やった。'],['A3','それはそれで伝説。'],['@yusei','……次は雲の上や。ヤギ様に羽をもらった天使がおる。'],['@tanigucci','天使か……。なんでか分からんけど、寒気がする。']]},
+  {stage:'sky',title:'第6話',sub:'雲の上の天空',tag:'IGU・天空の天使',lv:0,
+   enemy:{person:'reika',member:true,goat:'black',noLaunch:true,alt:'IGU・天使'},
+   pre:[[null,'――雲の上。どこまでも続く、白い海。'],['A1','なんで俺ら、雲の上に立てとんねん。'],['A3','細かいことは気にしない。'],['E','……ようこそ、天空へ。'],['E','ヤギ様が言うてくれたんや。「お前は天使や。羽もつけたる」って。'],['A2','その羽、ヤギがつけたんか……'],
+        ['E','……で。{@tanigucci}。'],['@tanigucci','え、俺？'],['E','あんたは、私の天敵や。ここで会ったが百年目。'],['@tanigucci','なんで俺、行く先々で恨まれとんねん！'],['@yusei','分かる。なんか許されへん顔しとる。'],
+        ['E','空から射抜いたる。浮かんでしもたら、届かへんで。'],['P','浮いとるうちは、MP減っとるんやろ。降りてきたとこを、ぶっ飛ばしたる！']],
+   post:[['E','……MP切れ。着地、失敗した……'],['@reika','羽、ちょっと重かった。'],['P','目ぇ覚めたか。'],['@reika','うん。ヤギ様は月におる。でも月へ行くロケットは、メカヤギが守ってる。'],['A1','ロケット！？ ほんまに月行くんか！'],['A2','宇宙でスクワットしたら、どうなるんやろ。'],['A3','そこ？']]},
+  {stage:'launch',title:'第7話',sub:'ロケット発射場',tag:'鋼鉄の門番・Mk-III',lv:0,
+   enemy:{name:'メカヤギMk-III',job:'robot',weapon:'rocket',stats:{atk:3,spd:2,hp:3,def:3,mp:2},goat:'mecha'},
+   pre:[[null,'――ロケット発射場。夜空を、サーチライトが走る。'],['E','ピピッ。侵入者ヲ確認。ワタシハ、メカヤギMk-III。'],['P','Mk-IIIて。前のやつ、2回スクラップにしたやろ。'],['E','学習シタ。今回ハ、ロケットパンチ搭載。'],['@aniki','おいタコ。それ俺とかぶっとるやんけ。'],
+        ['E','ガガ……（中から）しゃあないやろ！ ショットガンもスナイパーも、もう武器が全部かぶっとるから、ロボに乗ってきたんや！'],['A3','中の人、黒ヤギだった。'],['A1','黒ヤギ、かぶるの気にしすぎやろ！'],['P','ほな、ロボごとスクラップにして、ロケットいただくで！']],
+   post:[['E','ガガ……ロケット……ハッシャ……シテシマウ……'],[null,'――カウントダウンが始まった。10、9、8……'],['A1','乗れ乗れ乗れ！ 全員乗れ！！'],['@allen','定員は？'],['A2','気合いや。'],['@reika','私、飛べるから外でええよ。'],['A3','宇宙は無理だと思う。'],[null,'――3、2、1……発射！！']]},
+  {stage:'moon',title:'最終話',sub:'月面',tag:'真・ヤギ（宇宙）',lv:1,boss:true,
+   enemy:{person:'yagi',job:'goat',weapon:'horn',stats:{atk:4,spd:4,hp:5,def:3,mp:3},goat:'boss',boss:true,alt:'ヤギ'},
+   pre:[[null,'――月面。真っ黒な空に、青い地球が浮かんでいる。'],['E','メェ〜ッハッハ！ ようここまで来たな、{P}！ そして世界中のマミー会ども！'],['P','ヤギ……！ ほんまに月におるとは思わんかったわ。'],['E','見てみい、あの地球を。もうすぐ月をフタにして、グツグツ煮込むんや！'],['A3','月って、動かせるの？'],['E','……気合いや。'],['A1','気合いでなんでも解決すな！！'],
+        ['P','なんでや。なんでそこまでして、地球を鍋にしたいんや。'],['E','……決まっとるやろ。'],['E','世界中まわって、強いヤツ、おもろいヤツを集めたんや。銃オタクに、拳法家に、おいタコに、勇者に、天使や。'],['E','全員まとめて、ひとつの鍋を囲ませたかったんや！！'],
+        ['@tanigucci','……え、ほな俺ら、スカウトされとったん？'],['@aniki','おいタコ。めっちゃええヤツやんけ。'],['A2','やり方さえ普通なら、普通に入ったのに。'],['E','うるさい！ 鍋はもう煮えとる！ かかってこいや、{P}！！'],['P','おう。マミー会の鍋は……地球よりでっかいんや！！']],
+   mid:[['E','メェ……やるやないか……せやけどワシには、月の力がある！'],['E','重力が6分の1やから、ツッコミも6分の1しか効かへんのや！！ メェェェェ！！'],['A1','そんなルールないわ！！'],['P','ほな6倍の力で殴ったる！！']],
+   pinch:[['A1','{P}！ 立てぇぇ！！'],['@allen','援護射撃する！ 弾幕の中を走れ！'],['@tanigucci','拳は、受けてからが本番や！'],['@aniki','おいタコ！ 負けんなタコ！'],['@yusei','伝説の剣（物干し竿）の力、貸したる！'],['@reika','空から、見てるから。'],['P','……聞こえとるで。世界中の、みんなの声が……！'],['P','これが……マミー会の――地球まるごと分の拳やぁぁぁ！！']],
+   post:[['E','メェェェェェェ〜〜〜〜〜〜〜！！！'],[null,'――ヤギは地球に向かって、流れ星になった。'],['A1','やった……！ 月で、やったで！！'],['A3','……あれ。帰りのロケットは？'],['A2','…………'],['@reika','私、飛べるから先に帰るね。'],['A1','待って！！！'],
+         [null,'――次の週。いつもの河原。'],['@yagi','メェ。……世界のお土産、持ってきたで。'],['P','……おう。座れや。鍋、もう煮えとるで。'],[null,'（その日の鍋は、いつもより、ちょっとだけ大きかった）']]},
+];
 /* 章（増えたらここに足す） */
 const STORY_ARCS=[
   {id:'c1',title:'第1章',sub:'ヤギ団をぶっ飛ばせ',desc:'河原に現れたヤギ団。手下をしばいて、親玉のヤギを夕日の向こうまでぶっ飛ばせ。',eps:STORY,
    clear:'ヤギは夕日の向こうへ消えた。マミー会の夕日は、今日も燃えている。'},
-  {id:'c2',title:'第2章',sub:'ヤギ団の逆襲',desc:'ヤギが四天王を連れて帰ってきた。メシで釣られた仲間を取り戻して、もう一回ヤギをぶっ飛ばせ。',eps:STORY2,cast:{A1:'sanma',A2:'takeru',A3:'kojimaimo'},isNew:true,
+  {id:'c2',title:'第2章',sub:'ヤギ団の逆襲',desc:'ヤギが四天王を連れて帰ってきた。メシで釣られた仲間を取り戻して、もう一回ヤギをぶっ飛ばせ。',eps:STORY2,cast:{A1:'sanma',A2:'takeru',A3:'kojimaimo'},
    clear:'ヤギは鍋ごと夕日の向こうへ。……そして次の週、みんなで鍋を囲んだ。'},
+  {id:'c3',title:'第3章',sub:'ヤギ・ワールドツアー',desc:'ヤギが世界中に「国際ヤギ連合」を作った。ニューヨーク、万里の長城、ピラミッド、古城、雲の上、そして月へ。スカウトされた新顔たちの目を覚まさせて、宇宙でヤギをぶっ飛ばせ。',eps:STORY3,cast:{A1:'sanma',A2:'tatsuya',A3:'kojimaimo'},isNew:true,
+   clear:'ヤギは月から流れ星になって帰ってきた。……マミー会の鍋は、今日もちょっとだけ大きい。'},
 ];
 const pick=a=>a[(Math.random()*a.length)|0];
 const clone=o=>JSON.parse(JSON.stringify(o));
@@ -2439,6 +2503,7 @@ function buildBg(){
   bgC.width=cv.width;bgC.height=cv.height;const b=bgC.getContext('2d');b.setTransform(SCALE,0,0,SCALE,0,0);
   const HZ=GROUND-64,T=stageT(),B=T.body||SUN;let g;
   if(T.scene==='city'){buildCity(b);return;}
+  if(T.scene&&SCENES[T.scene]){SCENES[T.scene](b,T);return;}
   g=b.createLinearGradient(0,0,0,HZ);
   T.sky.forEach((c,i)=>g.addColorStop([0,0.3,0.58,0.83,1][i],c));
   b.fillStyle=g;b.fillRect(0,0,W,HZ+2);
@@ -2513,6 +2578,117 @@ function buildCity(b){
   b.strokeStyle='rgba(255,220,120,.5)';b.lineWidth=4;b.setLineDash([40,30]);b.beginPath();b.moveTo(0,GROUND+40);b.lineTo(W,GROUND+40);b.stroke();b.setLineDash([]);
   b.strokeStyle='rgba(255,90,200,.6)';b.lineWidth=2;b.beginPath();b.moveTo(0,GROUND);b.lineTo(W,GROUND);b.stroke();
 }
+/* 第3章の世界のステージ（背景は1回だけ描いて使い回す） */
+function scSky(b,T,hz){const g=b.createLinearGradient(0,0,0,hz);T.sky.forEach((c,i)=>g.addColorStop([0,0.3,0.58,0.83,1][i],c));b.fillStyle=g;b.fillRect(0,0,W,hz+2);}
+function scStars(b,n,maxY,a){for(let i=0;i<n;i++){const x=(i*397+i*i*7)%W,y=(i*131+i*i*3)%maxY,r=i%7===0?1.7:i%3===0?1.2:0.8;b.fillStyle=`rgba(255,255,255,${(a*(0.35+0.6*((i*13)%10)/10)).toFixed(2)})`;b.beginPath();b.arc(x,y,r,0,7);b.fill();}}
+function scBody(b,T){const B=T.body;let g=b.createRadialGradient(B.x,B.y,B.r*0.3,B.x,B.y,B.r*3);g.addColorStop(0,`rgba(${T.glow},.5)`);g.addColorStop(1,`rgba(${T.glow},0)`);b.fillStyle=g;b.fillRect(0,0,W,GROUND);
+  g=b.createLinearGradient(0,B.y-B.r,0,B.y+B.r*0.4);g.addColorStop(0,T.sun[0]);g.addColorStop(1,T.sun[1]);b.fillStyle=g;b.beginPath();b.arc(B.x,B.y,B.r,0,7);b.fill();}
+function scGround(b,T){const g=b.createLinearGradient(0,GROUND,0,H);g.addColorStop(0,T.ground[0]);g.addColorStop(1,T.ground[1]);b.fillStyle=g;b.fillRect(0,GROUND-3,W,H-GROUND+3);b.strokeStyle=`rgba(${T.rim},.55)`;b.lineWidth=1.6;b.beginPath();b.moveTo(0,GROUND);b.lineTo(W,GROUND);b.stroke();}
+function scRidgeY(x,base,amp,f1,f2,ph){return base-amp*(0.55+0.3*Math.sin(x*f1+ph)+0.15*Math.sin(x*f2+ph*2.3));}
+function scRidge(b,base,amp,f1,f2,ph,col){b.fillStyle=col;b.beginPath();b.moveTo(0,GROUND);for(let x=0;x<=W;x+=8)b.lineTo(x,scRidgeY(x,base,amp,f1,f2,ph));b.lineTo(W,GROUND);b.closePath();b.fill();}
+const SCENES={
+  ny(b,T){ // ニューヨーク：摩天楼の屋上。遠くに松明を掲げた像
+    const hz=GROUND-30;scSky(b,T,hz);scStars(b,40,240,0.7);scBody(b,T);
+    let x=-10,i=0;b.fillStyle='#2c2f5c';
+    while(x<W+10){const bw=30+((i*29)%36),bh=110+((i*53)%170);b.fillRect(x,hz-bh,bw,bh+30);if(i%6===3){b.beginPath();b.moveTo(x+bw*0.3,hz-bh);b.lineTo(x+bw/2,hz-bh-50);b.lineTo(x+bw*0.7,hz-bh);b.fill();}x+=bw+2;i++;}
+    {const sx=905,sy=hz-30;b.fillStyle='#4a5a7e';b.fillRect(sx-16,sy-28,32,28);b.fillRect(sx-10,sy-42,20,14);b.beginPath();b.moveTo(sx-9,sy-42);b.lineTo(sx-5,sy-92);b.lineTo(sx+5,sy-92);b.lineTo(sx+9,sy-42);b.closePath();b.fill();b.beginPath();b.arc(sx,sy-98,6,0,7);b.fill();b.fillRect(sx+3,sy-128,4,32);
+      const g=b.createRadialGradient(sx+5,sy-134,1,sx+5,sy-134,18);g.addColorStop(0,'rgba(255,225,130,.95)');g.addColorStop(1,'rgba(255,160,60,0)');b.fillStyle=g;b.beginPath();b.arc(sx+5,sy-134,18,0,7);b.fill();}
+    x=-14;i=3;while(x<850){const bw=40+((i*37)%44),bh=70+((i*71)%150);b.fillStyle='#14162f';b.fillRect(x,hz-bh,bw,bh+30);
+      for(let wy=hz-bh+8;wy<hz-4;wy+=11)for(let wx=x+5;wx<x+bw-6;wx+=9)if(((wx*7+wy*13+i*5)%11)<4){b.fillStyle=((wx+wy)%3)?'rgba(255,214,120,.75)':'rgba(170,220,255,.6)';b.fillRect(wx,wy,4,6);}
+      if(i%4===1){b.fillStyle='#14162f';b.fillRect(x+bw/2-1.5,hz-bh-26,3,26);b.fillStyle='#ff4a3d';b.beginPath();b.arc(x+bw/2,hz-bh-27,2.5,0,7);b.fill();}
+      x+=bw+6;i++;}
+    {const tx=120,top=GROUND-214,bot=GROUND-122;b.strokeStyle='#2a1d18';b.lineWidth=4;b.lineCap='round';b.beginPath();for(const lx of [-30,-10,10,30]){b.moveTo(tx+lx*0.8,bot);b.lineTo(tx+lx,GROUND-30);}b.moveTo(tx-30,bot+40);b.lineTo(tx+30,bot+40);b.moveTo(tx-28,bot+40);b.lineTo(tx+28,GROUND-34);b.moveTo(tx+28,bot+40);b.lineTo(tx-28,GROUND-34);b.stroke();
+      b.fillStyle='#6b4630';b.fillRect(tx-36,top,72,bot-top);b.strokeStyle='#3a2418';b.lineWidth=3;b.beginPath();for(let y=top+14;y<bot;y+=18){b.moveTo(tx-36,y);b.lineTo(tx+36,y);}b.stroke();
+      b.fillStyle='#3a2a24';b.beginPath();b.moveTo(tx-42,top+2);b.lineTo(tx,top-30);b.lineTo(tx+42,top+2);b.closePath();b.fill();}
+    b.fillStyle='#5b5f6c';b.fillRect(780,GROUND-78,80,44);b.strokeStyle='#2f323b';b.lineWidth=2;b.beginPath();b.arc(820,GROUND-56,15,0,7);b.moveTo(805,GROUND-56);b.lineTo(835,GROUND-56);b.moveTo(820,GROUND-71);b.lineTo(820,GROUND-41);b.stroke();
+    b.fillStyle='#3a3c48';b.fillRect(0,GROUND-34,W,34);b.fillStyle='#565968';b.fillRect(0,GROUND-38,W,6);
+    b.strokeStyle='rgba(0,0,0,.25)';b.lineWidth=1;b.beginPath();for(let px=0;px<W;px+=48){b.moveTo(px,GROUND-32);b.lineTo(px,GROUND-2);}b.stroke();
+    scGround(b,T);b.strokeStyle='rgba(0,0,0,.28)';b.lineWidth=2;b.beginPath();for(let k=0;k<5;k++){const y=GROUND+14+k*15;b.moveTo(0,y);b.lineTo(W,y+((k%2)?4:-3));}b.stroke();
+  },
+  greatwall(b,T){ // 万里の長城：霧の山並みを城壁がうねる
+    const hz=GROUND-40;scSky(b,T,hz);scBody(b,T);
+    scRidge(b,hz-150,90,0.006,0.017,0.4,'#a8b6c7');
+    scRidge(b,hz-70,50,0.009,0.023,1.7,'#7d92a4');
+    const ry=x=>scRidgeY(x,hz-70,50,0.009,0.023,1.7);
+    b.lineJoin='round';b.lineCap='round';b.strokeStyle='#5d4b37';b.lineWidth=9;b.beginPath();for(let x=0;x<=W;x+=8){const y=ry(x)-2;x?b.lineTo(x,y):b.moveTo(x,y);}b.stroke();b.strokeStyle='#cdb58c';b.lineWidth=5;b.stroke();
+    b.fillStyle='#5d4b37';for(let x=4;x<W;x+=10)b.fillRect(x,ry(x)-10,4,4);
+    for(const tx of [120,360,600,850]){const y=ry(tx);b.fillStyle='#5d4b37';b.fillRect(tx-11,y-26,22,26);b.fillStyle='#cdb58c';b.fillRect(tx-8,y-23,16,20);b.fillStyle='#5d4b37';b.fillRect(tx-3,y-16,6,8);for(let k=-10;k<=6;k+=8)b.fillRect(tx+k,y-31,5,6);}
+    let g=b.createLinearGradient(0,hz-70,0,hz);g.addColorStop(0,'rgba(255,250,240,0)');g.addColorStop(1,'rgba(255,250,240,.85)');b.fillStyle=g;b.fillRect(0,hz-70,W,74);
+    scRidge(b,hz+10,30,0.012,0.031,0.2,'#5b7466');
+    const pt=GROUND-44;b.fillStyle='#9c8462';b.fillRect(0,pt,W,44);for(let x=0;x<W;x+=40)b.fillRect(x,pt-18,24,18);
+    b.strokeStyle='rgba(60,45,30,.45)';b.lineWidth=1.2;b.beginPath();for(let y=pt+11,r=0;y<=GROUND;y+=11,r++){b.moveTo(0,y);b.lineTo(W,y);for(let x=(r%2)*16;x<W;x+=32){b.moveTo(x,y-11);b.lineTo(x,y);}}b.stroke();
+    scGround(b,T);
+    b.strokeStyle='rgba(60,45,30,.35)';b.lineWidth=1.4;b.beginPath();for(let y=GROUND+14,r=0;y<H;y+=16,r++){b.moveTo(0,y);b.lineTo(W,y);for(let x=(r%2)*30;x<W;x+=60){b.moveTo(x,y);b.lineTo(x,y+16);}}b.stroke();
+  },
+  desert(b,T){ // エジプト：夕日とピラミッド
+    const hz=GROUND-56;scSky(b,T,hz);scBody(b,T);
+    const pyr=(cx,base,w,h)=>{b.fillStyle='#8f5530';b.beginPath();b.moveTo(cx,base-h);b.lineTo(cx-w/2,base);b.lineTo(cx+w/2,base);b.closePath();b.fill();
+      b.fillStyle='#d58e48';b.beginPath();b.moveTo(cx,base-h);b.lineTo(cx+w*0.1,base);b.lineTo(cx+w/2,base);b.closePath();b.fill();
+      b.strokeStyle='rgba(90,45,20,.25)';b.lineWidth=1;b.beginPath();for(let k=1;k<9;k++){const y=base-h+h*k/9,hw=w/2*k/9;b.moveTo(cx-hw,y);b.lineTo(cx+hw,y);}b.stroke();};
+    pyr(150,hz+4,170,96);pyr(330,hz+6,340,196);pyr(540,hz+4,220,124);
+    b.fillStyle='#8a5530';b.beginPath();b.moveTo(700,hz+4);b.lineTo(700,hz-14);b.lineTo(762,hz-18);b.lineTo(770,hz-40);b.lineTo(792,hz-46);b.lineTo(802,hz-32);b.lineTo(798,hz-14);b.lineTo(814,hz-4);b.lineTo(814,hz+4);b.closePath();b.fill();
+    for(const [base,amp,col,ph] of [[hz+18,14,'#e8ad62',0.3],[hz+40,18,'#d99a52',2.1]]){b.fillStyle=col;b.beginPath();b.moveTo(0,GROUND);for(let x=0;x<=W;x+=10)b.lineTo(x,base-amp*Math.sin(x*0.011+ph)*Math.sin(x*0.004+ph));b.lineTo(W,GROUND);b.closePath();b.fill();}
+    const palm=(px,base,h,lean)=>{b.strokeStyle='#5a3a22';b.lineWidth=7;b.lineCap='round';b.beginPath();b.moveTo(px,base);b.quadraticCurveTo(px+lean*0.3,base-h*0.6,px+lean,base-h);b.stroke();
+      b.strokeStyle='#2f5a2a';b.lineWidth=5;const tx=px+lean,ty=base-h;for(let k=0;k<6;k++){const a=-Math.PI+k*Math.PI/5,L=40;b.beginPath();b.moveTo(tx,ty);b.quadraticCurveTo(tx+Math.cos(a)*L*0.6,ty+Math.sin(a)*L*0.6-12,tx+Math.cos(a)*L,ty+Math.sin(a)*L*0.4+14);b.stroke();}};
+    palm(60,GROUND-6,150,18);palm(905,GROUND-6,130,-16);
+    scGround(b,T);
+    b.strokeStyle='rgba(120,70,30,.25)';b.lineWidth=2;b.beginPath();for(let i=0;i<16;i++){const y=GROUND+12+((i*23)%60),x=(i*173)%W;b.moveTo(x,y);b.quadraticCurveTo(x+30,y-5,x+60,y);}b.stroke();
+  },
+  castle(b,T){ // ヨーロッパ：雪山と古城
+    const hz=GROUND-40;scSky(b,T,hz);scBody(b,T);
+    const pk=[[-40,hz-120],[90,hz-230],[210,hz-150],[330,hz-262],[470,hz-170],[560,hz-212],[700,hz-140],[840,hz-240],[1000,hz-130]];
+    b.fillStyle='#8ea3bf';b.beginPath();b.moveTo(-40,hz);for(const [px,py] of pk)b.lineTo(px,py);b.lineTo(1000,hz);b.closePath();b.fill();
+    b.fillStyle='#f4f8fc';for(let k=1;k<pk.length-1;k++){const [px,py]=pk[k],[lx,ly]=pk[k-1],[nx,ny]=pk[k+1],t=0.3;b.beginPath();b.moveTo(px,py);b.lineTo(px+(lx-px)*t,py+(ly-py)*t);b.lineTo(px+(lx-px)*t*0.45,py+(ly-py)*t*0.7);b.lineTo(px+(nx-px)*t*0.4,py+(ny-py)*t*0.75);b.lineTo(px+(nx-px)*t,py+(ny-py)*t);b.closePath();b.fill();}
+    scRidge(b,hz-30,40,0.01,0.027,0.9,'#4f7a5c');
+    b.fillStyle='#2e5640';for(let i=0;i<44;i++){const x=(i*61)%W+((i*17)%20),base=hz-2-((i*13)%22),h=26+((i*7)%22);b.beginPath();b.moveTo(x,base-h);b.lineTo(x-9,base);b.lineTo(x+9,base);b.closePath();b.fill();}
+    const cb=hz-58;b.fillStyle='#6d6a64';b.beginPath();b.moveTo(600,hz);b.lineTo(630,cb+10);b.lineTo(660,cb);b.lineTo(800,cb);b.lineTo(830,cb+16);b.lineTo(860,hz);b.closePath();b.fill();
+    const tower=(x,w,h,rh)=>{b.fillStyle='#eceff4';b.fillRect(x-w/2,cb-h,w,h);b.fillStyle='#41618f';b.beginPath();b.moveTo(x-w/2-4,cb-h);b.lineTo(x,cb-h-rh);b.lineTo(x+w/2+4,cb-h);b.closePath();b.fill();
+      b.fillStyle='#2c3550';for(let y=cb-h+12;y<cb-10;y+=18)b.fillRect(x-3,y,6,9);b.strokeStyle='#3a3f4d';b.lineWidth=1.5;b.beginPath();b.moveTo(x,cb-h-rh);b.lineTo(x,cb-h-rh-12);b.stroke();b.fillStyle='#c63a2f';b.beginPath();b.moveTo(x,cb-h-rh-12);b.lineTo(x+10,cb-h-rh-9);b.lineTo(x,cb-h-rh-6);b.closePath();b.fill();};
+    b.fillStyle='#e3e6ec';b.fillRect(665,cb-60,130,60);b.fillStyle='#c9ced8';for(let x=667;x<795;x+=12)b.fillRect(x,cb-66,7,6);
+    tower(680,26,110,40);tower(778,24,90,36);tower(735,40,165,62);tower(710,18,72,28);tower(758,16,122,30);
+    b.fillStyle='#8c877d';b.fillRect(0,GROUND-30,W,30);b.fillStyle='#a9a398';b.fillRect(0,GROUND-34,W,6);b.fillStyle='#9a958a';for(let x=10;x<W;x+=26)b.fillRect(x,GROUND-28,10,26);
+    scGround(b,T);b.fillStyle='rgba(255,255,255,.08)';for(let i=0;i<70;i++){const x=(i*137)%W,y=GROUND+8+((i*29)%(H-GROUND-10));b.beginPath();b.ellipse(x,y,12,5,0,0,7);b.fill();}
+  },
+  sky(b,T){ // 天空：雲の海の上
+    const hz=GROUND-60;scSky(b,T,GROUND);scBody(b,T);
+    const B=T.body;b.save();b.globalAlpha=0.12;b.fillStyle='#ffffff';for(let k=0;k<7;k++){const a=0.9+k*0.32;b.beginPath();b.moveTo(B.x,B.y);b.lineTo(B.x+Math.cos(a)*1100,B.y+Math.sin(a)*1100);b.lineTo(B.x+Math.cos(a+0.08)*1100,B.y+Math.sin(a+0.08)*1100);b.closePath();b.fill();}b.restore();
+    b.save();b.globalAlpha=0.3;b.lineWidth=7;['#ff5a5a','#ffa64a','#ffe14a','#6fdc6f','#5ab4ff','#8a6aff'].forEach((c,k)=>{b.strokeStyle=c;b.beginPath();b.arc(260,hz+60,250-k*7,Math.PI*1.05,Math.PI*1.95);b.stroke();});b.restore();
+    const puff=(y,n,r,col,seed)=>{b.fillStyle=col;b.beginPath();for(let i=0;i<=n;i++){const x=i*(W/n)+((i*seed)%30)-10,rr=r*(0.7+((i*seed*7)%10)/18);b.moveTo(x+rr,y);b.arc(x,y,rr,0,Math.PI*2);}b.fill();b.fillRect(0,y,W,GROUND-y+4);};
+    puff(hz-10,16,30,'#d7e8f8',13);puff(hz+22,13,38,'#eaf3fc',7);puff(GROUND-14,12,34,'#ffffff',11);
+    const g=b.createLinearGradient(0,GROUND,0,H);g.addColorStop(0,'#ffffff');g.addColorStop(1,'#bcd5ee');b.fillStyle=g;b.fillRect(0,GROUND-3,W,H-GROUND+3);
+    b.fillStyle='rgba(120,160,210,.18)';for(let i=0;i<12;i++){const x=(i*157)%W,y=GROUND+20+((i*31)%50);b.beginPath();b.ellipse(x,y,40+(i%3)*14,8,0,0,7);b.fill();}
+  },
+  launch(b,T){ // ロケット発射場：夜の海辺、発射台とロケット
+    const hz=GROUND-50;scSky(b,T,hz);scStars(b,70,hz-80,0.9);scBody(b,T);
+    b.fillStyle='#0b1226';b.fillRect(0,hz-6,W,60);b.fillStyle='rgba(180,200,255,.12)';for(let i=0;i<20;i++)b.fillRect((i*211)%W,hz+((i*17)%40),18+(i*7)%30,1.5);
+    b.fillStyle='#1a2038';b.fillRect(60,GROUND-120,170,100);b.fillStyle='#232a48';b.beginPath();b.moveTo(52,GROUND-120);b.lineTo(145,GROUND-152);b.lineTo(238,GROUND-120);b.closePath();b.fill();b.fillStyle='rgba(255,214,120,.7)';for(let wx=78;wx<220;wx+=22)b.fillRect(wx,GROUND-100,10,8);
+    const tx=730,tt=GROUND-360;b.strokeStyle='#c63a2f';b.lineWidth=3;b.beginPath();b.moveTo(tx-22,GROUND-20);b.lineTo(tx-22,tt);b.moveTo(tx+22,GROUND-20);b.lineTo(tx+22,tt);for(let y=GROUND-20;y>tt;y-=26){b.moveTo(tx-22,y);b.lineTo(tx+22,y-26);b.moveTo(tx+22,y);b.lineTo(tx-22,y-26);b.moveTo(tx-22,y);b.lineTo(tx+22,y);}b.stroke();
+    b.lineWidth=5;b.strokeStyle='#8a2a22';b.beginPath();b.moveTo(tx-22,GROUND-150);b.lineTo(tx-64,GROUND-150);b.moveTo(tx-22,GROUND-262);b.lineTo(tx-64,GROUND-262);b.stroke();
+    b.fillStyle='#ff4a3d';b.beginPath();b.arc(tx,tt-6,4,0,7);b.fill();
+    const rx=638,rw=44,rt=GROUND-330,rb=GROUND-40;b.fillStyle='#eef1f6';b.fillRect(rx-rw/2,rt,rw,rb-rt);
+    b.fillStyle='#c63a2f';b.beginPath();b.moveTo(rx-rw/2,rt);b.quadraticCurveTo(rx-rw/2,rt-50,rx,rt-72);b.quadraticCurveTo(rx+rw/2,rt-50,rx+rw/2,rt);b.closePath();b.fill();
+    b.fillStyle='#2a2e3a';b.fillRect(rx-rw/2,rt+60,rw,8);b.fillRect(rx-rw/2,rb-70,rw,8);
+    b.fillStyle='#c63a2f';for(const sg of [-1,1]){b.beginPath();b.moveTo(rx+sg*rw/2,rb-60);b.lineTo(rx+sg*(rw/2+24),rb);b.lineTo(rx+sg*rw/2,rb);b.closePath();b.fill();}
+    b.save();b.fillStyle='#1f2433';b.font=`18px ${FONT_D}`;b.textAlign='center';b.textBaseline='middle';b.translate(rx,rt+160);b.rotate(-Math.PI/2);b.fillText('IGU',0,0);b.restore();
+    b.fillStyle='rgba(200,210,230,.35)';for(let i=0;i<9;i++){b.beginPath();b.arc(rx-64+i*16,GROUND-30-((i*7)%14),16+((i*5)%10),0,7);b.fill();}
+    scGround(b,T);
+    const sy=GROUND+26;b.fillStyle='#1c1c1c';b.fillRect(0,sy,W,10);b.fillStyle='#ffd23f';for(let x=-10;x<W;x+=24){b.beginPath();b.moveTo(x,sy);b.lineTo(x+12,sy);b.lineTo(x+2,sy+10);b.lineTo(x-10,sy+10);b.closePath();b.fill();}
+  },
+  moon(b,T){ // 月面：空に地球、ヤギ連合の旗
+    scSky(b,T,GROUND);scStars(b,160,GROUND-60,1);
+    const B=T.body;let g=b.createRadialGradient(B.x,B.y,B.r*0.8,B.x,B.y,B.r*1.9);g.addColorStop(0,'rgba(110,160,255,.45)');g.addColorStop(1,'rgba(110,160,255,0)');b.fillStyle=g;b.fillRect(B.x-B.r*2,B.y-B.r*2,B.r*4,B.r*4);
+    b.save();b.beginPath();b.arc(B.x,B.y,B.r,0,7);b.clip();b.fillStyle='#2a6fd1';b.fillRect(B.x-B.r,B.y-B.r,B.r*2,B.r*2);
+    b.fillStyle='#4fa14f';for(const [dx,dy,rx2,ry2,rot] of [[-22,-18,22,14,0.5],[-30,10,12,20,0.2],[18,-6,18,26,-0.3],[30,28,14,8,0.4],[-6,40,20,6,0]]){b.beginPath();b.ellipse(B.x+dx,B.y+dy,rx2,ry2,rot,0,7);b.fill();}
+    b.strokeStyle='rgba(255,255,255,.7)';b.lineWidth=4;b.lineCap='round';for(const [dx,dy,l] of [[-40,-34,26],[6,-44,30],[-10,18,34],[24,10,22]]){b.beginPath();b.moveTo(B.x+dx,B.y+dy);b.quadraticCurveTo(B.x+dx+l/2,B.y+dy-5,B.x+dx+l,B.y+dy);b.stroke();}
+    g=b.createLinearGradient(B.x-B.r,0,B.x+B.r,0);g.addColorStop(0,'rgba(0,0,10,0)');g.addColorStop(0.6,'rgba(0,0,10,.15)');g.addColorStop(1,'rgba(0,0,10,.75)');b.fillStyle=g;b.fillRect(B.x-B.r,B.y-B.r,B.r*2,B.r*2);b.restore();
+    scRidge(b,GROUND-70,60,0.008,0.02,2.2,'#5d6068');scRidge(b,GROUND-40,36,0.013,0.034,0.6,'#7a7d85');
+    {const fx=150,fb=GROUND-8;b.strokeStyle='#c9ccd4';b.lineWidth=3;b.beginPath();b.moveTo(fx,fb);b.lineTo(fx,fb-120);b.lineTo(fx+70,fb-120);b.stroke();b.fillStyle='#ffffff';b.fillRect(fx,fb-118,70,44);b.strokeStyle='#1f2433';b.lineWidth=2;b.strokeRect(fx,fb-118,70,44);
+      b.fillStyle='#f1e8da';b.beginPath();b.ellipse(fx+35,fb-97,12,14,0,0,7);b.fill();b.stroke();b.strokeStyle='#8a7a5a';b.lineWidth=3;b.beginPath();b.moveTo(fx+29,fb-109);b.quadraticCurveTo(fx+23,fb-117,fx+17,fb-112);b.moveTo(fx+41,fb-109);b.quadraticCurveTo(fx+47,fb-117,fx+53,fb-112);b.stroke();
+      b.fillStyle='#1f2433';b.beginPath();b.arc(fx+31,fb-99,1.8,0,7);b.arc(fx+39,fb-99,1.8,0,7);b.fill();b.font=`9px ${FONT_D}`;b.textAlign='center';b.textBaseline='alphabetic';b.fillText('IGU',fx+35,fb-78);}
+    scGround(b,T);
+    for(let i=0;i<9;i++){const x=(i*137+40)%W,y=GROUND+14+((i*29)%50),r=10+(i%4)*7;b.fillStyle='rgba(40,40,48,.35)';b.beginPath();b.ellipse(x,y,r,r*0.32,0,0,7);b.fill();b.strokeStyle='rgba(230,230,240,.35)';b.lineWidth=1.5;b.beginPath();b.ellipse(x,y+1,r,r*0.32,0,0.1,Math.PI-0.1);b.stroke();}
+  },
+};
 function drawAmbient(){
   const p=beatPulse(),hz=GROUND-64,T=stageT(),B=T.body||SUN;
   ctx.save();ctx.globalCompositeOperation='lighter';
@@ -2528,6 +2704,11 @@ function drawAmbient(){
     ctx.globalCompositeOperation='lighter';
   }
   if(T.scene==='city'&&NEON_C){ctx.save();ctx.globalAlpha=0.15+0.5*p;ctx.drawImage(NEON_C,0,0,W,H);ctx.restore();}
+  if(T.search){for(const [sx,ph] of [[190,0],[870,2]]){const a=-Math.PI/2+Math.sin(t*0.012+ph)*0.5,L=720,g=ctx.createLinearGradient(sx,GROUND-20,sx+Math.cos(a)*L,GROUND-20+Math.sin(a)*L);g.addColorStop(0,'rgba(255,250,210,.26)');g.addColorStop(1,'rgba(255,250,210,0)');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(sx,GROUND-20);ctx.lineTo(sx+Math.cos(a-0.06)*L,GROUND-20+Math.sin(a-0.06)*L);ctx.lineTo(sx+Math.cos(a+0.06)*L,GROUND-20+Math.sin(a+0.06)*L);ctx.closePath();ctx.fill();}} // 発射場のサーチライト
+  if(T.dust||T.wisp){ctx.globalCompositeOperation='source-over';
+    if(T.dust)for(let i=0;i<40;i++){const x=((i*173)+t*(1.2+(i%4)*0.5))%(W+40)-20,y=GROUND-10-((i*37)%200)+Math.sin(t*0.03+i)*8;ctx.fillStyle=`rgba(255,220,160,${(0.25+0.2*(i%3)).toFixed(2)})`;ctx.beginPath();ctx.arc(x,y,1.2+(i%3)*0.7,0,7);ctx.fill();} // 砂ぼこり
+    if(T.wisp)for(let i=0;i<6;i++){const x=((i*211)+t*(0.4+i*0.08))%(W+300)-150,y=GROUND-30-((i*61)%140);ctx.fillStyle='rgba(255,255,255,.35)';ctx.beginPath();ctx.ellipse(x,y,90+(i%3)*30,12+(i%2)*6,0,0,7);ctx.fill();} // 流れる雲
+    ctx.globalCompositeOperation='lighter';}
   if(T.petals||T.snow){
     ctx.globalCompositeOperation='source-over';
     const cnt=T.snow?70:36;
@@ -3109,8 +3290,8 @@ function renderPickBtns(){
   sb.append(sw,elx('span','',k==='random'?'ランダム':STAGES[k].name));
 }
 let PK=null;
-function openPicker(title,groups,value,onPick){
-  PK={onPick};$('#pkTitle').textContent=title;const g=$('#pkGrid');g.textContent='';
+function openPicker(title,groups,value,onPick,cls){
+  PK={onPick};$('#pkTitle').textContent=title;const g=$('#pkGrid');g.textContent='';g.className='pk-grid'+(cls?' '+cls:''); // cls='compact'：数が多い時は小さめのタイル
   for(const grp of groups){
     if(grp.label)g.appendChild(elx('div','pk-group',grp.label));
     for(const it of grp.items){const b=elx('button','pk'+(it.v===value?' on':''));b.type='button';b.dataset.v=it.v;b.setAttribute('aria-pressed',String(it.v===value));
@@ -3127,7 +3308,7 @@ function openPickFor(kind){
     if(DATA.favs.length)gs.push({label:'オリジナル',items:DATA.favs.map(mk)});
     openPicker('相手をえらぶ',gs,DATA.opp,v=>{DATA.opp=v;save();renderMenu();});
   }else if(kind==='stage'){
-    openPicker('ステージをえらぶ',[{items:[{v:'random',label:'ランダム',sw:stageSwatch('random'),mark:'?'}].concat(STAGE_ORDER.map(k=>({v:k,label:STAGES[k].name,sw:stageSwatch(k)})))}],STAGES[DATA.stage]?DATA.stage:'random',v=>{DATA.stage=v;save();renderMenu();});
+    openPicker('ステージをえらぶ',[{items:[{v:'random',label:'ランダム',sw:stageSwatch('random'),mark:'?'}].concat(STAGE_ORDER.map(k=>({v:k,label:STAGES[k].name,sw:stageSwatch(k)})))}],STAGES[DATA.stage]?DATA.stage:'random',v=>{DATA.stage=v;save();renderMenu();},'compact');
   }
 }
 function defaultArc(){for(let i=0;i<STORY_ARCS.length;i++)if(arcCleared(i)<STORY_ARCS[i].eps.length)return i;return STORY_ARCS.length-1;}
@@ -3714,7 +3895,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='41';
+const GAME_VER='42';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
