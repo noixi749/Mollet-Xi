@@ -4510,7 +4510,7 @@ function fbSender(path,minMs){
   let val,dirty=false,busy=0,last=0,tm=0,dead=false;
   const go=()=>{
     tm=0;if(!dirty||dead)return;
-    const wait=minMs-(performance.now()-last);
+    const wait=(typeof minMs==='function'?minMs():minMs)-(performance.now()-last);
     if(busy>=2||wait>0){if(!tm)tm=setTimeout(go,Math.max(8,wait));return;}
     dirty=false;last=performance.now();busy++;const v=val;
     (v===null?Fb.del(path):Fb.put(path,v)).catch(()=>{}).finally(()=>{busy--;if(dirty&&!tm)go();});
@@ -4519,13 +4519,41 @@ function fbSender(path,minMs){
   send.stop=()=>{dead=true;clearTimeout(tm);};
   return send;
 }
+/* 直結（WebRTC）：ホストとゲストを直接つないで、試合の様子と入力をサーバーを通さずにやりとりする。
+   つながらへん時（回線の都合）は今まで通りサーバー経由。合図（offer/answer）は fight/r/<部屋>/w/<相手>/<自分> に置く */
+const RTC_CFG={iceServers:[{urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']}]};
+const RTC_ON=typeof RTCPeerConnection!=='undefined'&&!/[?&]nortc/.test(typeof location!=='undefined'?location.search:'');
 async function fbJoin(name,opts){
   opts=opts||{};
   await fbSyncClock();
   const base='fight/r/'+name,me='q'+Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10);
   let P={},S={},I={},mine={},snap=Object.freeze([]),hs=[],cs=[],queued=false,left=false,conn=false,lastSig='';
   const stops=[],now=()=>Date.now()+FB.off;
-  const sendS=fbSender(base+'/s/'+me,40),sendI=fbSender(base+'/i/'+me,30);
+  const dcs={},dcS={},dcI={},dcN={};let dcCnt=0;
+  const dcOpen=p=>!!(dcs[p]&&dcs[p].open);
+  const allDc=()=>{const o=Object.keys(P||{}).filter(p=>p!==me&&P[p]&&P[p].g);return o.length>0&&o.every(dcOpen);};
+  const sendS=fbSender(base+'/s/'+me,()=>allDc()?300:40),sendI=fbSender(base+'/i/'+me,()=>Object.keys(dcs).some(dcOpen)?250:30);
+  const iceDone=pc=>new Promise(r=>{if(pc.iceGatheringState==='complete')return r();const t=setTimeout(r,2500);pc.addEventListener('icegatheringstatechange',()=>{if(pc.iceGatheringState==='complete'){clearTimeout(t);r();}});});
+  const dcWire=(peer,dc)=>{const o=dcs[peer];if(!o)return;o.dc=dc;
+    dc.onopen=()=>{o.open=true;if(opts.onDirect)try{opts.onDirect(peer);}catch(e){}};dc.onclose=()=>{o.open=false;};
+    dc.onmessage=e=>{let d;try{d=JSON.parse(e.data);}catch(_){return;}if(!d||typeof d!=='object')return;
+      if(d.k==='s'&&d.v&&typeof d.v==='object'){if((+d.v.f||0)<(dcS[peer]?+dcS[peer].f||0:-1)&&d.v.m===(dcS[peer]&&dcS[peer].m))return;dcS[peer]=d.v;S=Object.assign({},S,{[peer]:d.v});notify();}
+      else if(d.k==='i'&&d.v&&typeof d.v==='object'){const n=+d.n||0;if(n<=(dcN[peer]||0))return;dcN[peer]=n;dcI[peer]=d.v;I=Object.assign({},I,{[peer]:d.v});notify();}};};
+  const dcSend=(peer,k,v,n)=>{const o=dcs[peer];if(!o||!o.open||!o.dc||o.dc.bufferedAmount>65536)return;try{o.dc.send(JSON.stringify(n?{k,v,n}:{k,v}));}catch(e){}};
+  const rtcClose=p=>{const o=dcs[p];if(!o)return;try{o.pc.close();}catch(e){}delete dcs[p];};
+  const rtcGuest=async hp=>{ // ゲスト → ホストへ申し込む
+    if(!RTC_ON||dcs[hp])return;
+    try{const pc=new RTCPeerConnection(RTC_CFG);dcs[hp]={pc,open:false};dcWire(hp,pc.createDataChannel('g',{ordered:false,maxRetransmits:0}));
+      await pc.setLocalDescription(await pc.createOffer());await iceDone(pc);if(left)return;
+      await Fb.put(base+'/w/'+hp+'/'+me,{o:pc.localDescription.sdp});}catch(e){}
+  };
+  const rtcAnswer=async(gp,sdp)=>{ // ホスト：申し込みに答える
+    if(!RTC_ON||dcs[gp]&&dcs[gp].sdp===sdp)return;rtcClose(gp);
+    try{const pc=new RTCPeerConnection(RTC_CFG);dcs[gp]={pc,open:false,sdp};pc.ondatachannel=e=>dcWire(gp,e.channel);
+      await pc.setRemoteDescription({type:'offer',sdp});await pc.setLocalDescription(await pc.createAnswer());await iceDone(pc);if(left)return;
+      await Fb.put(base+'/w/'+gp+'/'+me,{a:pc.localDescription.sdp});}catch(e){}
+  };
+  const rtcGotAnswer=(hp,sdp)=>{const o=dcs[hp];if(!o||o.ans||!sdp)return;o.ans=true;o.pc.setRemoteDescription({type:'answer',sdp}).catch(()=>{});};
   const rebuild=()=>{
     const t=now(),arr=[Object.freeze({peer:me,by:null,isMe:true,sameTab:true,kind:'viewer',guest:false,presence:Object.freeze(Object.assign({},mine)),updatedAt:Date.now()})];
     for(const peer of Object.keys(P||{})){
@@ -4544,15 +4572,21 @@ async function fbJoin(name,opts){
   const obj=m=>(m&&typeof m==='object')?m:{};
   if(opts.host){ // ホストは自分の「試合の様子」を受け取らんでええように、参加者と入力だけ聞く
     stops.push(Fb.listen(base+'/p',m=>{P=obj(m);notify();ready();},c=>setConn(c),fail));
-    stops.push(Fb.listen(base+'/i',m=>{I=obj(m);notify();},null,null));
+    stops.push(Fb.listen(base+'/i',m=>{I=obj(m);for(const p in dcI)if(dcOpen(p))I[p]=dcI[p];notify();},null,null));
+    if(RTC_ON)stops.push(Fb.listen(base+'/w/'+me,m=>{m=obj(m);for(const gp in m){const v=m[gp];if(v&&typeof v.o==='string'&&/^q[a-z0-9]{6,24}$/.test(gp))rtcAnswer(gp,v.o);}},null,null));
   }else{ // ゲストは部屋まるごと1本で聞く
-    stops.push(Fb.listen(base,m=>{m=obj(m);P=obj(m.p);S=obj(m.s);I=obj(m.i);notify();ready();},c=>setConn(c),fail));
+    stops.push(Fb.listen(base,m=>{m=obj(m);P=obj(m.p);S=obj(m.s);I=obj(m.i);
+      for(const p in dcS)if(dcOpen(p)&&(!S[p]||(+dcS[p].f||0)>=(+S[p].f||0)))S[p]=dcS[p];
+      if(RTC_ON){const w=obj(obj(m.w)[me]);for(const hp in w)if(w[hp]&&w[hp].a)rtcGotAnswer(hp,w[hp].a);
+        for(const hp in P)if(hp!==me&&P[hp]&&P[hp].h&&!dcs[hp]&&/^q[a-z0-9]{6,24}$/.test(hp))rtcGuest(hp);}
+      notify();ready();},c=>setConn(c),fail));
   }
   await Promise.race([first,new Promise(r=>setTimeout(r,8000))]);
   const hb=setInterval(()=>{if(!left)Fb.put(base+'/p/'+me+'/at',FB_TS).catch(()=>{});},4000);
   const tick=setInterval(()=>{if(left)return;const before=snap.map(p=>p.peer).join(',');rebuild();if(snap.map(p=>p.peer).join(',')!==before)notify();},2000);
   const bye=()=>{if(left)return;left=true;clearInterval(hb);clearInterval(tick);sendS.stop();sendI.stop();for(const s of stops)try{s();}catch(e){}
-    for(const k of ['p','s','i'])Fb.del(base+'/'+k+'/'+me,true).catch(()=>{});window.removeEventListener('pagehide',bye);};
+    for(const p of Object.keys(dcs)){if(!opts.host)Fb.del(base+'/w/'+p+'/'+me,true).catch(()=>{});rtcClose(p);}
+    for(const k of ['p','s','i','w'])Fb.del(base+'/'+k+'/'+me,true).catch(()=>{});window.removeEventListener('pagehide',bye);};
   window.addEventListener('pagehide',bye);
   rebuild();
   return {
@@ -4562,12 +4596,15 @@ async function fbJoin(name,opts){
       const low={};let anyLow=false;
       for(const k in patch){
         const v=patch[k];if(v===null)delete mine[k];else mine[k]=v;
-        if(k==='s')sendS(v);else if(k==='i')sendI(v);else{low[k]=v;anyLow=true;}
+        if(k==='s'){if(v)for(const p in dcs)dcSend(p,'s',v);sendS(v);}
+        else if(k==='i'){if(v){dcCnt++;for(const p in dcs)dcSend(p,'i',v,dcCnt);}sendI(v);}
+        else{low[k]=v;anyLow=true;}
       }
       if(anyLow)Fb.patch(base+'/p/'+me,low).catch(()=>{});
       notify();return Promise.resolve();
     },
     peers(){return snap;},
+    fast(){return Object.keys(dcs).some(dcOpen);}, // 直結できてる相手がおるか
     onPeers(h,onErr){h.err=onErr;hs.push(h);setTimeout(()=>{if(!left)h({peers:snap,joined:snap,left:[],updated:[]});},0);return()=>{hs=hs.filter(x=>x!==h);};},
     connected(){return conn;},
     onConnection(h){cs.push(h);setTimeout(()=>h(conn),0);return()=>{cs=cs.filter(x=>x!==h);};},
@@ -4577,7 +4614,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='53';
+const GAME_VER='54';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
@@ -4826,7 +4863,7 @@ async function netEnter(create,watch){
   onBusy(true);onSet('つないでる…');
   let room=null;
   if(BUILD_GH){
-    try{room=await fbJoin(roomName(code),{host:create});}catch(e){onBusy(false);onSet('');toast('サーバーにつながらへん。電波を確かめてもう一回試してな');return;}
+    try{room=await fbJoin(roomName(code),{host:create,onDirect:()=>{if(!create&&!NET.directSaid){NET.directSaid=true;toast('ホストと直結した（ラグ少なめ）');}}});}catch(e){onBusy(false);onSet('');toast('サーバーにつながらへん。電波を確かめてもう一回試してな');return;}
   }else{
     const lobby=await lobbyRoom();
     if(!lobby){onBusy(false);onSet('');$('#onOff').hidden=false;toast('この画面ではオンライン対戦が使えへん');return;}
@@ -5059,7 +5096,7 @@ function buildSnap(){
 }
 function netSendSnap(force){
   if(!G||!G.net||!G.net.host||!NET.room)return;
-  const now=performance.now();if(!force&&now-NET.sentAt<(BUILD_GH?48:32))return;NET.sentAt=now;
+  const now=performance.now(),fast=NET.room.fast&&NET.room.fast();if(!force&&now-NET.sentAt<(fast?30:BUILD_GH?48:32))return;NET.sentAt=now;
   NET.room.presence({s:buildSnap()}).catch(()=>{});
 }
 /* ---- ゲスト：入力を送り、届いた様子を描く ---- */
