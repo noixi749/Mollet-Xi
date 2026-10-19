@@ -592,6 +592,10 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
             <button class="toggle" id="opOpen" type="button">見る</button>
           </div>
           <div class="setting">
+            <div><b>起動時にOPを流す</b><span class="note">ゲームを開いた時にオープニングを流す</span></div>
+            <button class="toggle" id="opAutoBtn" type="button" aria-pressed="true">ON</button>
+          </div>
+          <div class="setting">
             <div><b>ボタン配置</b><span class="note">十字キーやボタンの位置と大きさ</span></div>
             <button class="toggle" id="layOpen" type="button">変える</button>
           </div>
@@ -3487,17 +3491,20 @@ function loop(ts){
   uiTick();
 }
 
-/* ================= ロゴ・タイトル画面・OP（曲：魔王魂「ハルジオン」の頭62秒＝op.mp3） =================
-   OPは BPM152、1小節≒1.58秒。0〜4小節：イントロ／4：ロゴ／5〜18：メンバー紹介（1人1小節）／19：集合／20〜27：各章／28〜35：バトル／36〜：ロゴ */
-const OPS={b0:0.36,beat:60/152};OPS.bar=OPS.beat*4;
+/* ================= ロゴ・タイトル画面・OP（曲：魔王魂「ハルジオン」を90秒に編集＝op.mp3） =================
+   BPM152、1小節≒1.58秒（opBar(n)＝n小節目の秒）。曲は頭〜サビ終わり(82.6秒)＋曲のエンディングをつないである。
+   0〜3 イントロ（河原の影）／4〜10 メンバー紹介（2人ずつ）／11 集結／12〜13 ロゴ（20秒）／14〜21 各章
+   22〜35 黒幕「ヤギの野望」／36〜43 サビ：バトル／44〜47.5 必殺技カットイン連打／47.5〜51 全員集合／52〜 ラストのロゴ */
+const OPS={b0:0.455,beat:60/152.005};OPS.bar=OPS.beat*4;
 const opBar=b=>OPS.b0+b*OPS.bar;
-const OP_LEN=62.3;
+const OP_LEN=90;
 const OP_CAST=[['yagi','メェ。'],['sanma','ぶっ飛ばすで！'],['takeru','……効かへん。'],['kojimaimo','細かいことは気にしない。'],['rion','……後ろ。'],['bayashi','忍法・メェ遁の術。'],['kazusa','全弾、持っていけ。'],['tatsuya','ジム行かね？'],
   ['allen','残りの1丁は観賞用や。'],['tanigucci','拳法は、受けてからが本番や。'],['aniki','おいタコ。'],['yusei','伝説の剣、抜いたる。'],['reika','空から射抜いたる。'],['matsukawa','……陰キャの王の雷、受けてみい。']];
 const OP_ROMA={yagi:'YAGI',sanma:'SANMA',kazusa:'KAZUSA',bayashi:'BAYASHI',tatsuya:'TATSUYA',takeru:'TAKERU',kojimaimo:'KOJIMA-IMO',rion:'RION',allen:'ALLEN',tanigucci:'TANI-GUCCI',aniki:'ANIKI',yusei:'YUSEI',reika:'REIKA',matsukawa:'SHUN MATSUKAWA'};
 const OP_COL=['#ff5a3c','#ffb02e','#3fa7ff','#ff6fb1','#8a6aff','#3fd47a','#ff8a3d','#e8452c','#5ac8fa','#ff3b6b','#9aa3b2','#ffd23f','#7fd8ff','#b06aff'];
-const OP_CH=[['sunset','第1章','ヤギ団をぶっ飛ばせ','yagi'],['thunder','第2章','ヤギ団の逆襲','tatsuya'],['moon','第3章','ヤギ・ワールドツアー','yagi'],['storm','第4章','陰キャの王','matsukawa']];
-const OP_BT=[{cap:'コンボでぶっ飛ばせ！',stage:'sakura',ps:['tanigucci','takeru']},{cap:'必殺技！',stage:'night',ps:['matsukawa','yusei'],sp:[0]},{cap:'最大4人で大乱闘！',stage:'desert',ps:['aniki','allen','tatsuya','kazusa']},{cap:'オンラインで、みんなと。',stage:'fire',ps:['yagi','bayashi'],sp:[0,1]}];
+const OP_PAIRS=[['sanma','takeru'],['kojimaimo','rion'],['bayashi','kazusa'],['tatsuya','allen'],['tanigucci','aniki'],['yusei','reika'],['matsukawa','yagi']];
+const OP_CH=[['sunset','sanma','河原に現れたヤギ団を、夕日の向こうまでぶっ飛ばせ。'],['city','yagi','四天王を引き連れて、ヤギが帰ってきた。'],['moon','kojimaimo','国際ヤギ連合、結成。ニューヨークから、月まで。'],['storm','matsukawa','黒い雷とともに、陰キャの王が闇に堕ちる。']];
+const OP_BT=[{cap:'最大4人で大乱闘！',stage:'desert',ps:['aniki','allen','tatsuya','kazusa']},{cap:'コンボでぶっ飛ばせ！',stage:'sakura',ps:['tanigucci','takeru']},{cap:'必殺技！',stage:'night',ps:['matsukawa','yusei'],sp:[0]},{cap:'オンラインで、みんなと。',stage:'sky',ps:['reika','kojimaimo'],sp:[1]}];
 let LOGO_C=null;
 function fontReady(){try{return !document.fonts||document.fonts.check(`40px ${FONT_D}`);}catch(e){return true;}}
 function getLogo(){if(!LOGO_C||(!LOGO_C.ok&&fontReady()))LOGO_C=makeLogo();return LOGO_C;}
@@ -3533,18 +3540,24 @@ function setHLogo(){const h=document.querySelector('#menu .logo'),L=getLogo();if
 function refreshLogo(){ // フォントが届いたらロゴを描き直す
   LOGO_C=null;const L=getLogo();setHLogo();const lc=$('#ttLogo');if(lc){const x=lc.getContext('2d');x.clearRect(0,0,lc.width,lc.height);x.drawImage(L,0,0);}
 }
+function opAutoTry(){ // ゲームを開いたらOP（ブラウザが音を出させてくれる時だけ。あかん時はタイトルでタップ待ち）
+  if(DATA.opAuto===0||!A.on||OP)return;
+  try{const au=opAudio(),p=au.play();if(p&&p.then)p.then(()=>{if(!OP&&!$('#title').hidden)opStart('title',au);else au.pause();}).catch(()=>{});}catch(e){}
+}
 function titleGo(){
   aInit();BG.started=true;
-  if(!DATA.opSeen){DATA.opSeen=1;save();opStart('title');return;} // 初めての人は最初にOP
+  if(DATA.opAuto!==0||!DATA.opSeen){DATA.opSeen=1;save();opStart('title');return;} // タップしたらOP（設定で切れる）
   $('#title').hidden=true;bgmSync();setTimeout(showNews,300);
 }
 /* ---- OP ---- */
 let OP=null;const OPBG={};
-function opStart(from){
+function opAudio(){const au=new Audio();au.src='op.mp3';au.preload='auto';try{au.volume=Math.max(0,Math.min(1,DATA.vb!=null?+DATA.vb:1));}catch(e){}return au;}
+function opStart(from,au0){
   aInit();bgmHalt();BG.cur='op';
-  const au=new Audio();au.src='op.mp3';au.preload='auto';try{au.volume=Math.max(0,Math.min(1,DATA.vb!=null?+DATA.vb:1));}catch(e){}
+  const au=au0||opAudio();
   OP={from,au,t0:performance.now(),cut:-1,mute:true,fixedT:null,figP:null};
-  if(from!=='export'&&A.on){const p=au.play();if(p&&p.catch)p.catch(()=>{});}
+  if(from!=='export'&&!DATA.opSeen){DATA.opSeen=1;save();}
+  if(!au0&&from!=='export'&&A.on){const p=au.play();if(p&&p.catch)p.catch(()=>{});}
   $('#title').hidden=true;$('#news').hidden=true;
   G=null;STORYS=null;KUMITE=null;PRACTICE=null;$('#pause').hidden=true;$('#result').hidden=true;
   $('#battle').classList.add('op');show('battle');resize();
@@ -3579,82 +3592,182 @@ function opFig(pid,u,x,y,s,face){ // 棒人間（その人のいつものジョ�
 }
 function opFlash(a,col){if(a<=0.01)return;ctx.fillStyle=col||'#ffffff';ctx.globalAlpha=Math.min(1,a);ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;}
 function opPetals(t,n,col){ctx.save();for(let i=0;i<n;i++){const sp=0.4+(i%5)*0.15,y=((i*71)+t*60*sp)%(H+40)-20,x=(((i*131)+t*40*(1+i%3)+Math.sin(t+i)*30)%(W+40)+W+40)%(W+40)-20;ctx.translate(x,y);ctx.rotate(t*2+i);ctx.fillStyle=col||'rgba(255,190,210,.85)';ctx.beginPath();ctx.ellipse(0,0,5,2.8,0,0,7);ctx.fill();ctx.setTransform(SCALE,0,0,SCALE,0,0);}ctx.restore();}
-function opDraw(t){
-  ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#000';ctx.fillRect(0,0,cv.width,cv.height);ctx.setTransform(SCALE,0,0,SCALE,0,0);
-  if(t<opBar(4))opIntro(t);
-  else if(t<opBar(5))opLogoHit(t-opBar(4),t);
-  else if(t<opBar(19)){const i=Math.floor((t-opBar(5))/OPS.bar);opCast(i,t-opBar(5+i),t);}
-  else if(t<opBar(20))opGroup(t-opBar(19),t);
-  else if(t<opBar(28)){const i=Math.floor((t-opBar(20))/(OPS.bar*2));opChapter(i,t-opBar(20+i*2),t);}
-  else if(t<opBar(36)){const i=Math.floor((t-opBar(28))/(OPS.bar*2));opBattle(i,t-opBar(28+i*2),t);}
-  else opFinal(t-opBar(36),t);
-  ctx.setTransform(SCALE,0,0,SCALE,0,0);
-  if(t>OP_LEN-1.3)opFlash((t-(OP_LEN-1.3))/1.2,'#000');
+const opE=x=>{x=Math.max(0,Math.min(1,x));return 1-Math.pow(1-x,3);};
+const opCl=x=>Math.max(0,Math.min(1,x));
+function opPairs(){ // 2人ずつの組（新メンバーは後ろに足される）
+  const ok=id=>!!personById(id),L=OP_PAIRS.map(p=>p.filter(ok)).filter(p=>p.length),used=new Set(L.flat());
+  const rest=ROSTER.map(p=>p.id).filter(id=>!used.has(id));for(let i=0;i<rest.length;i+=2)L.push(rest.slice(i,i+2));
+  return L.length?L:[['yagi']];
 }
-function opIntro(t){ // 夕焼けの河原、ことばが1小節ずつ出る
-  const k=Math.max(0,t/opBar(4));opDrawBg('sunset',1.12-0.08*k,0,-10);
-  ctx.fillStyle=`rgba(5,2,12,${(0.88-0.5*k).toFixed(3)})`;ctx.fillRect(0,0,W,H);opPetals(t,18,'rgba(255,200,140,.6)');
-  const lines=['いつもの河原。','いつもの仲間。','そして――','ヤギ。'],b=Math.max(0,Math.floor((t-OPS.b0)/OPS.bar));
-  if(t>=opBar(3)){const u=t-opBar(3),im=opImg('yagi');ctx.save();ctx.globalAlpha=Math.min(0.55,u*0.8);const R=150+u*30;ctx.beginPath();ctx.arc(W/2,H/2-10,R,0,7);ctx.clip();if(im&&im.complete&&im.naturalWidth)ctx.drawImage(im,W/2-R,H/2-10-R,R*2,R*2);ctx.fillStyle='rgba(180,20,20,.35)';ctx.fillRect(0,0,W,H);ctx.restore();}
-  for(let i=0;i<=Math.min(3,b);i++){const u=t-opBar(i),a=Math.min(1,u/0.5)*(i<b&&i<3?Math.max(0.25,1-(t-opBar(i+1))/0.4):1);
-    const n=Math.min(lines[i].length,Math.floor(u/0.08)+1),y=i===3?H/2+150:150+i*70;ctx.globalAlpha=Math.max(0,a);opTxt(lines[i].slice(0,n),W/2,y,i===3?64:38,i===3?'#ffd23f':'#ffffff','rgba(0,0,0,.6)','center',6,FONT_B);ctx.globalAlpha=1;}
+function opLineOf(id){const r=OP_CAST.find(x=>x[0]===id);return r?r[1]:'';}
+function opFace(id,x,y,R,ring,dark){ // まるい顔
+  const im=typeof id==='string'?opImg(id):id;ctx.save();ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fillStyle='#fff';ctx.fill();ctx.save();ctx.clip();
+  if(im&&im.complete&&im.naturalWidth)ctx.drawImage(im,x-R,y-R,R*2,R*2);if(dark){ctx.fillStyle=dark;ctx.fillRect(x-R,y-R,R*2,R*2);}ctx.restore();
+  if(ring){ctx.lineWidth=Math.max(3,R*0.09);ctx.strokeStyle=ring;ctx.stroke();}ctx.restore();
 }
-function opLogoHit(u,t){ // バンドが入る瞬間にロゴ
-  opDrawBg('sunset',1.04,0,0);ctx.fillStyle='rgba(20,5,10,.35)';ctx.fillRect(0,0,W,H);
-  ctx.save();ctx.translate(W/2,H/2);for(let i=0;i<24;i++){ctx.rotate(Math.PI/12);ctx.fillStyle=i%2?'rgba(255,220,120,.18)':'rgba(255,120,40,.14)';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(900,-60);ctx.lineTo(900,60);ctx.closePath();ctx.fill();}ctx.restore();
-  const s=u<0.12?1.6-0.6*(u/0.12):1+0.02*Math.sin(u*20),sh=u<0.4?(1-u/0.4)*10:0;
-  ctx.save();ctx.translate((Math.random()-0.5)*sh,(Math.random()-0.5)*sh);drawLogoAt(W/2,H/2,700*s);ctx.restore();
-  opFlash(1-u*4);
+function opScratch(list){ // 棒人間をまとめて描くための仮の試合
+  const keep=G,g={frame:0,f:[],projs:[],parts:[],clones:[],strikes:[],stage:'sunset'};G=g;
+  try{g.f=list.map((cfg,k)=>makeFighter(cfg,k%4));for(const f of g.f)resetFighter(f);}finally{G=keep;}return g;
 }
-function opCast(i,u,t){ // 1人ずつの紹介カット
-  const L=opCastList(),[pid,line]=L[i%L.length],col=OP_COL[i%OP_COL.length],sd=i%2?-1:1,X=v=>sd>0?v:W-v,ease=1-Math.pow(1-Math.min(1,u/0.25),3);
+function opLine(){if(!OP.line)OP.line=opScratch(opCastList().map(([id])=>clone(SAMPLES.find(q=>q.person===id)||SAMPLES[0])));return OP.line;}
+function opArmy(){if(!OP.army){const ks=['black','kid','black','mecha','black','kid','black','black','mecha','kid','black','black'];
+  OP.army=opScratch(ks.map(k=>({name:'ヤギ団',job:'fighter',weapon:'stegoro',stats:{atk:2,spd:2,hp:2,def:2,mp:1},goat:k})));}return OP.army;}
+function opDrawGroup(g,u,pos,sil){ // pos(k)=>[x,y,scale,facing]。sil を渡すと影絵になる
+  const keep=G,kc=ctx;let off=null;G=g;g.frame=Math.floor(u*60);
+  try{
+    if(sil){off=OP.silC||(OP.silC=document.createElement('canvas'));if(off.width!==cv.width||off.height!==cv.height){off.width=cv.width;off.height=cv.height;}
+      const oc=off.getContext('2d');oc.setTransform(1,0,0,1,0,0);oc.clearRect(0,0,off.width,off.height);oc.setTransform(SCALE,0,0,SCALE,0,0);ctx=oc;}
+    g.f.forEach((f,k)=>{const P=pos(k,g.f.length);if(!P)return;const [x,y,s,fc]=P;f.x=0;f.y=0;f.facing=fc||1;f.state='idle';f.out=false;ctx.save();ctx.translate(x,y);ctx.scale(s,s);drawFighter(f);ctx.restore();});
+    if(sil){ctx.setTransform(1,0,0,1,0,0);ctx.globalCompositeOperation='source-in';ctx.fillStyle=sil;ctx.fillRect(0,0,off.width,off.height);ctx.globalCompositeOperation='source-over';}
+  }finally{ctx=kc;G=keep;}
+  if(off){ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(off,0,0);ctx.setTransform(SCALE,0,0,SCALE,0,0);}
+}
+const opLinePos=(y,sc)=>(k,n)=>{const x=W/2+(k-(n-1)/2)*Math.min(68,W*0.92/n);return [x,y+(k%2)*8,sc,x<W/2?1:-1];};
+function opSpeed(t,col,cx,cy){ // 集中線
+  ctx.save();ctx.translate(cx==null?W/2:cx,cy==null?H/2:cy);ctx.strokeStyle=col||'rgba(255,255,255,.5)';
+  for(let i=0;i<60;i++){const a=i*2.399+Math.floor(t*20)*0.7,r0=170+((i*53)%90),r1=700;ctx.lineWidth=1+(i%4);ctx.beginPath();ctx.moveTo(Math.cos(a)*r0,Math.sin(a)*r0);ctx.lineTo(Math.cos(a)*r1,Math.sin(a)*r1);ctx.stroke();}
+  ctx.restore();
+}
+function opBolt(x0,y0,x1,y1,seed,w,col){ // いなずま
+  let s=seed*9301+49297;const rnd=()=>{s=(s*9301+49297)%233280;return s/233280;};
+  ctx.save();ctx.lineJoin='round';ctx.strokeStyle=col||'#e8d8ff';ctx.shadowColor=col||'#b06aff';ctx.shadowBlur=18;ctx.lineWidth=w||4;ctx.beginPath();ctx.moveTo(x0,y0);
+  const n=9;for(let i=1;i<=n;i++){const k=i/n;ctx.lineTo(x0+(x1-x0)*k+(i<n?(rnd()-0.5)*70:0),y0+(y1-y0)*k);}ctx.stroke();ctx.restore();
+}
+/* ---- 0〜3小節：静かなイントロ（河原に並ぶ影） ---- */
+function opIntro(t){
+  const k=opCl(t/opBar(4));opDrawBg('sunset',1.14-0.1*k,0,-14+10*k);
+  ctx.fillStyle=`rgba(8,3,14,${(0.82-0.42*k).toFixed(3)})`;ctx.fillRect(0,0,W,H);opPetals(t,16,'rgba(255,200,140,.55)');
+  ctx.save();ctx.globalAlpha=opCl((t-opBar(1))/2.5);opDrawGroup(opLine(),t,opLinePos(GROUND+4,0.62),'#14070c');ctx.restore();
+  const lines=['いつもの河原。','いつもの仲間。','くだらんことで笑って、','本気でぶつかる。'];
+  for(let i=0;i<4;i++){const u=t-opBar(i);if(u<0)continue;const out=i<3?opCl((t-opBar(i+1))/0.5):0,a=opCl(u/0.5)*(1-out);if(a<=0)continue;
+    const n=Math.min(lines[i].length,Math.floor(u/0.07)+1);ctx.globalAlpha=a;opTxt(lines[i].slice(0,n),W/2,H*0.36-out*14,i===3?50:38,i===3?'#ffd23f':'#ffffff','rgba(0,0,0,.6)','center',6,FONT_B);ctx.globalAlpha=1;}
+  opFlash(1-t/0.6,'#000');
+}
+/* ---- 4〜10小節：2人ずつ紹介（／で画面を割って、上と下からフェードイン） ---- */
+function opPair(i,pair,u,d,t){
+  const yL=H*0.8,yR=H*0.2,c1=OP_COL[(i*2)%OP_COL.length],c2=OP_COL[(i*2+1)%OP_COL.length],no=i*2;
   ctx.fillStyle='#120a16';ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='rgba(255,255,255,.05)';for(let y=10;y<H;y+=18)for(let x=((y/18)%2)*9;x<W;x+=18){ctx.beginPath();ctx.arc(x+((t*30)%18),y,2.2,0,7);ctx.fill();} // 網点
-  const slab=(a,b,c2,d)=>{ctx.beginPath();ctx.moveTo(X(a),0);ctx.lineTo(X(W),0);ctx.lineTo(X(W),H);ctx.lineTo(X(b),H);ctx.closePath();};
-  ctx.save();ctx.translate(sd*(1-ease)*300,0);slab(W*0.46,W*0.34);ctx.fillStyle=col;ctx.fill();ctx.clip();
-  ctx.strokeStyle='rgba(255,255,255,.16)';ctx.lineWidth=14;for(let k=-10;k<30;k++){const x0=k*46+((t*120)%46);ctx.beginPath();ctx.moveTo(x0,0);ctx.lineTo(x0-180,H);ctx.stroke();}
-  ctx.restore();
-  // 写真
-  const ph=opImg(pid),pw=380,pcx=X(W*0.72)+sd*(1-ease)*260,pcy=H/2+4,z=1+u*0.05;
-  ctx.save();ctx.beginPath();ctx.moveTo(pcx-pw/2+30,pcy-pw/2);ctx.lineTo(pcx+pw/2+30,pcy-pw/2);ctx.lineTo(pcx+pw/2-30,pcy+pw/2);ctx.lineTo(pcx-pw/2-30,pcy+pw/2);ctx.closePath();
-  ctx.lineWidth=16;ctx.strokeStyle='#ffffff';ctx.stroke();ctx.lineWidth=7;ctx.strokeStyle=INK;ctx.stroke();ctx.clip();
-  ctx.fillStyle='#fff';ctx.fillRect(pcx-pw,pcy-pw,pw*2,pw*2);if(ph&&ph.complete&&ph.naturalWidth){const s=pw*1.1*z;ctx.drawImage(ph,pcx-s/2,pcy-s/2,s,s);}
-  const gl=ctx.createLinearGradient(pcx-pw/2,0,pcx+pw/2,0);gl.addColorStop(0,'rgba(255,255,255,0)');gl.addColorStop(0.5,`rgba(255,255,255,${(0.35*Math.max(0,1-Math.abs(u-0.5)*3)).toFixed(3)})`);gl.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=gl;ctx.fillRect(pcx-pw,pcy-pw,pw*2,pw*2);
-  ctx.restore();
-  // 文字
-  const tx=X(56),al=sd>0?'left':'right',ta=Math.min(1,Math.max(0,(u-0.08)/0.25)),off=(1-ta)*-60*sd;
-  ctx.save();ctx.globalAlpha=ta;ctx.translate(off,0);
-  opTxt('No.'+String(i+1).padStart(2,'0'),tx,60,22,col,null,al);
-  const nm=personName(pid),fs=opFit(nm,96,W*0.48);opTxt(nm,tx,150,fs,'#ffffff',col,al,fs*0.14);
-  opTxt(OP_ROMA[pid]||'',tx,214,24,col,'rgba(0,0,0,.5)',al,5);
-  const c0=SAMPLES.find(q=>q.person===pid),tr=traitInfo(pid);
-  if(c0){ctx.font=`700 20px ${FONT_B}`;const s1=jw(c0),w1=ctx.measureText(s1).width+28,bx=sd>0?tx:tx-w1;ctx.fillStyle='rgba(255,255,255,.92)';ctx.beginPath();rrect(bx,248,w1,34,17);ctx.fill();opTxt(s1,bx+w1/2,265,20,INK,null,'center',0,FONT_B);}
-  if(tr)opTxt('特性「'+tr.name+'」',tx,310,22,'#ffd23f','rgba(0,0,0,.6)',al,5,FONT_B);
-  ctx.restore();
-  // ひとこと
-  const la=Math.min(1,Math.max(0,(u-0.35)/0.2));if(la>0){ctx.save();ctx.globalAlpha=la;ctx.translate(X(40),H-74);ctx.rotate(-0.04*sd);ctx.font=`32px ${FONT_D}`;const q='「'+line+'」',w2=Math.min(W*0.62,ctx.measureText(q).width+40),qs=opFit(q,32,W*0.6);
-    ctx.fillStyle='#ffffff';ctx.beginPath();ctx.rect(sd>0?0:-w2,-30,w2,60);ctx.fill();ctx.lineWidth=5;ctx.strokeStyle=INK;ctx.stroke();opTxt(q,sd>0?w2/2:-w2/2,2,qs,INK,null,'center');ctx.restore();}
-  opFig(pid,u,X(W*0.38),H-96,0.9,sd);
-  opFlash(1-u*7);
-  if(u<0.18){ctx.fillStyle='rgba(255,255,255,.85)';const wx=X(W*(u/0.18)*1.2);ctx.beginPath();ctx.moveTo(wx-30,0);ctx.lineTo(wx+10,0);ctx.lineTo(wx-60,H);ctx.lineTo(wx-100,H);ctx.closePath();ctx.fill();}
+  const half=(top,col,e,dy,fn)=>{ctx.save();ctx.beginPath();if(top){ctx.moveTo(0,0);ctx.lineTo(W,0);ctx.lineTo(W,yR);ctx.lineTo(0,yL);}else{ctx.moveTo(0,yL);ctx.lineTo(W,yR);ctx.lineTo(W,H);ctx.lineTo(0,H);}ctx.closePath();ctx.clip();
+    ctx.globalAlpha=e;const g=ctx.createLinearGradient(0,top?0:H,0,top?yL:yR);g.addColorStop(0,col);g.addColorStop(1,'#1a0d1c');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='rgba(255,255,255,.12)';ctx.lineWidth=12;for(let k=-12;k<34;k++){const x0=k*44+((t*(top?110:-110))%44+44)%44;ctx.beginPath();ctx.moveTo(x0,0);ctx.lineTo(x0+260,H);ctx.stroke();}
+    ctx.translate(0,dy);fn();ctx.restore();};
+  const card=(id,top,num)=>{const ph=opImg(id),px=top?30:W-370,py=top?18:H-358,pw=340,z=1.02+u*0.03;
+    ctx.fillStyle='#fff';ctx.fillRect(px-8,py-8,pw+16,pw+16);ctx.save();ctx.beginPath();ctx.rect(px,py,pw,pw);ctx.clip();if(ph&&ph.complete&&ph.naturalWidth){const s=pw*z;ctx.drawImage(ph,px+pw/2-s/2,py+pw/2-s/2,s,s);}ctx.restore();
+    ctx.lineWidth=5;ctx.strokeStyle=INK;ctx.strokeRect(px,py,pw,pw);
+    const al=top?'left':'right',tx=top?400:W-400,nm=personName(id),c0=SAMPLES.find(q=>q.person===id),tr=traitInfo(id),ln=opLineOf(id),yy=top?[34,60,108,140,174]:[H-196,H-150,H-104,H-72,H-36];
+    opTxt('No.'+String(num).padStart(2,'0'),tx,yy[0],18,'#ffffff','rgba(0,0,0,.5)',al,4);
+    const fs=opFit(nm,64,340);opTxt(nm,tx,yy[1],fs,'#ffffff',INK,al,fs*0.2);
+    opTxt(OP_ROMA[id]||'',tx,yy[2],20,top?c1:c2,'rgba(0,0,0,.65)',al,5);
+    if(c0){ctx.font=`700 17px ${FONT_B}`;const s1=jw(c0)+(tr?'　特性「'+tr.name+'」':''),w1=Math.min(340,ctx.measureText(s1).width+24),bx=top?tx:tx-w1;ctx.fillStyle='rgba(255,255,255,.92)';ctx.beginPath();rrect(bx,yy[3]-14,w1,28,14);ctx.fill();opTxt(s1,bx+w1/2,yy[3],opFit(s1,17,w1-20,FONT_B),INK,null,'center',0,FONT_B);}
+    if(ln){const q='「'+ln+'」';opTxt(q,tx,yy[4],opFit(q,24,top?280:300),'#ffe9a8','rgba(0,0,0,.75)',al,6);}
+  };
+  const eA=opE(u/0.3),eB=opE((u-OPS.beat*0.5)/0.3);
+  half(true,c1,eA,-(1-eA)*120,()=>card(pair[0],true,no+1));
+  if(pair[1])half(false,c2,eB,(1-eB)*120,()=>card(pair[1],false,no+2));
+  // ／の線
+  const p=opE(u/0.16),x1=W*p,y1=yL+(yR-yL)*p;ctx.save();ctx.lineCap='round';ctx.shadowColor='#fff';ctx.shadowBlur=20;ctx.strokeStyle='#ffffff';ctx.lineWidth=12;ctx.beginPath();ctx.moveTo(0,yL);ctx.lineTo(x1,y1);ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle=INK;ctx.lineWidth=3;ctx.stroke();ctx.restore();
+  opFlash(0.8-u*6);
 }
-function opGroup(u,t){ // 全員集合
-  ctx.fillStyle='#1a0a12';ctx.fillRect(0,0,W,H);opPetals(t,30);
-  const ids=opCastList().map(x=>x[0]),n=ids.length,cols=Math.ceil(n/2),R=Math.min(52,(W-80)/cols/2-6);
-  ids.forEach((id,k)=>{const at=k*OPS.beat/4;if(u<at)return;const p=Math.min(1,(u-at)/0.12),s=p<1?0.4+0.8*p:1,r=k<cols?0:1,c=k%cols,x=W/2+(c-(cols-1)/2)*(R*2+12)+(r?R*0.5:0),y=H/2-70+r*(R*2+16);
-    const im=opImg(id);ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.beginPath();ctx.arc(0,0,R,0,7);ctx.fillStyle='#fff';ctx.fill();ctx.save();ctx.clip();if(im&&im.complete&&im.naturalWidth)ctx.drawImage(im,-R,-R,R*2,R*2);ctx.restore();ctx.lineWidth=5;ctx.strokeStyle=OP_COL[k%OP_COL.length];ctx.stroke();ctx.restore();});
-  if(u>0.75){const a=Math.min(1,(u-0.75)/0.2);ctx.globalAlpha=a;opTxt('マミー会、集結！',W/2,H/2+150,58,'#ffd23f',INK,'center',12);ctx.globalAlpha=1;}
+/* ---- 11小節：集結 ---- */
+function opGroup(u,t){
+  ctx.fillStyle='#1a0a12';ctx.fillRect(0,0,W,H);opSpeed(t,'rgba(255,190,120,.18)');opPetals(t,30);
+  const ids=opCastList().map(x=>x[0]),n=ids.length,cols=Math.ceil(n/2),R=Math.min(54,(W-80)/cols/2-6);
+  ids.forEach((id,k)=>{const at=k*0.045;if(u<at)return;const p=opCl((u-at)/0.12),s=p<1?0.4+0.8*p:1,r=k<cols?0:1,c=k%cols,x=W/2+(c-(cols-1)/2)*(R*2+12)+(r?R*0.5:0),y=H/2-80+r*(R*2+16);
+    ctx.save();ctx.translate(x,y);ctx.scale(s,s);opFace(id,0,0,R,OP_COL[k%OP_COL.length]);ctx.restore();});
+  if(u>0.6){ctx.globalAlpha=opCl((u-0.6)/0.2);opTxt('マミー会、集結！',W/2,H/2+150,60,'#ffd23f',INK,'center',12);ctx.globalAlpha=1;}
+  opFlash(0.7-u*5);
 }
-function opChapter(i,u,t){ // ストーリーの各章
-  const [st,ti,sub,pid]=OP_CH[i%OP_CH.length];opDrawBg(st,1.06+u*0.025,-u*8,0);
-  const g=ctx.createLinearGradient(0,0,W*0.7,0);g.addColorStop(0,'rgba(0,0,0,.75)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-  const im=opImg(pid),R=150,a=Math.min(1,u/0.4);ctx.save();ctx.globalAlpha=0.9*a;ctx.translate(W-230+(1-a)*80,H/2);ctx.beginPath();ctx.arc(0,0,R,0,7);ctx.fillStyle='#fff';ctx.fill();ctx.clip();if(im&&im.complete&&im.naturalWidth)ctx.drawImage(im,-R,-R,R*2,R*2);if(pid==='matsukawa'){ctx.fillStyle='rgba(60,0,90,.35)';ctx.fillRect(-R,-R,R*2,R*2);}ctx.restore();
-  ctx.save();ctx.globalAlpha=a;ctx.beginPath();ctx.arc(W-230+(1-a)*80,H/2,R,0,7);ctx.lineWidth=8;ctx.strokeStyle='#ffd23f';ctx.stroke();ctx.restore();
-  const ta=Math.min(1,u/0.3);ctx.globalAlpha=ta;opTxt('STORY',70,96,22,'#ffd23f',null,'left');opTxt(ti,70-(1-ta)*40,170,86,'#ffffff',INK,'left',14);opTxt(sub,74,260,opFit(sub,42,W*0.5),'#ffd23f',INK,'left',9);ctx.globalAlpha=1;
-  ctx.fillStyle='#000';ctx.fillRect(0,0,W,46);ctx.fillRect(0,H-46,W,46);
-  opFlash(1-u*5);
+/* ---- 12〜13小節：ロゴ（20秒あたり） ---- */
+function opLogoHit(u,t){
+  opDrawBg('sunset',1.04+u*0.01,0,0);ctx.fillStyle='rgba(20,5,10,.35)';ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.translate(W/2,H/2);ctx.rotate(u*0.2);for(let i=0;i<24;i++){ctx.rotate(Math.PI/12);ctx.fillStyle=i%2?'rgba(255,220,120,.18)':'rgba(255,120,40,.14)';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(900,-60);ctx.lineTo(900,60);ctx.closePath();ctx.fill();}ctx.restore();
+  opPetals(t,24);
+  const bp=((t-OPS.b0)/OPS.beat)%1,s=u<0.14?2.4-1.4*(u/0.14):1+0.025*Math.max(0,1-bp*4),sh=u<0.5?(1-u/0.5)*14:0;
+  ctx.save();ctx.translate((Math.random()-0.5)*sh,(Math.random()-0.5)*sh);drawLogoAt(W/2,H/2-24,700*s);ctx.restore();
+  if(u>0.9){ctx.globalAlpha=opCl((u-0.9)/0.4);opTxt('河原で笑って、拳で語れ。',W/2,H-62,30,'#ffffff',INK,'center',8);ctx.globalAlpha=1;}
+  opFlash(1-u*3.5);
 }
-function opBattle(i,u,t){ // 本物の対戦シーン（CPU同士）
+/* ---- 14〜21小節：各章 ---- */
+function opChapter(i,u,t){
+  const [st,pid,desc]=OP_CH[i%OP_CH.length],arc=STORY_ARCS[i]||{title:'',sub:''};opDrawBg(st,1.06+u*0.025,-u*8,0);
+  const g=ctx.createLinearGradient(0,0,W*0.75,0);g.addColorStop(0,'rgba(0,0,0,.8)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  const a=opE(u/0.4);ctx.save();ctx.globalAlpha=a;opFace(pid,W-220+(1-a)*80,H/2,150,'#ffd23f',pid==='matsukawa'?'rgba(70,0,110,.35)':null);ctx.restore();
+  const ta=opE(u/0.3);ctx.globalAlpha=ta;opTxt('STORY',70,92,22,'#ffd23f',null,'left');opTxt(arc.title,70-(1-ta)*40,160,82,'#ffffff',INK,'left',14);opTxt(arc.sub,74,240,opFit(arc.sub,42,W*0.55),'#ffd23f',INK,'left',9);
+  const n=Math.max(0,Math.floor((u-0.5)/0.045));if(n>0)opTxt(desc.slice(0,n),76,312,opFit(desc,24,W*0.58,FONT_B),'#ffffff','rgba(0,0,0,.7)','left',5,FONT_B);ctx.globalAlpha=1;
+  ctx.fillStyle='#000';ctx.fillRect(0,0,W,44);ctx.fillRect(0,H-44,W,44);
+  opFlash(0.9-u*5);
+}
+/* ---- 22〜35小節：黒幕「ヤギの野望」 ---- */
+function opVillain(t){
+  const v=(t-opBar(22))/OPS.bar,ph=Math.floor(v/2),u=(v-ph*2)*OPS.bar,bt=((t-OPS.b0)/OPS.beat)%1;
+  if(ph===0){ // その頃――
+    opDrawBg('castle',1.1+u*0.02,0,0);ctx.fillStyle='rgba(18,0,30,.72)';ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='rgba(180,170,220,.35)';ctx.lineWidth=1.5;for(let i=0;i<70;i++){const x=(i*137+t*900)%(W+200)-100,y=(i*89+t*1400)%(H+100)-50;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-14,y+30);ctx.stroke();}
+    if(u<0.25||(u>OPS.bar&&u<OPS.bar+0.2)){opBolt(W*0.7,0,W*0.62,H*0.6,Math.floor(t*8),5);opFlash(0.35,'#d8ccff');}
+    const lines=['その頃――','ヤギ団本部。'],k=u<OPS.bar?0:1,uu=u-k*OPS.bar,n=Math.min(lines[k].length,Math.floor(uu/0.09)+1);
+    opTxt(lines[k].slice(0,n),W/2,H/2,48,'#ffffff','rgba(0,0,0,.7)','center',8,FONT_B);
+    opFlash(1-u*3,'#000');
+  }else if(ph===1){ // 総帥ヤギ
+    ctx.fillStyle='#07020c';ctx.fillRect(0,0,W,H);
+    const gl=ctx.createRadialGradient(W*0.62,H*0.95,10,W*0.62,H*0.7,420);gl.addColorStop(0,'rgba(220,30,30,.55)');gl.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gl;ctx.fillRect(0,0,W,H);
+    const ph2=opImg('yagi'),S=470*(1.08-u*0.025),cx=W*0.64,cy=H*0.52;
+    ctx.save();ctx.beginPath();ctx.arc(cx,cy,S/2,0,7);ctx.clip();if(ph2&&ph2.complete&&ph2.naturalWidth)ctx.drawImage(ph2,cx-S/2,cy-S/2,S,S);
+    ctx.fillStyle='rgba(90,0,40,.38)';ctx.fillRect(cx-S/2,cy-S/2,S,S);
+    const sg=ctx.createLinearGradient(0,cy-S/2,0,cy+S*0.1);sg.addColorStop(0,'rgba(0,0,0,.97)');sg.addColorStop(0.62,'rgba(0,0,0,.85)');sg.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=sg;ctx.fillRect(cx-S/2,cy-S/2,S,S);
+    const rg=ctx.createRadialGradient(cx,cy,S*0.3,cx,cy,S/2);rg.addColorStop(0,'rgba(0,0,0,0)');rg.addColorStop(1,'rgba(0,0,0,.9)');ctx.fillStyle=rg;ctx.fillRect(cx-S/2,cy-S/2,S,S);ctx.restore();
+    for(const sx of [-1,1]){ctx.save();ctx.globalAlpha=0.6+0.4*Math.sin(t*9);ctx.fillStyle='#ff2a2a';ctx.shadowColor='#ff0000';ctx.shadowBlur=24;ctx.beginPath();ctx.ellipse(cx+sx*70,cy-46,16,5,sx*0.18,0,7);ctx.fill();ctx.restore();}
+    const a=opE(u/0.4);ctx.globalAlpha=a;opTxt('ヤギ団 総帥',60,140,26,'#ffb0b0',null,'left',0,FONT_B);opTxt('ヤギ',56-(1-a)*40,214,96,'#ff3b2f',INK,'left',14);ctx.globalAlpha=1;
+    if(u>OPS.bar*0.85){const k=u-OPS.bar*0.85,sh=4;ctx.save();ctx.translate((Math.random()-0.5)*sh,(Math.random()-0.5)*sh);ctx.globalAlpha=opCl(k/0.2);opTxt('メェ～ッハッハッハ！',60,330,opFit('メェ～ッハッハッハ！',46,W*0.5),'#ffffff','#7a0010','left',10);ctx.restore();}
+    opFlash(0.8-u*4,'#ff2020');
+  }else if(ph===2){ // 全軍集結
+    const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#1a0006');g.addColorStop(0.6,'#6a0b12');g.addColorStop(1,'#140205');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(255,90,40,.25)';ctx.beginPath();ctx.arc(W/2,H*0.62,230,0,7);ctx.fill();
+    for(let r=0;r<3;r++){const sc=0.42+r*0.2,y=250+r*92,n=9-r*2;ctx.save();opDrawGroup(opArmy(),t+r*0.3,(k)=>{if(k>=n)return null;const x=W/2+(k-(n-1)/2)*(W*0.9/n)+(r%2)*30+Math.sin(t*6+k)*2;return [x,y-Math.abs(Math.sin(t*8+k))*6,sc,k<n/2?1:-1];},r<2?`rgba(20,0,6,${(0.9-r*0.3).toFixed(2)})`:null);ctx.restore();}
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(0,0,W,90);
+    const a=opE(u/0.3);ctx.globalAlpha=a;opTxt('ヤギ団、全軍集結。',W/2,64,44,'#ffffff','#5a0010','center',10);ctx.globalAlpha=1;
+    opFlash(0.7-u*4);
+  }else if(ph===3){ // 世界のメェ化
+    ctx.fillStyle='#04030c';ctx.fillRect(0,0,W,H);for(let i=0;i<80;i++){ctx.fillStyle='rgba(255,255,255,.6)';ctx.fillRect((i*397)%W,(i*131)%H,1.5,1.5);}
+    const cx=W*0.62,cy=H*0.54,R=200,rot=t*0.5;const og=ctx.createRadialGradient(cx-60,cy-60,20,cx,cy,R);og.addColorStop(0,'#2b6fd6');og.addColorStop(1,'#0b1f55');
+    ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.fillStyle=og;ctx.fill();ctx.clip();
+    const land=[[0.2,0.5,0.5,0.35],[1.1,-0.3,0.4,0.55],[2.3,0.6,0.7,0.35],[3.4,-0.1,0.35,0.5],[4.4,0.3,0.6,0.4],[5.4,-0.6,0.3,0.25]];
+    const pins=[];for(const [lo,la,rx,ry] of land){const c=Math.cos(lo+rot);if(c<-0.1)continue;const x=cx+R*Math.sin(lo+rot)*Math.cos(la),y=cy-R*Math.sin(la);ctx.fillStyle='#3aa65a';ctx.beginPath();ctx.ellipse(x,y,R*rx*Math.max(0.15,c)*0.6,R*ry*0.6,0,0,7);ctx.fill();}
+    const redk=opCl(u/(OPS.bar*2));ctx.fillStyle=`rgba(200,0,20,${(redk*0.45).toFixed(3)})`;ctx.fillRect(cx-R,cy-R,R*2,R*2);ctx.restore();
+    ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.lineWidth=3;ctx.strokeStyle='rgba(160,200,255,.6)';ctx.stroke();ctx.restore();
+    const goat=faceImage({goat:'black',name:'',job:'fighter'}),nb=Math.floor(u/OPS.beat)+1;
+    for(let k=0;k<Math.min(8,nb);k++){const lo=k*0.79+0.3,la=((k*37)%9-4)*0.15,c=Math.cos(lo+rot);if(c<0.05)continue;const x=cx+R*Math.sin(lo+rot)*Math.cos(la),y=cy-R*Math.sin(la),p=opE((u-k*OPS.beat)/0.15);
+      ctx.save();ctx.translate(x,y);ctx.scale(p,p);ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-40);ctx.stroke();ctx.restore();opFace(goat,x,y-40*p,16*p,'#ff2a2a');}
+    const lines=['目標――','世界の、メェ化。'];for(let k=0;k<2;k++){const uu=u-k*OPS.bar;if(uu<0)continue;ctx.globalAlpha=opE(uu/0.3);opTxt(lines[k],60,190+k*90,k?54:36,k?'#ff3b2f':'#ffffff',k?INK:'rgba(0,0,0,.6)','left',k?12:6,k?FONT_D:FONT_B);ctx.globalAlpha=1;}
+    opFlash(0.6-u*4);
+  }else if(ph===4){ // タイトル「ヤギの野望」
+    ctx.fillStyle='#050005';ctx.fillRect(0,0,W,H);
+    const im=opImg('yagi');ctx.save();ctx.globalAlpha=0.28;ctx.beginPath();ctx.arc(W*0.78,H*0.5,300,0,7);ctx.clip();if(im&&im.complete&&im.naturalWidth)ctx.drawImage(im,W*0.78-300,H*0.5-300,600,600);ctx.fillStyle='rgba(160,0,0,.5)';ctx.fillRect(0,0,W,H);ctx.restore();
+    const p=opE(u/0.35);ctx.save();ctx.translate(W/2,H/2+10);ctx.rotate(-0.05);ctx.fillStyle='#b3000c';ctx.beginPath();ctx.moveTo(-480*p,-70);for(let i=0;i<=12;i++)ctx.lineTo(-480*p+960*p*i/12,-70+((i*37)%11)-5);ctx.lineTo(480*p,70);for(let i=12;i>=0;i--)ctx.lineTo(-480*p+960*p*i/12,70+((i*53)%13)-6);ctx.closePath();ctx.fill();ctx.restore();
+    const s=u<0.18?1.8-0.8*(u/0.18):1+0.01*Math.sin(u*5);ctx.save();ctx.translate(W/2,H/2);ctx.scale(s,s);
+    opTxt('ヤギの',-230,0,70,'#ffffff',INK,'center',14);opTxt('野望',90,4,150,'#ffd23f',INK,'center',22);ctx.restore();
+    if(u>OPS.bar){ctx.globalAlpha=opCl((u-OPS.bar)/0.4);opTxt('―― すべては、メェの計画通り。',W/2,H-70,26,'#ffb0b0','rgba(0,0,0,.7)','center',5,FONT_B);ctx.globalAlpha=1;}
+    opFlash(1-u*4);
+  }else if(ph===5){ // 本当の闇
+    ctx.fillStyle='#08010f';ctx.fillRect(0,0,W,H);
+    const k=opCl(u/(OPS.bar*2)),cx=W*0.66,cy=H*0.5,R=210;
+    for(let i=0;i<5;i++){const a=0.08+0.04*Math.sin(t*7+i);ctx.fillStyle=`rgba(150,60,255,${a.toFixed(3)})`;ctx.beginPath();ctx.arc(cx,cy,R+30+i*26+Math.sin(t*5+i)*8,0,7);ctx.fill();}
+    ctx.save();ctx.globalAlpha=0.25+0.75*k;opFace('matsukawa',cx,cy,R,'#b06aff','rgba(60,0,100,.45)');ctx.restore();
+    const sg=ctx.createLinearGradient(0,cy-R,0,cy+R);sg.addColorStop(0,`rgba(0,0,0,${(0.9-0.5*k).toFixed(3)})`);sg.addColorStop(1,'rgba(0,0,0,0)');ctx.save();ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.clip();ctx.fillStyle=sg;ctx.fillRect(cx-R,cy-R,R*2,R*2);ctx.restore();
+    if(bt<0.25){opBolt(cx-260+((Math.floor(t*4)*97)%180),0,cx-120,H,Math.floor(t*12),4,'#d9b8ff');opBolt(cx+250,0,cx+150,H*0.8,Math.floor(t*12)+5,3,'#d9b8ff');}
+    const lines=['だが、ヤギはまだ知らない。','本当の闇を――'];for(let j=0;j<2;j++){const uu=u-j*OPS.bar;if(uu<0)continue;const n=Math.min(lines[j].length,Math.floor(uu/0.08)+1);opTxt(lines[j].slice(0,n),50,170+j*80,j?50:30,j?'#d8b4ff':'#ffffff','rgba(0,0,0,.7)','left',j?10:6,j?FONT_D:FONT_B);}
+    opFlash(0.6-u*3,'#000');
+  }else{ // させるか――！（サビ前のたたみかけ）
+    const ids=['sanma','takeru','rion','reika','tatsuya','yusei','kazusa','aniki'],b=Math.min(7,Math.floor(u/OPS.beat)),id=ids[b%ids.length],ub=u-b*OPS.beat;
+    ctx.fillStyle=b%2?'#ff4a1f':'#1f2bff';ctx.fillRect(0,0,W,H);opSpeed(t,'rgba(255,255,255,.35)',W*0.3,H/2);
+    const s=1.15-0.15*opE(ub/0.2);ctx.save();ctx.translate(W*0.3,H/2);ctx.scale(s,s);opFace(id,0,0,190,'#ffffff');ctx.restore();
+    opTxt(personName(id),W*0.62,H/2-30,opFit(personName(id),70,W*0.34),'#ffffff',INK,'left',12);
+    if(u>OPS.bar*1.5){const k=u-OPS.bar*1.5;ctx.fillStyle=`rgba(0,0,0,${opCl(k/0.2)*0.55})`;ctx.fillRect(0,0,W,H);ctx.save();ctx.translate((Math.random()-0.5)*8,(Math.random()-0.5)*8);opTxt('させるか――ッ！',W/2,H/2+120,84,'#ffd23f',INK,'center',16);ctx.restore();}
+    opFlash(0.5-ub*4);
+    if(u>OPS.bar*2-OPS.beat)opFlash((u-(OPS.bar*2-OPS.beat))/OPS.beat);
+  }
+}
+/* ---- サビ：本物の対戦シーン（CPU同士） ---- */
+function opBattle(i,u,t){
   const spec=OP_BT[i%OP_BT.length];
   if(OP.cut!==100+i){OP.cut=100+i;OP.spDone=[];
     const cfgs=spec.ps.filter(p=>personById(p)).map(p=>clone(SAMPLES.find(q=>q.person===p)||SAMPLES[0]));while(cfgs.length<2)cfgs.push(clone(SAMPLES[cfgs.length%SAMPLES.length]));
@@ -3663,20 +3776,66 @@ function opBattle(i,u,t){ // 本物の対戦シーン（CPU同士）
   const target=Math.floor(u*60);let n=0;while(OP.gStep<target&&n<8){step();OP.gStep++;n++;}if(OP.fixedT!=null)while(OP.gStep<target){step();OP.gStep++;}
   for(const k of spec.sp||[]){if(!OP.spDone[k]&&u>0.3+k*0.9&&G.f[k]){const f=G.f[k];f.sg=100;f.state='idle';f.move=null;f.onGround=true;f.y=GROUND;startMove(f,'SP');OP.spDone[k]=true;}}
   render();ctx.setTransform(SCALE,0,0,SCALE,0,0);
-  const a=Math.min(1,u/0.2);ctx.save();ctx.globalAlpha=a;ctx.translate(-(1-a)*200,0);ctx.fillStyle='rgba(10,4,8,.78)';ctx.beginPath();ctx.moveTo(0,H-120);ctx.lineTo(560,H-120);ctx.lineTo(520,H-50);ctx.lineTo(0,H-50);ctx.closePath();ctx.fill();
+  const a=opE(u/0.2);ctx.save();ctx.globalAlpha=a;ctx.translate(-(1-a)*200,0);ctx.fillStyle='rgba(10,4,8,.78)';ctx.beginPath();ctx.moveTo(0,H-120);ctx.lineTo(560,H-120);ctx.lineTo(520,H-50);ctx.lineTo(0,H-50);ctx.closePath();ctx.fill();
   opTxt(spec.cap,40,H-85,opFit(spec.cap,40,480),'#ffffff','#ff4a1f','left',8);ctx.restore();
-  opFlash(1-u*6);
+  opFlash((i===0?1.2:0.9)-u*5);
 }
-function opFinal(u,t){ // ラスト：ロゴがドーン
+/* ---- サビ：必殺技カットインの連打（半小節に2人） ---- */
+function opSpName(id){const g=opLine(),k=opCastList().findIndex(x=>x[0]===id),f=g.f[k];return f&&f.moves&&f.moves.SP?f.moves.SP.name:'必殺技';}
+function opSpRush(i,u,t){
+  const P=opPairs(),pr=P[i%P.length]||[];
+  ctx.fillStyle='#120408';ctx.fillRect(0,0,W,H);opSpeed(t,'rgba(255,170,90,.22)');
+  pr.forEach((id,j)=>{const top=j===0,d=opE((u-j*0.08)/0.16),y=top?H*0.3:H*0.72;ctx.save();ctx.translate((top?-1:1)*(1-d)*W,y);ctx.rotate(-0.07);
+    const g=ctx.createLinearGradient(-W/2,0,W/2,0),c=OP_COL[(i*2+j)%OP_COL.length];g.addColorStop(0,c);g.addColorStop(0.5,'#ffb02e');g.addColorStop(1,c);
+    ctx.fillStyle=INK;ctx.fillRect(-W,-74,W*3,148);ctx.fillStyle=g;ctx.fillRect(-W,-64,W*3,128);
+    const fx=top?150:W-150;opFace(id,fx,0,56,INK);
+    const nm=opSpName(id),tx=top?fx+76:fx-76,al=top?'left':'right';opTxt(personName(id),tx,-34,22,'#ffffff',INK,al,6);opTxt(nm,tx,14,opFit(nm,50,W-300),'#fff6d6',INK,al,10);ctx.restore();});
+  opFlash(0.7-u*6);
+}
+/* ---- サビ終わり：全員集合 ---- */
+function opRally(u,t){
+  if(u<OPS.bar*2.5){
+    opDrawBg('sunset',1.2-0.12*opE(u/(OPS.bar*2.5)),0,-20);
+    ctx.save();ctx.translate(SUN.x,SUN.y);ctx.rotate(t*0.2);for(let i=0;i<16;i++){ctx.rotate(Math.PI/8);ctx.fillStyle='rgba(255,236,170,.12)';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(1100,-70);ctx.lineTo(1100,70);ctx.closePath();ctx.fill();}ctx.restore();
+    opDrawGroup(opLine(),t,opLinePos(GROUND+4,0.66));opPetals(t,24);
+    if(u>OPS.bar*0.5){ctx.globalAlpha=opE((u-OPS.bar*0.5)/0.3);opTxt('いくで、マミー会！',W/2,120,64,'#ffd23f',INK,'center',14);ctx.globalAlpha=1;}
+    opFlash(1-u*4);
+  }else{
+    const v=u-OPS.bar*2.5,ids=opCastList().map(x=>x[0]),n=ids.length;
+    ctx.fillStyle='#ff5a1f';ctx.fillRect(0,0,W,H);opSpeed(t,'rgba(255,255,255,.4)');
+    const bp=((t-OPS.b0)/OPS.beat)%1,pulse=1+0.06*Math.max(0,1-bp*4);
+    ids.forEach((id,k)=>{const an=k/n*Math.PI*2+v*0.8,rr=opE(v/0.4)*(k%2?230:170),x=W/2+Math.cos(an)*rr*1.5,y=H/2+Math.sin(an)*rr*0.85;opFace(id,x,y,44*pulse,OP_COL[k%OP_COL.length]);});
+    ctx.save();ctx.translate(W/2,H/2);ctx.scale(pulse,pulse);opFace('yagi',0,0,92,'#ffffff');ctx.restore();
+    opTxt('全員で、ぶっ飛ばせ！',W/2,H-44,opFit('全員で、ぶっ飛ばせ！',50,W-80),'#ffffff',INK,'center',12);
+    opFlash(0.8-v*5);
+    const end=OPS.bar*2;if(v>end-OPS.beat)opFlash((v-(end-OPS.beat))/OPS.beat);
+  }
+}
+/* ---- ラスト：ロゴがドーン（曲のエンディング） ---- */
+function opFinal(u,t){
   opDrawBg('sunset',1.02,0,0);ctx.fillStyle='rgba(30,8,10,.25)';ctx.fillRect(0,0,W,H);
   ctx.save();ctx.translate(SUN.x,SUN.y);ctx.rotate(u*0.25);for(let i=0;i<18;i++){ctx.rotate(Math.PI/9);ctx.fillStyle='rgba(255,230,150,.12)';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(1100,-80);ctx.lineTo(1100,80);ctx.closePath();ctx.fill();}ctx.restore();
-  const ids=opCastList().map(x=>x[0]);ids.forEach((id,k)=>{const an=u*0.5+k*Math.PI*2/ids.length,x=W/2+Math.cos(an)*400,y=H/2+20+Math.sin(an)*170,R=34,im=opImg(id);ctx.save();ctx.globalAlpha=Math.min(1,u/0.6)*0.9;ctx.beginPath();ctx.arc(x,y,R,0,7);ctx.fillStyle='#fff';ctx.fill();ctx.save();ctx.clip();if(im&&im.complete&&im.naturalWidth)ctx.drawImage(im,x-R,y-R,R*2,R*2);ctx.restore();ctx.lineWidth=4;ctx.strokeStyle=OP_COL[k%OP_COL.length];ctx.stroke();ctx.restore();});
+  const ids=opCastList().map(x=>x[0]);ids.forEach((id,k)=>{const an=u*0.4+k*Math.PI*2/ids.length,x=W/2+Math.cos(an)*400,y=H/2+20+Math.sin(an)*170;ctx.save();ctx.globalAlpha=opCl(u/0.6)*0.9;opFace(id,x,y,34,OP_COL[k%OP_COL.length]);ctx.restore();});
   opPetals(t,26);
-  const s=u<0.16?3-2*(u/0.16):1+0.015*Math.sin(u*6),sh=u<0.5?(1-u/0.5)*16:0;ctx.save();ctx.translate((Math.random()-0.5)*sh,(Math.random()-0.5)*sh);drawLogoAt(W/2,H/2-10,640*s);ctx.restore();
-  if(u>1.2){ctx.globalAlpha=Math.min(1,(u-1.2)/0.5);opTxt('BGM：魔王魂「ハルジオン」　／　製作者 Naohisa Akiyama',W/2,H-30,16,'#ffffff','rgba(0,0,0,.7)','center',5,FONT_B);ctx.globalAlpha=1;}
-  opFlash(1-u*3);
+  const s=u<0.16?3-2*(u/0.16):1+0.015*Math.sin(u*3),sh=u<0.6?(1-u/0.6)*18:0;ctx.save();ctx.translate((Math.random()-0.5)*sh,(Math.random()-0.5)*sh);drawLogoAt(W/2,H/2-10,640*s);ctx.restore();
+  if(u>1.6){ctx.globalAlpha=opCl((u-1.6)/0.6);opTxt('BGM：魔王魂「ハルジオン」　／　製作者 Naohisa Akiyama',W/2,H-30,16,'#ffffff','rgba(0,0,0,.7)','center',5,FONT_B);ctx.globalAlpha=1;}
+  opFlash(1-u*2.5);
 }
-
+function opDraw(t){
+  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;ctx.fillStyle='#000';ctx.fillRect(0,0,cv.width,cv.height);ctx.setTransform(SCALE,0,0,SCALE,0,0);
+  if(t<opBar(4))opIntro(t);
+  else if(t<opBar(11)){const P=opPairs(),d=(opBar(11)-opBar(4))/P.length,i=Math.min(P.length-1,Math.floor((t-opBar(4))/d));opPair(i,P[i],t-opBar(4)-i*d,d,t);}
+  else if(t<opBar(12))opGroup(t-opBar(11),t);
+  else if(t<opBar(14))opLogoHit(t-opBar(12),t);
+  else if(t<opBar(22)){const i=Math.floor((t-opBar(14))/(OPS.bar*2));opChapter(i,t-opBar(14+i*2),t);}
+  else if(t<opBar(36))opVillain(t);
+  else if(t<opBar(44)){const i=Math.floor((t-opBar(36))/(OPS.bar*2));opBattle(i,t-opBar(36+i*2),t);}
+  else if(t<opBar(47.5)){const i=Math.floor((t-opBar(44))/(OPS.bar/2));opSpRush(i,t-opBar(44+i/2),t);}
+  else if(t<opBar(52))opRally(t-opBar(47.5),t);
+  else opFinal(t-opBar(52),t);
+  ctx.setTransform(SCALE,0,0,SCALE,0,0);ctx.globalAlpha=1;
+  if(t>OP_LEN-1.8)opFlash((t-(OP_LEN-1.8))/1.6,'#000');
+}
 /* ================= 画面 ================= */
 const $=s=>document.querySelector(s);
 function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.tm);toast.tm=setTimeout(()=>{t.hidden=true;},1800);}
@@ -4379,7 +4538,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='50';
+const GAME_VER='51';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
@@ -5043,7 +5202,9 @@ function init(){
   window.addEventListener('keydown',e=>{if(OP&&OP.from!=='export'&&(e.key==='Escape'||e.key==='Enter'||e.key===' ')){e.preventDefault();opEnd();return;}if(!$('#title').hidden&&(e.key==='Enter'||e.key===' ')){e.preventDefault();titleGo();}});
   setHLogo();
   if(document.fonts){const fl=()=>{try{document.fonts.load(`40px ${FONT_D}`,'マミー会ファイト').then(refreshLogo,()=>{});}catch(e){}};fl();if(document.fonts.ready)document.fonts.ready.then(refreshLogo);document.fonts.addEventListener&&document.fonts.addEventListener('loadingdone',refreshLogo);window.addEventListener('load',fl);}
-  if(!$('#menu').hidden)showTitle();
+  const opAB=()=>{const b=$('#opAutoBtn'),on=DATA.opAuto!==0;b.textContent=on?'ON':'OFF';b.setAttribute('aria-pressed',String(on));};opAB();
+  $('#opAutoBtn').addEventListener('click',()=>{DATA.opAuto=DATA.opAuto===0?1:0;save();opAB();});
+  if(!$('#menu').hidden){showTitle();opAutoTry();}
   $('#onWatch').addEventListener('click',()=>{aInit();netEnter(false,true);});
   $('#onCode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();aInit();netEnter(false);}});
   $('#lbLeave').addEventListener('click',()=>{netLeave();goMenuFromNet();});
