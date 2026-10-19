@@ -124,3 +124,8 @@ node src/tools/tune_master.js src/mami-fight.html 4 10   # 勝率の調整（TUN
 - つながったら、試合の様子（ホスト→ゲスト、約30回/秒）と入力（ゲスト→ホスト、変化したらすぐ）をデータチャネル（順不同・再送なし）で直接やりとり。Firebase にも間引いて書き続けるので、直結できへん回線（一部のスマホ回線など）は今まで通りサーバー経由で動く。
 - テスト（同じPC・サーバー遅延70ms想定）：入力してから自分のキャラが動くまで 約410ms → 約60ms、様子の受信 18回/秒 → 28回/秒。
 - `?nortc=1` を付けると直結なしで動く（比べる用）。
+
+## APK（v55〜）
+- `apk/MummyFight.apk`（パッケージ jp.naohisa.mummyfight）。WebView の殻は MummyRS.apk の classes.dex をそのまま使い、マニフェストの名前・アイコン・中身（assets/www にこのフォルダの index.html・roster.js・bgm.mp3・op.mp3）を入れかえて、APK署名 v2 で署名し直したもの。
+- 作り方：scratchpad の `apktool_py/build_fight_apk.py <鍵フォルダ> <出力> <versionName> <versionCode>`。更新するときは同じ鍵（mummyfight-key.pem / mummyfight-cert.der）で、versionCode を上げる。鍵が変わるとアンインストールせんと入らへん。
+- 戻るボタンは `window.androidBack()`（OP中→スキップ、バトル中→ポーズ、メニューの画面→1つ前へ）。
