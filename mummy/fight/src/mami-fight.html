@@ -1150,7 +1150,7 @@ function derive(c){
   return d;
 }
 /* 武器ごとの強さの調整（CPU同士の勝率が揃うように合わせた値）。dmg=与えるダメージ、hp=体力 */
-const TUNE={stegoro:{dmg:1.072},tonfa:{dmg:1.028},kenpo:{dmg:0.996},greatsword:{dmg:0.96},katana:{dmg:0.936},hammer:{dmg:0.973},onehand:{dmg:1.45},boosthammer:{dmg:1},gunblade:{dmg:1},staff:{dmg:1.189},grimoire:{dmg:1.054},ninjutsu:{dmg:1.164},thunder:{dmg:1.1,hp:0.85},handgun:{dmg:1.61},shotgun:{dmg:1.378},sniper:{dmg:1.283},akimbo:{dmg:1.15},rocket:{dmg:1.118},drill:{dmg:1.046},beam:{dmg:1.156},bow:{dmg:1.3},iai:{dmg:0.724},nitoryu:{dmg:1.0},ninja:{dmg:0.946},muscle:{dmg:1,hp:0.88},hustle:{dmg:1},ishihara:{dmg:1.4,hp:0.6,fixed:true}};
+const TUNE={stegoro:{dmg:1.072},tonfa:{dmg:1.028},kenpo:{dmg:1.1},greatsword:{dmg:0.96},katana:{dmg:0.936},hammer:{dmg:0.973},onehand:{dmg:1.45},boosthammer:{dmg:1.04},gunblade:{dmg:1},staff:{dmg:1.189},grimoire:{dmg:1.054},ninjutsu:{dmg:1.164},thunder:{dmg:1.1,hp:0.85},handgun:{dmg:1.61},shotgun:{dmg:1.378},sniper:{dmg:1.283},akimbo:{dmg:1.15},rocket:{dmg:1.118},drill:{dmg:1.046},beam:{dmg:1.156},bow:{dmg:1.3},iai:{dmg:0.724},nitoryu:{dmg:1.0},ninja:{dmg:0.946},muscle:{dmg:1,hp:0.88},hustle:{dmg:1},ishihara:{dmg:1.4,hp:0.6,fixed:true}};
 function M(o){return Object.assign({name:'',kind:'melee',startup:6,active:4,recovery:10,dmg:5,hb:null,kb:4,hitstun:15,lift:0,mp:0,dash:0,rise:0,multi:1,inv:0,proj:null,pose:'punch',sfx:'hit',fx:null,fxColor:'#e8452c'},o);}
 const EMPTY=M({kind:'none',startup:0,active:0,recovery:12,pose:'idle'});
 
@@ -1182,37 +1182,38 @@ function buildMoves(job,weapon){
     }
   }
   if(job==='sword'){
-    m.P=M({name:'横なぎ',startup:11,active:5,recovery:18,dmg:15,hb:{x:62,y:104,w:84,h:56},kb:7,hitstun:20,pose:'swing',sfx:'slash'});
-    m.K=M({name:'突き',startup:9,active:4,recovery:15,dmg:11,hb:{x:78,y:108,w:84,h:20},kb:5,hitstun:17,pose:'thrust',sfx:'slash'});
+    m.P=M({name:'上斬り',startup:11,active:5,recovery:18,dmg:15,dash:2.5,hb:{x:62,y:118,w:90,h:112},kb:7,hitstun:20,pose:'cutDown',sfx:'slash'});
+    m.K=M({name:'回し蹴り',startup:8,active:4,recovery:14,dmg:10,dash:2,hb:{x:56,y:100,w:64,h:46},kb:6,hitstun:18,pose:'spinKick',sfx:'hit',fx:'arc',fxColor:'#ffffff',fxA:[-3.0,-0.3]});
     m.S1=M({name:'突進斬り',startup:10,active:12,recovery:20,dmg:19,dash:10,hb:{x:58,y:104,w:84,h:48},kb:10,hitstun:22,pose:'thrust',sfx:'slash'});
-    m.S2=M({name:'斬り上げ',startup:4,active:14,recovery:24,dmg:17,rise:-13,dash:1.5,hb:{x:40,y:150,w:74,h:90},kb:3,lift:-12,hitstun:30,inv:7,pose:'upper',sfx:'slash'});
+    m.S2=M({name:'斬り上げ',startup:4,active:14,recovery:24,dmg:17,rise:-13,dash:1.5,hb:{x:40,y:150,w:74,h:90},kb:3,lift:-12,hitstun:30,inv:7,pose:'cutUp',sfx:'slash'});
     m.S3=M({name:'回転斬り',startup:8,active:21,recovery:16,dmg:7,multi:3,dash:4,hb:{x:0,y:100,w:176,h:56},kb:5,hitstun:16,pose:'spin',sfx:'slash'});
-    m.P.next='P2';m.P.nextBtn='P';m.P2=M({name:'袈裟斬り',startup:9,active:5,recovery:20,dmg:14,hb:{x:60,y:120,w:90,h:70},kb:8,hitstun:22,pose:'swing',sfx:'slash',next:'P3',nextBtn:'P'});
-    m.P3=M({name:'兜割り',startup:12,active:6,recovery:24,dmg:19,hb:{x:66,y:150,w:96,h:150},kb:11,hitstun:26,pose:'swing',sfx:'slash'});
+    m.P.next='P2';m.P.nextBtn='P';m.P2=M({name:'下から斬り',startup:9,active:5,recovery:20,dmg:14,dash:2.5,hb:{x:58,y:124,w:90,h:126},kb:4,lift:-6,hitstun:24,pose:'cutUp',sfx:'slash',next:'P3',nextBtn:'P'});
+    m.P3=M({name:'横斬り',startup:11,active:6,recovery:24,dmg:19,dash:7,hb:{x:72,y:112,w:142,h:86},kb:11,hitstun:26,pose:'cutSide',sfx:'slash'});
     m.K.next='K2';m.K.nextBtn='K';
-    m.K2=M({name:'柄打ち',startup:6,active:3,recovery:12,dmg:8,hb:{x:44,y:110,w:44,h:30},kb:4,hitstun:16,pose:'punch',next:'K3',nextBtn:'K'});
-    m.K3=M({name:'踏み込み突き',startup:9,active:8,recovery:20,dash:9,dmg:15,hb:{x:80,y:108,w:96,h:24},kb:11,hitstun:22,pose:'thrust',sfx:'slash'});
+    m.K2=M({name:'蹴り上げ',startup:6,active:4,recovery:14,dmg:9,hb:{x:40,y:140,w:54,h:88},kb:3,lift:-10,hitstun:26,pose:'kickUp',fx:'arc',fxColor:'#ffffff',fxA:[1.1,-1.7],next:'K3',nextBtn:'K'});
+    m.K3=M({name:'踏み込み突き',startup:9,active:8,recovery:20,dash:10,dmg:15,hb:{x:80,y:110,w:96,h:34},kb:11,hitstun:22,pose:'thrust',sfx:'slash',fx:'zan',fxColor:'#ffffff'});
     if(weapon!=='hammer'&&weapon!=='boosthammer')for(const k of ['P','P2','P3','S1','S2','S3'])Object.assign(m[k],{fx:'arc',fxColor:weapon==='katana'?'#cfeeff':'#ffe2b8'});
     if(weapon==='katana'){
       for(const k of ['P','P2','P3','K','K2','K3','S1','S3']){const v=m[k];v.startup=Math.max(3,Math.round(v.startup*0.7));v.recovery=Math.round(v.recovery*0.75);v.dmg=Math.round(v.dmg*0.78);v.hb.x-=8;v.hb.w-=10;}
-      m.S2.dmg=14;m.S2.startup=3;m.P.name='居合';m.P2.name='逆袈裟';m.P3.name='唐竹割り';m.K2.name='柄当て';m.K3.name='諸手突き';
+      m.S2.dmg=14;m.S2.startup=3;m.P.name='唐竹';m.P2.name='逆袈裟';m.P3.name='一文字';m.K3.name='諸手突き';
     }
     if(weapon==='hammer'){
       for(const k of ['P','P2','P3','K','K2','K3','S1','S3']){const v=m[k];v.startup=Math.round(v.startup*1.25);v.dmg=Math.round(v.dmg*1.3);v.kb*=1.5;v.recovery=Math.round(v.recovery*1.1);v.sfx='hit';v.hb=Object.assign({},v.hb,{w:Math.round(v.hb.w*1.1)});} // 重いけど範囲そこそこで吹っ飛ばす
-      m.S2.sfx='hit';m.P2.name='振り下ろし';m.P.name='ぶん回し';m.K.name='柄打ち';m.S1.name='突進殴り';m.S2.name='かち上げ';m.S3.name='大回転';
-      Object.assign(m.P3,{name:'地割り',sfx:'boom',fx:'burst',fxColor:'#ffe2b8',hb:{x:70,y:60,w:130,h:110}});
+      m.S2.sfx='hit';Object.assign(m.P,{name:'ぶん回し',pose:'cutSide',fx:'arc',fxColor:'#ffe2b8'});Object.assign(m.P2,{name:'振り下ろし',pose:'cutDown',fx:'arc',fxColor:'#ffe2b8'});m.S1.name='突進殴り';m.S2.name='かち上げ';m.S3.name='大回転';
+      Object.assign(m.P3,{name:'地割り',pose:'cutDown',dash:4,sfx:'boom',fx:'burst',fxColor:'#ffe2b8',hb:{x:70,y:60,w:130,h:110}});
       Object.assign(m.K2,{name:'膝蹴り',pose:'kick',hb:{x:46,y:90,w:44,h:34}});
-      Object.assign(m.K3,{name:'フルスイング',pose:'swing',dash:5,hb:{x:66,y:108,w:120,h:64}});
+      Object.assign(m.K3,{name:'フルスイング',pose:'cutUp',dash:6,fx:'arc',fxColor:'#ffe2b8',hb:{x:66,y:112,w:120,h:96}});
     }
     if(weapon==='boosthammer'){ // エンジン付き：出は遅く隙もデカいけど一撃が重い
       for(const k of ['P','P2','P3','K','K2','K3','S1']){const v=m[k];v.startup=Math.round(v.startup*1.6);v.dmg=Math.round(v.dmg*1.75);v.kb*=2;v.recovery=Math.round(v.recovery*1.5);v.sfx='boom';}
-      Object.assign(m.P,{name:'ブースト振り',dash:6});Object.assign(m.P2,{name:'ブースト叩きつけ'});Object.assign(m.P3,{name:'フルスロットル・クラッシュ',dash:10,fx:'burst',fxColor:'#ff7a2a'});
-      Object.assign(m.K,{name:'エンジン柄打ち'});Object.assign(m.K2,{name:'排気キック',pose:'kick'});Object.assign(m.K3,{name:'ジェットスイング',pose:'swing',dash:9,hb:{x:66,y:108,w:124,h:64}});
-      Object.assign(m.S1,{name:'ジェット突進',dash:14});Object.assign(m.S2,{name:'ロケットかち上げ',sfx:'boom'});
+      Object.assign(m.P,{name:'ブースト横振り',pose:'cutSide',dash:8,fx:'arc',fxColor:'#ff9a4a'});Object.assign(m.P2,{name:'ブースト叩きつけ',pose:'cutDown',dash:4,fx:'arc',fxColor:'#ff9a4a'});Object.assign(m.P3,{name:'フルスロットル・クラッシュ',pose:'spin',dash:12,fx:'burst',fxColor:'#ff7a2a'});
+      Object.assign(m.K,{name:'エンジン柄打ち',pose:'thrust',dash:6,fx:null});Object.assign(m.K2,{name:'排気キック'});Object.assign(m.K3,{name:'ジェットスイング',pose:'cutUp',dash:11,fx:'arc',fxColor:'#ff9a4a',hb:{x:66,y:112,w:124,h:100}});
+      Object.assign(m.S1,{name:'ジェット突進',dash:14});Object.assign(m.S2,{name:'ロケットかち上げ',sfx:'boom',pose:'cutUp'});
       m.S3=M({name:'エンジン全開',startup:12,active:6,recovery:12,dmg:6,hb:{x:0,y:100,w:150,h:150},kb:8,hitstun:18,buff:'engine',pose:'swing',sfx:'boom',fx:'burst',fxColor:'#ff7a2a'});
     }
     if(weapon==='gunblade'){ // 変形銃剣：剣モード（ふつうの技）と銃モード（G付きの技）を技3で切り替える
-      Object.assign(m.P,{name:'斬り払い'});Object.assign(m.P3,{name:'ブレードバースト',fx:'burst',fxColor:'#ffd23f'});
+      Object.assign(m.K3,{name:'銃剣突撃',dash:13,pass:true,inv:6,fx:'zan',fxColor:'#ffe27a'}); // 忍者の影縫いみたいに駆け抜けて斬る
+      for(const k of ['P','P2','P3'])m[k].fxColor='#ffe27a';
       for(const k of ['P','P2','P3','K','K2','K3','S1']){const v=m[k];v.startup=Math.max(3,Math.round(v.startup*0.85));v.dmg=Math.round(v.dmg*0.9);}
       m.S3=M({name:'変形',kind:'transform',startup:6,active:1,recovery:10,dmg:0,pose:'cast',sfx:'pop'});
       const B={kind:'bullet',color:INK};
@@ -1220,7 +1221,7 @@ function buildMoves(job,weapon){
       m.GP2=M({name:'連射',kind:'proj',startup:5,active:1,recovery:12,mp:10,pose:'shoot',sfx:'gun',next:'GP3',nextBtn:'P',proj:Object.assign({speed:20,w:14,h:5,dmg:6,life:40,burst:2,hitstun:12,kb:3},B)});
       m.GP3=M({name:'チャージショット',kind:'proj',startup:14,active:1,recovery:22,mp:20,pose:'shoot',sfx:'boom',proj:{speed:16,w:34,h:22,dmg:22,life:60,kind:'slug',color:'#ffd23f',kb:12,lift:-8,hitstun:26,pierce:true}});
       m.GK=M({name:'銃剣突き',startup:6,active:4,recovery:12,dmg:10,hb:{x:80,y:108,w:80,h:22},kb:6,hitstun:17,pose:'thrust',sfx:'slash',next:'GK2',nextBtn:'K'});
-      m.GK2=M({name:'ストック打ち',startup:5,active:3,recovery:12,dmg:8,hb:{x:46,y:112,w:46,h:30},kb:5,hitstun:16,pose:'swing',next:'GK3',nextBtn:'K'});
+      m.GK2=M({name:'銃剣斬り上げ',startup:5,active:4,recovery:12,dmg:8,dash:2,hb:{x:58,y:124,w:84,h:110},kb:4,lift:-7,hitstun:22,pose:'cutUp',sfx:'slash',fx:'arc',fxColor:'#ffe27a',next:'GK3',nextBtn:'K'});
       m.GK3=M({name:'ゼロ距離砲撃',startup:8,active:3,recovery:20,dmg:16,hb:{x:56,y:110,w:60,h:34},kb:12,hitstun:22,pose:'shoot',sfx:'gun',fx:'burst',fxColor:'#ffd23f'});
       m.GS1=M({name:'貫通弾',kind:'proj',startup:11,active:1,recovery:24,mp:28,pose:'shoot',sfx:'gun',proj:{speed:30,w:30,h:6,dmg:30,life:60,kind:'bullet',color:'#c63a2f',hitstun:24,kb:11,pierce:true}});
       m.GS2=M({name:'対空射撃',kind:'proj',startup:6,active:1,recovery:18,mp:10,pose:'shootUp',sfx:'gun',proj:{speed:9,vy:-9,y:125,w:12,h:12,dmg:9,life:60,kind:'bullet',color:INK,hitstun:20,kb:3,lift:-9}});
@@ -1348,8 +1349,8 @@ function buildMoves(job,weapon){
   }
   if(job==='hero'){ // 勇者：片手剣と盾。攻撃は控えめ
     const C='#e6f0ff';
-    m.P=M({name:'斬り',startup:5,active:3,recovery:10,dmg:7,hb:{x:58,y:110,w:70,h:36},kb:4,hitstun:15,pose:'swing',sfx:'slash',fx:'arc',fxColor:C,next:'P2',nextBtn:'P'});
-    m.P2=M({name:'返し斬り',startup:5,active:3,recovery:11,dmg:7,hb:{x:58,y:118,w:70,h:48},kb:4,hitstun:16,pose:'upper',sfx:'slash',fx:'arc',fxColor:C,next:'P3',nextBtn:'P'});
+    m.P=M({name:'上斬り',startup:5,active:3,recovery:10,dmg:7,dash:2,hb:{x:58,y:116,w:72,h:90},kb:4,hitstun:15,pose:'cutDown',sfx:'slash',fx:'arc',fxColor:C,next:'P2',nextBtn:'P'});
+    m.P2=M({name:'下から斬り',startup:5,active:3,recovery:11,dmg:7,dash:2,hb:{x:58,y:122,w:72,h:96},kb:4,hitstun:16,pose:'cutUp',sfx:'slash',fx:'arc',fxColor:C,next:'P3',nextBtn:'P'});
     m.P3=M({name:'シールドバッシュ',startup:7,active:4,recovery:16,dmg:10,hb:{x:46,y:106,w:52,h:70},kb:12,hitstun:22,pose:'punch',sfx:'hit'});
     m.K=M({name:'前蹴り',startup:5,active:4,recovery:11,dmg:7,hb:{x:52,y:80,w:50,h:28},kb:5,hitstun:15,pose:'kick',next:'K2',nextBtn:'K'});
     m.K2=M({name:'盾打ち',startup:5,active:4,recovery:12,dmg:7,hb:{x:44,y:110,w:48,h:50},kb:6,hitstun:16,pose:'punch',next:'K3',nextBtn:'K'});
@@ -1855,7 +1856,7 @@ function fxTick(){
 }
 function fxUpdate(){
   for(const f of allF()){
-    const mv=f.move,fast=(f.state==='attack'&&mv&&(mv.dash||mv.rise||mv.kind==='cstrike')&&f.moveT>=mv.startup-2&&f.moveT<mv.startup+mv.active)||((f.state==='airhit'||f.state==='launch')&&Math.abs(f.vx)>4);
+    const mv=f.move,fast=(f.state==='attack'&&mv&&(mv.dash||mv.rise||mv.kind==='cstrike'||CUTS[mv.pose]||mv.pose==='spinKick'||mv.pose==='kickUp')&&f.moveT>=mv.startup-2&&f.moveT<mv.startup+mv.active)||((f.state==='airhit'||f.state==='launch')&&Math.abs(f.vx)>4);
     if(fast&&G.frame%2===0){f.trail.push({x:f.x,y:f.y,facing:f.facing,P:poseOf(f),robot:f.job==='robot'});if(f.trail.length>6)f.trail.shift();}
     else if(!fast&&f.trail.length&&G.frame%2===0)f.trail.shift();
   }
@@ -2450,13 +2451,15 @@ const POSE_X={
   flex:full({fe:[34,-130],fh:[26,-152],be:[-28,-130],bh:[-20,-152],neck:[2,-120],head:[4,-145],fk:[16,-32],ff:[26,0],bk:[-14,-32],bf:[-26,0],w:-1.6}),
   reload:full({fe:[14,-96],fh:[26,-106],be:[6,-92],bh:[22,-100],neck:[4,-117],head:[7,-141],w:-0.5}),
   iai:full({hip:[0,-54],neck:[10,-106],head:[14,-130],fe:[16,-80],fh:[6,-66],be:[2,-82],bh:[-6,-66],fk:[24,-28],ff:[34,0],bk:[-16,-26],bf:[-32,0],w:0.35}),
+  kickUp:full({hip:[-2,-64],neck:[-10,-114],head:[-15,-137],fe:[-2,-100],fh:[-14,-88],be:[-14,-96],bh:[-28,-104],fk:[22,-98],ff:[30,-152],bk:[-6,-32],bf:[-12,0],w:-2.4}),
+  spinKick:full({hip:[-4,-66],neck:[-16,-112],head:[-22,-134],fe:[-6,-104],fh:[-20,-92],be:[-24,-100],bh:[-36,-110],fk:[30,-92],ff:[68,-108],bk:[-6,-32],bf:[-14,0],w:-2.6}),
   stepF:full({hip:[4,-56],neck:[16,-108],head:[22,-131],fe:[22,-96],fh:[34,-104],be:[2,-92],bh:[-10,-84],fk:[22,-30],ff:[30,0],bk:[-18,-24],bf:[-36,-4],w:-0.4}),
   stepB:full({hip:[-4,-58],neck:[-10,-112],head:[-12,-136],fe:[14,-100],fh:[28,-112],be:[6,-98],bh:[20,-108],fk:[16,-28],ff:[30,-6],bk:[-14,-30],bf:[-24,0],w:-1.1}),
   shootDown:full({hip:[0,-64],fe:[22,-104],fh:[38,-90],be:[10,-100],bh:[20,-96],neck:[6,-118],head:[9,-142],fk:[8,-34],ff:[2,-4],bk:[-6,-32],bf:[-12,-2],w:0.75}),
   dive:full({hip:[0,-70],neck:[-12,-120],head:[-16,-144],fe:[-6,-106],fh:[-22,-120],be:[-16,-102],bh:[-32,-112],fk:[20,-40],ff:[38,-6],bk:[-6,-44],bf:[-2,-20],w:-1.9}),
   pray:full({fe:[14,-128],fh:[8,-156],be:[6,-128],bh:[6,-156],neck:[2,-120],head:[4,-146],w:-1.57}),
 };
-const POSE_W={punch:full({fe:[6,-102],fh:[12,-110],neck:[-1,-118],head:[0,-143]}),kick:full({fk:[20,-50],ff:[22,-30]}),lowkick:full({fk:[20,-40],ff:[22,-24]}),thrust:full({fe:[4,-104],fh:[-4,-108],w:-0.2}),upper:CROUCH,slide:CROUCH,flex:full({fe:[20,-96],fh:[12,-80],be:[-14,-96],bh:[-6,-80],w:1.2}),shoot:POSE_X.shoot,shootUp:POSE_X.shootUp,stepF:POSE_X.stepF,stepB:POSE_X.stepB,shootDown:POSE_X.shootDown,dive:full({hip:[0,-72],fk:[14,-60],ff:[8,-38],bk:[-6,-58],bf:[-16,-40],w:-1.2}),pray:SIGN_P,cast:full({fe:[10,-104],fh:[14,-116],w:-0.8})};
+const POSE_W={punch:full({fe:[6,-102],fh:[12,-110],neck:[-1,-118],head:[0,-143]}),kick:full({fk:[20,-50],ff:[22,-30]}),lowkick:full({fk:[20,-40],ff:[22,-24]}),thrust:full({fe:[4,-104],fh:[-4,-108],w:-0.2}),upper:CROUCH,slide:CROUCH,flex:full({fe:[20,-96],fh:[12,-80],be:[-14,-96],bh:[-6,-80],w:1.2}),shoot:POSE_X.shoot,shootUp:POSE_X.shootUp,kickUp:full({hip:[0,-60],fk:[24,-62],ff:[14,-36],w:-1.2}),spinKick:full({hip:[0,-62],neck:[6,-116],head:[9,-140],fk:[-14,-58],ff:[-32,-48],w:-1.2}),stepF:POSE_X.stepF,stepB:POSE_X.stepB,shootDown:POSE_X.shootDown,dive:full({hip:[0,-72],fk:[14,-60],ff:[8,-38],bk:[-6,-58],bf:[-16,-40],w:-1.2}),pray:SIGN_P,cast:full({fe:[10,-104],fh:[14,-116],w:-0.8})};
 /* 武器ごとの構え（待機ポーズ）。座標はキャラの足元が原点、右が前、上がマイナス。w=持っている武器の向き、w2=後ろの手の武器の向き */
 const STANCE_DEF={
   stegoro:{name:'オーソドックス',note:'ボクシングの構え。両拳を顔の前に上げてあごを守り、小刻みに跳ねる',bounce:1,p:{hip:[0,-58],neck:[6,-112],head:[10,-136],fe:[24,-96],fh:[44,-114],be:[16,-92],bh:[38,-106],fk:[16,-29],ff:[24,0],bk:[-12,-28],bf:[-24,0]}},
@@ -2488,6 +2491,20 @@ const STANCE_DEF={
   bow:{name:'弓構え',note:'弓を前に立てて持ち、後ろの手は矢をつがえる準備。背中には天使の羽',p:{hip:[0,-61],neck:[4,-117],head:[7,-142],fe:[20,-102],fh:[34,-108],be:[0,-98],bh:[8,-108],fk:[14,-31],ff:[22,0],bk:[-12,-31],bf:[-22,0],w:-0.06}},
   horn:{name:'突進の構え',note:'頭を下げて角で突っ込む',p:{hip:[0,-58],neck:[14,-106],head:[24,-126],fe:[4,-92],fh:[-8,-80],be:[-6,-92],bh:[-18,-80],fk:[16,-30],ff:[26,0],bk:[-16,-28],bf:[-28,0]}},
 };
+/* 斬りの軌道（肩を中心に剣を回す）。w0=振りかぶり前、a0→a1=斬ってる間、r1=戻り。ry<1 は横に平たい軌道（横斬り） */
+const CUTS={cutDown:{w0:-1.0,a0:-2.75,a1:0.95,r1:0.5,ry:1},cutUp:{w0:0.9,a0:2.4,a1:-1.75,r1:-1.2,ry:1},cutSide:{w0:-0.6,a0:-3.2,a1:-6.2,r1:-5.9,ry:0.32}};
+function cutPose(base,mt,s,a,r,c){
+  let ang,lean;
+  if(mt<s){const t=mt/Math.max(1,s);ang=c.w0+(c.a0-c.w0)*t;lean=-0.6*t;}
+  else if(mt<s+a){const t=Math.min(1,(mt-s+1)/Math.max(1,a));ang=c.a0+(c.a1-c.a0)*(1-(1-t)*(1-t));lean=1;}
+  else{const t=Math.min(1,(mt-s-a)/Math.max(1,r));ang=c.a1+(c.r1-c.a1)*t;lean=1-t;}
+  const P=cp(base),sx=P.neck[0]+2,sy=P.neck[1]+10,R=46,cx=Math.cos(ang),cy=Math.sin(ang)*c.ry,L=Math.max(0,lean);
+  P.fh=[sx+cx*R,sy+cy*R];P.fe=[sx+cx*R*0.5+2,sy+cy*R*0.5+7];P.bh=[sx+cx*R*0.78-5,sy+cy*R*0.78+5];P.be=[sx+cx*R*0.36-7,sy+cy*R*0.36+9];P.w=Math.atan2(cy,cx);
+  P.neck[0]+=lean*9;P.head[0]+=lean*12;P.hip[0]+=lean*3;P.ff[0]+=L*14;P.fk[0]+=L*11;P.bf[0]-=L*12;P.bk[0]-=L*6;
+  if(c===CUTS.cutUp){P.neck[1]-=L*5;P.head[1]-=L*6;}
+  if(c===CUTS.cutDown||c===CUTS.cutSide){P.hip[1]+=L*7;P.neck[1]+=L*7;P.head[1]+=L*7;P.fk[1]+=L*4;P.bk[1]+=L*4;}
+  return P;
+}
 const STANCES={};for(const k in STANCE_DEF)STANCES[k]=full(STANCE_DEF[k].p);
 function stanceOf(f){if(f.weapon==='gunblade'&&f.form==='gun')return STANCES.sniper;return STANCES[f.weapon]||BASE;}
 function walkAnim(P,f,t){
@@ -2517,6 +2534,7 @@ function attackPose(f,t){
   const s=mv.startup,a=mv.active,r=mv.recovery,mt=f.moveT;
   const e=mt<s?-(mt/Math.max(1,s)):mt<s+a?1:Math.max(0,1-(mt-s-a)/Math.max(1,r));
   const base=f.air?(f.fly?HOVER:JUMP):stanceOf(f);
+  if(CUTS[mv.pose])return cutPose(base,mt,s,a,r,CUTS[mv.pose]);
   switch(mv.pose){
     case 'swing':return swingPose(base,mt,s,a,r);
     case 'spin':return spinPose(base,mt,f);
@@ -2988,13 +3006,13 @@ function drawHead(f,P,blink){
   ctx.restore();
 }
 function drawSlashFx(f,mv,k){
-  const hb=mv.hb;if(!hb)return;const cx=f.x+f.facing*hb.x*0.55,cy=f.y-hb.y,R=Math.max(42,hb.w*0.62),col=mv.fxColor||'#ffffff';
-  ctx.save();ctx.translate(cx,cy);ctx.scale(f.facing,1);ctx.globalAlpha=Math.max(0,Math.min(1,1.6-k*1.4));
+  const hb=mv.hb;if(!hb)return;const C=CUTS[mv.pose],cx=C?f.x+f.facing*10:f.x+f.facing*hb.x*0.55,cy=C?f.y-110:f.y-hb.y,R=C?(mv.fxR||(f.weapon==='onehand'?100:122)):Math.max(42,hb.w*0.62),col=mv.fxColor||'#ffffff';
+  ctx.save();ctx.translate(cx,cy);ctx.scale(f.facing,C?C.ry:1);ctx.globalAlpha=Math.max(0,Math.min(1,1.6-k*1.4));
   if(mv.fx==='zan'){const L=R*2.4*Math.min(1,k*2.5);ctx.rotate(-0.14);ctx.lineCap='round';ctx.strokeStyle='rgba(120,220,255,.55)';ctx.lineWidth=12;ctx.beginPath();ctx.moveTo(-R*0.7,0);ctx.lineTo(-R*0.7+L,0);ctx.stroke();ctx.strokeStyle=col;ctx.lineWidth=4;ctx.stroke();}
   else{
-    let a0=-1.7,a1=1.0;if(mv.pose==='upper'){a0=1.5;a1=-1.5;}else if(mv.pose==='spin'){a0=-Math.PI;a1=Math.PI;}
+    let a0=-1.7,a1=1.0;if(C){a0=C.a0;a1=C.a1;}else if(mv.fxA){a0=mv.fxA[0];a1=mv.fxA[1];}else if(mv.pose==='upper'){a0=1.5;a1=-1.5;}else if(mv.pose==='spin'){a0=-Math.PI;a1=Math.PI;}
     const am=a0+(a1-a0)*Math.min(1,k*1.5),lo=Math.min(a0,am),hi=Math.max(a0,am);
-    const one=rot=>{ctx.save();ctx.rotate(rot);ctx.beginPath();ctx.arc(0,0,R,lo,hi);ctx.arc(0,0,R*0.7,hi,lo,true);ctx.closePath();ctx.fillStyle=hexA(col,0.5);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(0,0,R,lo,hi);ctx.stroke();ctx.restore();};
+    const one=rot=>{ctx.save();ctx.rotate(rot);ctx.beginPath();ctx.arc(0,0,R,lo,hi);ctx.arc(0,0,R*(C?0.5:0.7),hi,lo,true);ctx.closePath();ctx.fillStyle=hexA(col,C?0.6:0.5);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.95)';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(0,0,R,lo,hi);ctx.stroke();ctx.restore();};
     one(0);if(mv.fx==='cross')one(Math.PI/2);
   }
   ctx.restore();
@@ -3971,7 +3989,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='43';
+const GAME_VER='44';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
