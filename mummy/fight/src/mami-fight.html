@@ -912,6 +912,7 @@ const WEAPONS={
 };
 const CMD={P:'パンチ',K:'キック',S1:'↓↘→ ＋ パンチ',S2:'→↓↘ ＋ パンチ',S3:'↓↙← ＋ キック'};
 const SCMD={S1:'↓↘→P',S2:'→↓↘P',S3:'↓↙←K'};
+const DMG_ALL=0.9; // ゲーム全体の攻撃力（殿下：上げすぎたので0.9倍）
 const SPEED_ALL=1.15; // ゲーム全体のキャラの移動速度（殿下：速度感がほしい）
 const HOVER_MP=0.38; // 天使の浮遊で1フレームに減るMP
 const JUST=8,JUST_PHYS=15; // ジャストガードの受付（フレーム）。物理キャラ（格闘・大剣・ロボ）は長い
@@ -998,9 +999,10 @@ const STAGES={
   castle:{name:'古城',scene:'castle',sky:['#3f6fb0','#6f9ad2','#aecbea','#dde9f6','#f5efe3'],sun:['#ffffff','#fff3c8'],glow:'255,250,225',ground:['#a39d90','#5b564d'],rim:'255,255,240',body:{x:150,y:100,r:38}},
   sky:{name:'雲の上',scene:'sky',sky:['#1d63c8','#3a86dd','#6fb0ee','#acd5f6','#e6f3ff'],sun:['#ffffff','#fff8d6'],glow:'255,255,235',ground:['#ffffff','#bcd5ee'],rim:'255,255,255',body:{x:770,y:105,r:44},wisp:true},
   launch:{name:'ロケット基地',scene:'launch',sky:['#02040f','#091331','#172856','#283b6c','#3a4c7b'],sun:['#fffbe8','#d6dbff'],glow:'190,205,255',ground:['#4b505c','#1f2128'],rim:'255,210,90',body:{x:120,y:84,r:22},search:true},
+  storm:{name:'闇の雷雲',scene:'storm',sky:['#05010c','#140726','#2a0d40','#3d1250','#2a0d3a'],sun:['#d8b0ff','#6a2a9a'],glow:'160,90,255',ground:['#2a1a3a','#0c0612'],rim:'190,120,255',body:{x:480,y:120,r:34},rain:true},
   moon:{name:'月面',scene:'moon',sky:['#000004','#01010a','#040516','#080a20','#0e1129'],sun:['#7fb6ff','#2a6fd1'],glow:'110,160,255',ground:['#9b9da4','#45474e'],rim:'230,230,240',body:{x:760,y:128,r:66}},
 };
-const STAGE_ORDER=['sunset','noon','sakura','night','snow','dawn','thunder','fire','city','ny','greatwall','desert','castle','sky','launch','moon'];
+const STAGE_ORDER=['sunset','noon','sakura','night','snow','dawn','thunder','fire','city','ny','greatwall','desert','castle','sky','launch','moon','storm'];
 const NEON=[{x:170,y:250,w:150,h:46,text:'マミー会',rgb:'255,60,170'},{x:500,y:205,w:110,h:40,text:'ヤギ',rgb:'60,230,255'},{x:800,y:262,w:210,h:42,text:'ジンギスカン',rgb:'255,200,60'}];
 const GOATS={kid:{horn:'#efe4cf',ear:'#fbf6ee',hs:0.7},black:{horn:'#2a262e',ear:'#4b4552',hs:1},mecha:{horn:'#9aa3b2',ear:'#b9c1cc',hs:1},boss:{horn:'#d9c7a0',ear:'#efe5d6',hs:1.35}};
 /* ストーリー。話し手：'P'=自分、'E'=相手、'A1'〜'A3'=仲間、'F'=操られる友、null=ナレーション。{P}{E}{F}{A1}… は名前に置き換わる */
@@ -1127,14 +1129,60 @@ const STORY3=[
    post:[['E','メェェェェェェ〜〜〜〜〜〜〜！！！'],[null,'――ヤギは地球に向かって、流れ星になった。'],['A1','やった……！ 月で、やったで！！'],['A3','……あれ。帰りのロケットは？'],['A2','…………'],['@reika','私、飛べるから先に帰るね。'],['A1','待って！！！'],
          [null,'――次の週。いつもの河原。'],['@yagi','メェ。……世界のお土産、持ってきたで。'],['P','……おう。座れや。鍋、もう煮えとるで。'],[null,'（その日の鍋は、いつもより、ちょっとだけ大きかった）']]},
 ];
+/* 第4章：陰キャの王。ヤギにボコられたマツカワが闇堕ち（enemy.dark）、ビビったヤギが途中から仲間になる。ラスボスは闇マツカワ */
+const STORY4=[
+  {stage:'sunset',title:'第1話',sub:'陰キャの王',tag:'いつもの河原で',lv:-1,
+   enemy:{name:'子ヤギ（撮影係）',job:'fighter',weapon:'stegoro',stats:{atk:2,spd:4,hp:2,def:1,mp:1},goat:'kid'},
+   pre:[[null,'――月から流れ星になって帰ってきたヤギは、ちょっと調子に乗っていた。'],[null,'――いつもの河原。端っこで、ひとりの男がしゃがんでスマホをいじっている。'],['@matsukawa','……（イヤホン）'],['@yagi','メェ〜？ なんやお前、ひとりで暗いのう。'],['@matsukawa','……別に。'],
+        ['@yagi','せっかくの河原やぞ！ 鍋も囲まんと、ひとりでスマホいじって何がおもろいんや！ メェッハッハ！'],['@matsukawa','……ほっといて。'],['@yagi','よっしゃ、ワシが根性叩き直したるわ！ 必殺・ヤギ回し蹴り！！'],[null,'――ドカッ！ バキッ！ ボコッ！'],
+        ['@yagi','メェッハッハ！ よわっ！ 陰キャの王、敗れたり〜！ 子ヤギ、ちゃんと撮ったか？'],['E','バッチリっす、ヤギ様！ ネットに上げときます！'],[null,'――ヤギは笑いながら去っていった。'],
+        ['A1','{P}！ 遅かった……！ ヤギのやつ、{@matsukawa}をボコボコにしよった！'],['P','……おい子ヤギ。その動画、消せ。'],['E','メェ！？ い、嫌っす！ バズるんで！'],['P','ほな、スマホごとぶっ飛ばしたる！']],
+   post:[['E','メェェ……動画が……消えたっす……'],['A2','……{@matsukawa}、大丈夫か。'],['@matsukawa','…………。'],['@matsukawa','……もう、ええわ。'],[null,'――その瞬間。晴れていた空に、黒い雷が落ちた。'],['A1','な、なんや今の……！ 雷が、黒かったで……！'],['A3','……{@matsukawa}が、おらん。']]},
+  {stage:'thunder',title:'第2話',sub:'黒い雷',tag:'おびえる黒ヤギ',lv:0,
+   enemy:{name:'黒ヤギ',job:'samurai',weapon:'nitoryu',stats:{atk:3,spd:3,hp:2,def:1,mp:1},goat:'black'},
+   pre:[[null,'――雷鳴の河原。黒い雷が、何度も何度も落ちている。'],['E','ひぃぃ！ く、来るなぁ！ お前もあいつの仲間か！？'],['P','黒ヤギ？ なにをそんなにビビっとんねん。'],
+        ['E','ヤギ団のアジトが……黒い雷で、ひとつずつ潰されとるんや……！ 雷の中に、前髪の長い男が……！'],['A3','……{@matsukawa}や。'],
+        ['E','もう嫌や！ 二刀流にしたら誰ともかぶらへんと思ったのに、それどころやない！ 近づくやつは全員斬る！'],['A1','武器の話はもうええねん！'],['P','落ち着け！ ……聞かへんなら、まず落ち着かしたる！']],
+   post:[['E','……はぁ、はぁ……すまん、取り乱した……'],['E','あいつ、言うてた。「ヤギは、どこや」って。……ヤギ様を探しとるんや。'],['A2','{@matsukawa}、ヤギに仕返しする気なんや……。'],['E','ネオンの高架下で見た。……頼む、あいつを止めてくれ。'],['P','……ああ。止める。仲間やからな。']]},
+  {stage:'city',title:'第3話',sub:'闇の雷帝',tag:'闇堕ちしたマツカワ',lv:0,
+   enemy:{person:'matsukawa',job:'mage',weapon:'thunder',stats:{atk:4,spd:3,hp:2,def:1,mp:3},dark:true,noLaunch:true,alt:'闇マツカワ'},
+   pre:[[null,'――ネオンの高架下。電線が火花を散らし、看板がひとつ、またひとつ消えていく。'],['E','…………。'],['P','{@matsukawa}！ やっと見つけたで！'],['E','……{P}か。どいて。ヤギに用がある。'],['A1','目ぇが真っ黒や……！'],
+        ['E','ずっと、ひとりでええと思ってた。……けど、笑われて、撮られて、晒されて。'],['E','……分かったんや。陰キャは、我慢しすぎたら闇になるんやって。'],['A3','動画は消させた。ちゃんと消えてる。'],['E','……それでも、もう遅い。この雷は、止まらへん。'],
+        ['P','止まらへんなら、俺が受け止めたる！ いくで、{@matsukawa}！']],
+   mid:[['E','……痛い。でも、ヤギに殴られた時のほうが、もっと痛かった。'],['P','せやったら、その痛み、全部ぶつけてこい！']],
+   post:[['E','……くっ。'],['E','……まだや。ヤギを、潰すまでは。'],[null,'――黒い雷とともに、マツカワは消えた。'],['A2','追いかけな……！ 次に雷が落ちるのは、ヤギのとこや！']]},
+  {stage:'dawn',title:'第4話',sub:'逃げるヤギ',tag:'ビビり散らかすヤギ',lv:0,
+   enemy:{person:'yagi',job:'goat',weapon:'horn',stats:{atk:3,spd:4,hp:3,def:2,mp:2},goat:'boss',alt:'ヤギ'},
+   pre:[[null,'――夜明けの鉄橋。ヤギが、ガタガタ震えながら走ってくる。'],['E','メ、メェェェ！ た、助けてくれぇ！ 黒い雷が、ずっと追いかけてくるんや！'],['P','ヤギ……お前、{@matsukawa}に何したか分かっとんのか。'],
+        ['E','ちょ、ちょっと根性叩き直そうとしただけやんけ！ ……あ。'],['E','わ、分かった……お前もワシを潰しに来たんやな！？ そうはさせへんでぇ！ メェェ！！'],['A1','ビビりすぎて逆ギレしとる！'],['P','ちゃうわ！ ……けど、一回しばいとかんと気が済まへんのも、ほんまや！']],
+   post:[['E','メェ……メェェ……（泣）'],['@yagi','……分かっとる。ワシが悪かったんや。'],['@yagi','あいつ、いっつもひとりやったから……仲間に入れたろ思て、ちょっかい出しただけやったんや。やり方、間違えた。'],['A3','……第2章の時も、同じこと言ってた。'],
+         ['@yagi','……せやな。ワシ、いっつもやり方間違えとる。'],['@yagi','頼む。ワシも連れてってくれ。……あいつに、ちゃんと謝りたいんや。'],['P','……おう。ほな今日から、お前も仲間や。'],['A1','ヤギが、仲間になった……！']]},
+  {stage:'snow',title:'第5話',sub:'闇の伝染',tag:'闇に呑まれたタケル',lv:0,
+   enemy:{person:'takeru',member:true,dark:true,noLaunch:true,alt:'闇タケル'},
+   pre:[[null,'――雪の河原。黒い雷を浴びた男が、雪の中に立っている。'],['@yagi','あ、あれは……{@takeru}！ 目ぇが真っ黒や！'],['E','……ヤギ。お前のせいで、マツカワは……'],['@yagi','ひぃっ！ ワ、ワシ、謝りに行くとこなんや！'],
+        ['A2','闇の雷が、まわりにも広がっとる。'],['E','……どけ。ヤギを、渡せ。'],['P','渡さへん。こいつはもう、仲間や！'],['@yagi','{P}……！ メェェ……（感動）']],
+   post:[['E','……はっ。俺、何しとったんや……'],['@takeru','すまん。なんか、胸の中が真っ黒になって……'],['A3','{@matsukawa}の気持ちが、雷と一緒に流れ込んできたんやと思う。'],['@takeru','……あいつ、ずっとさみしかったんやな。'],
+         [null,'――空を見上げると、雲の上で、黒い雷がうずを巻いていた。'],['@yagi','あそこや……。あそこに、あいつがおる。']]},
+  {stage:'storm',title:'最終話',sub:'闇の雷雲',tag:'陰キャの王',lv:1,boss:true,
+   enemy:{person:'matsukawa',job:'mage',weapon:'thunder',stats:{atk:4,spd:4,hp:4,def:2,mp:4},dark:true,boss:true,noLaunch:true,alt:'闇マツカワ'},
+   pre:[[null,'――闇の雷雲。黒い雷が、うずを巻いている。'],['E','……来たんか。'],['@yagi','マ、マツカワ……！'],['E','……ヤギ。'],['@yagi','（ビクッ）メ、メェ……'],
+        ['@yagi','……すまんかった！！ ワシが悪かった！ 動画も消した！ 子ヤギにもめっちゃ怒った！'],['@yagi','お前、いっつもひとりやったから、仲間に入れたかったんや！ やり方、ほんまに最低やった！'],['E','…………。'],
+        ['E','……遅いわ。もう、止め方が分からへん。'],['A1','雷が、マツカワ自身を呑み込もうとしとる！'],['P','ほな、俺が止めたる。その雷ごと、全部受け止めたる！'],['@yagi','{P}……！ ワシも、横で見とる！ もう逃げへんからな！'],['E','……陰キャの王の雷、受けてみい。']],
+   mid:[['E','……なんでや。なんで、そこまでして……'],['P','仲間やからに、決まっとるやろ！'],['@yagi','そうや！ お前はもう、マミー会や！ ……ワシが言うのも、なんやけど！'],['E','……っ、うるさい……うるさい！！']],
+   pinch:[['A1','{P}！ 立てぇぇ！！'],['@yagi','メェェェ！！ 負けんなぁ！！ マツカワのためにも！！'],['@takeru','あいつの闇は、俺が一回受けた。お前なら、晴らせる！'],['A3','……がんばれ。'],['P','……おう。陰キャも陽キャもヤギも、関係あるか……！'],['P','これがマミー会の――全員分の、光の拳やぁぁ！！']],
+   post:[['E','…………。'],[null,'――黒い雷が、ゆっくりと晴れていく。'],['@matsukawa','……負けた。……なんか、すっきりした。'],['@yagi','マツカワ……ほんまに、すまんかった。'],['@matsukawa','……もうええよ。……ビビってるヤギ、ちょっとおもろかったし。'],['@yagi','メェ！？ そこ！？'],['A1','ははっ！ 笑った！ マツカワが笑ったで！'],
+         [null,'――次の週。いつもの河原。'],['@yagi','マツカワ、鍋の席とっといたで。……ワシの隣や。'],['@matsukawa','……うん。……イヤホン、片っぽ外しとく。'],[null,'（陰キャの王とヤギは、なぜか一番仲良くなった）']]},
+];
 /* 章（増えたらここに足す） */
 const STORY_ARCS=[
   {id:'c1',title:'第1章',sub:'ヤギ団をぶっ飛ばせ',desc:'河原に現れたヤギ団。手下をしばいて、親玉のヤギを夕日の向こうまでぶっ飛ばせ。',eps:STORY,
    clear:'ヤギは夕日の向こうへ消えた。マミー会の夕日は、今日も燃えている。'},
   {id:'c2',title:'第2章',sub:'ヤギ団の逆襲',desc:'ヤギが四天王を連れて帰ってきた。メシで釣られた仲間を取り戻して、もう一回ヤギをぶっ飛ばせ。',eps:STORY2,cast:{A1:'sanma',A2:'takeru',A3:'kojimaimo'},
    clear:'ヤギは鍋ごと夕日の向こうへ。……そして次の週、みんなで鍋を囲んだ。'},
-  {id:'c3',title:'第3章',sub:'ヤギ・ワールドツアー',desc:'ヤギが世界中に「国際ヤギ連合」を作った。ニューヨーク、万里の長城、ピラミッド、古城、雲の上、そして月へ。スカウトされた新顔たちの目を覚まさせて、宇宙でヤギをぶっ飛ばせ。',eps:STORY3,cast:{A1:'sanma',A2:'tatsuya',A3:'kojimaimo'},isNew:true,
+  {id:'c3',title:'第3章',sub:'ヤギ・ワールドツアー',desc:'ヤギが世界中に「国際ヤギ連合」を作った。ニューヨーク、万里の長城、ピラミッド、古城、雲の上、そして月へ。スカウトされた新顔たちの目を覚まさせて、宇宙でヤギをぶっ飛ばせ。',eps:STORY3,cast:{A1:'sanma',A2:'tatsuya',A3:'kojimaimo'},
    clear:'ヤギは月から流れ星になって帰ってきた。……マミー会の鍋は、今日もちょっとだけ大きい。'},
+  {id:'c4',title:'第4章',sub:'陰キャの王',desc:'ヤギにボコボコにされたマツカワが、黒い雷とともに闇堕ちした。ビビり散らかすヤギを守りながら、闇の雷雲で陰キャの王を止めろ。',eps:STORY4,cast:{A1:'sanma',A2:'tatsuya',A3:'rion'},isNew:true,
+   clear:'闇の雷は晴れた。……そしてヤギとマツカワは、なぜか一番仲良くなった。'},
 ];
 const pick=a=>a[(Math.random()*a.length)|0];
 const clone=o=>JSON.parse(JSON.stringify(o));
@@ -1150,7 +1198,7 @@ function derive(c){
   return d;
 }
 /* 武器ごとの強さの調整（CPU同士の勝率が揃うように合わせた値）。dmg=与えるダメージ、hp=体力 */
-const TUNE={stegoro:{dmg:1.072},tonfa:{dmg:1.028},kenpo:{dmg:1.1},greatsword:{dmg:0.96},katana:{dmg:0.936},hammer:{dmg:0.973},onehand:{dmg:1.45},boosthammer:{dmg:1.04},gunblade:{dmg:1},staff:{dmg:1.189},grimoire:{dmg:1.054},ninjutsu:{dmg:1.164},thunder:{dmg:1.1,hp:0.85},handgun:{dmg:1.61},shotgun:{dmg:1.378},sniper:{dmg:1.283},akimbo:{dmg:1.15},rocket:{dmg:1.118},drill:{dmg:1.046},beam:{dmg:1.156},bow:{dmg:1.3},iai:{dmg:0.724},nitoryu:{dmg:1.0},ninja:{dmg:0.946},muscle:{dmg:1,hp:0.88},hustle:{dmg:1},ishihara:{dmg:1.4,hp:0.6,fixed:true}};
+const TUNE={stegoro:{dmg:1.072},tonfa:{dmg:1.028},kenpo:{dmg:1.1},greatsword:{dmg:0.96},katana:{dmg:0.936},hammer:{dmg:0.973},onehand:{dmg:1.45},boosthammer:{dmg:1.04},gunblade:{dmg:1},staff:{dmg:1.189},grimoire:{dmg:1.054},ninjutsu:{dmg:1.164},thunder:{dmg:1.1,hp:0.85},handgun:{dmg:1.61},shotgun:{dmg:1.378},sniper:{dmg:1.283},akimbo:{dmg:1.15},rocket:{dmg:1.118},drill:{dmg:1.046},beam:{dmg:1.156},bow:{dmg:1.3},iai:{dmg:0.724},nitoryu:{dmg:1.0},ninja:{dmg:0.946},muscle:{dmg:1,hp:0.95},hustle:{dmg:1},ishihara:{dmg:1.4,hp:0.6,fixed:true}};
 function M(o){return Object.assign({name:'',kind:'melee',startup:6,active:4,recovery:10,dmg:5,hb:null,kb:4,hitstun:15,lift:0,mp:0,dash:0,rise:0,multi:1,inv:0,proj:null,pose:'punch',sfx:'hit',fx:null,fxColor:'#e8452c'},o);}
 const EMPTY=M({kind:'none',startup:0,active:0,recovery:12,pose:'idle'});
 
@@ -1764,7 +1812,7 @@ function makeFighter(cfg,idx){
   {const tr=traitOf(cfg);f.sgMul=((tr&&tr.sg)||1)*(cfg.job==='hero'?0.5:1);f.mpCost=(tr&&tr.mpCost)||1; // 勇者はゲージがたまりにくい
     const q=tr&&tr.wpn&&tr.wpn[cfg.weapon]&&tr.wpn[cfg.weapon].quick; // 技の出と戻りが速なる特性
     if(q){const mv={};for(const k in f.moves){const v=Object.assign({},f.moves[k]);v.startup=Math.max(2,Math.round(v.startup/q));v.recovery=Math.round(v.recovery/q);mv[k]=v;}f.moves=mv;}}
-  f.goat=cfg.goat||null;f.boss=!!cfg.boss;f.aiLevel=cfg.aiLevel||null;if(f.boss)f.ranged=false;
+  f.goat=cfg.goat||null;f.dark=!!cfg.dark;f.boss=!!cfg.boss;f.aiLevel=cfg.aiLevel||null;if(f.boss)f.ranged=false;
   return f;
 }
 function resetFighter(f){
@@ -2148,7 +2196,7 @@ function applyHit(att,def,mv,isProj,dir,pt){
   const proj=isProj||mv.kind==='beam';
   const ironBody=def.weapon==='ishihara'&&def.armorT>0&&!def.armorBroken&&def.onGround&&['idle','walk','crouch','attack','land'].includes(def.state);
   if((ironBody||(def.state==='attack'&&def.move&&def.move.armor&&def.moveT<def.move.startup+def.move.active&&(def.armorUsed||0)<def.move.armor))&&!mv.throw&&mv.kind!=='cstrike'&&!mv.sp){ // アーマー（石原は常時）
-    const ar=Math.max(1,Math.round(mv.dmg*att.atkMul*def.defMul*(def.weapon==='ishihara'?1:0.6))); // 石原はひるまへんけど体力はしっかり減る
+    const ar=Math.max(1,Math.round(mv.dmg*DMG_ALL*att.atkMul*def.defMul*(def.weapon==='ishihara'?1:0.6))); // 石原はひるまへんけど体力はしっかり減る
     if(ironBody&&def.hp-ar>0){ // 石原：アーマーゲージが減って、なくなったらブレイクしてダウン
       def.armorG-=ar*2.4+6;def.hp-=ar;def.lastHurt=G.frame;def.flash=6;
       if(def.armorG<=0){def.armorG=0;def.armorBroken=true;def.move=null;def.state='airhit';def.onGround=false;def.vy=-8;def.vx=dir*4/def.weight;
@@ -2160,7 +2208,7 @@ function applyHit(att,def,mv,isProj,dir,pt){
   const guarding=def.onGround&&['idle','walk','crouch','blockstun','land'].includes(def.state)&&(def.gBtn||def.rel===4||def.rel===1);
   if(guarding&&G.frame<=def.justUntil&&mv.kind!=='cstrike'&&!mv.throw&&!mv.unblock){def.justUntil=-1;return doCounter(att,def,mv,isProj,dir,pt);}
   const gucci=personOf(att)==='tanigucci'&&FEMALE.has(personOf(def)); // 谷GUCCI：相手が女やと攻撃力1.25倍
-  const raw=Math.max(1,Math.round(mv.dmg*att.atkMul*(att.pump>0?1.25:1)*def.defMul*(def.pump>0?0.85:1)*(gucci?1.25:1)*anikiRage(att)*(att.engine>0?1.25:1)*(att.legend?1.25:1)*(personOf(att)==='yusei'&&personOf(def)==='kojimaimo'&&att.legend?1.25:1)));
+  const raw=Math.max(1,Math.round(mv.dmg*DMG_ALL*att.atkMul*(att.pump>0?1.25:1)*def.defMul*(def.pump>0?0.85:1)*(gucci?1.25:1)*anikiRage(att)*(att.engine>0?1.25:1)*(att.legend?1.25:1)*(personOf(att)==='yusei'&&personOf(def)==='kojimaimo'&&att.legend?1.25:1)));
   if(gucci&&G.frame-(att.gucciFx||0)>24){att.gucciFx=G.frame;addText(def.x,def.y-232,'×1.25','#ff4a3d',26);}
   let crushed=false;
   if(guarding&&!mv.throw&&!mv.unblock){
@@ -2206,7 +2254,7 @@ function applyHit(att,def,mv,isProj,dir,pt){
   if(def.boss&&!def.phase2&&def.hp>0&&def.hp<def.maxHp*0.5){
     def.phase2=true;def.walk*=1.2;def.aiLevel='hard';
     if(def.moves.S1.proj)def.moves.S1=Object.assign({},def.moves.S1,{proj:Object.assign({},def.moves.S1.proj,{burst:2})});
-    banner('ヤギ、本気モード！');sfx('mee',0.8);
+    banner(def.goat?'ヤギ、本気モード！':def.name+'、本気モード！');if(def.goat)sfx('mee',0.8);else sfx('zap');
   }
   const s=mv.sfx||'hit';sfx(s,1+Math.min(0.7,(def.combo-1)*0.09));
   if(heavy){sfx('heavy');G.flash=Math.max(G.flash,0.3);addRing(pt.x,pt.y,'#ff8a3d');}
@@ -2755,6 +2803,16 @@ const SCENES={
     scGround(b,T);
     const sy=GROUND+26;b.fillStyle='#1c1c1c';b.fillRect(0,sy,W,10);b.fillStyle='#ffd23f';for(let x=-10;x<W;x+=24){b.beginPath();b.moveTo(x,sy);b.lineTo(x+12,sy);b.lineTo(x+2,sy+10);b.lineTo(x-10,sy+10);b.closePath();b.fill();}
   },
+  storm(b,T){ // 闇の雷雲：黒い雲のうず、紫の雷
+    scSky(b,T,GROUND);const B=T.body;
+    let g=b.createRadialGradient(B.x,B.y,4,B.x,B.y,260);g.addColorStop(0,'rgba(200,140,255,.55)');g.addColorStop(0.3,'rgba(120,50,200,.25)');g.addColorStop(1,'rgba(40,0,80,0)');b.fillStyle=g;b.fillRect(0,0,W,GROUND);
+    b.lineCap='round';for(let k=0;k<5;k++){b.strokeStyle=`rgba(${k%2?'20,6,36':'60,24,96'},.75)`;b.lineWidth=26-k*3;b.beginPath();for(let t=0;t<=1;t+=0.02){const a=t*Math.PI*3.2+k*1.25,r=40+t*(300+k*20);const x=B.x+Math.cos(a)*r,y=B.y+Math.sin(a)*r*0.42;t?b.lineTo(x,y):b.moveTo(x,y);}b.stroke();}
+    b.fillStyle='#e6ccff';b.beginPath();b.arc(B.x,B.y,B.r*0.5,0,7);b.fill();
+    for(const [x0,len] of [[150,250],[790,300],[640,180]]){b.lineJoin='round';const pts=[];let x=x0;for(let i=0;i<=7;i++){pts.push([x,40+len*i/7]);x+=((i*37+x0)%27)-13;}for(const [lw,col] of [[10,'rgba(170,90,255,.35)'],[3,'#e9d6ff']]){b.strokeStyle=col;b.lineWidth=lw;b.beginPath();pts.forEach(([px,py],i)=>i?b.lineTo(px,py):b.moveTo(px,py));b.stroke();}}
+    for(let i=0;i<14;i++){const x=(i*83)%W-20,y=GROUND-70-((i*37)%60),r=50+((i*13)%40);b.fillStyle=i%2?'#1a0b2a':'#24103a';b.beginPath();b.ellipse(x,y,r,r*0.45,0,0,7);b.fill();}
+    b.fillStyle='#1a0b2a';b.fillRect(0,GROUND-60,W,60);
+    scGround(b,T);b.strokeStyle='rgba(190,120,255,.35)';b.lineWidth=2;b.beginPath();for(let i=0;i<8;i++){const x=(i*131+40)%W,y=GROUND+10+((i*23)%40);b.moveTo(x,y);b.lineTo(x+18,y+10);b.lineTo(x+8,y+22);b.lineTo(x+30,y+34);}b.stroke();
+  },
   moon(b,T){ // 月面：空に地球、ヤギ連合の旗
     scSky(b,T,GROUND);scStars(b,160,GROUND-60,1);
     const B=T.body;let g=b.createRadialGradient(B.x,B.y,B.r*0.8,B.x,B.y,B.r*1.9);g.addColorStop(0,'rgba(110,160,255,.45)');g.addColorStop(1,'rgba(110,160,255,0)');b.fillStyle=g;b.fillRect(B.x-B.r*2,B.y-B.r*2,B.r*4,B.r*4);
@@ -2939,6 +2997,8 @@ function drawFighter(f){
   if(f.phase2){const pl=beatPulse(),g=ctx.createRadialGradient(f.x,f.y-80,10,f.x,f.y-80,120);g.addColorStop(0,`rgba(255,60,30,${(0.35+0.25*pl).toFixed(3)})`);g.addColorStop(1,'rgba(255,60,30,0)');ctx.fillStyle=g;ctx.fillRect(f.x-130,f.y-210,260,250);}
   if(f.star>0){const hue=(G.frame*14)%360,a=f.star<60&&(G.frame>>2)%2?0.15:0.5,g=ctx.createRadialGradient(f.x,f.y-80,10,f.x,f.y-80,130);g.addColorStop(0,`hsla(${hue},100%,65%,${a})`);g.addColorStop(0.6,`hsla(${(hue+120)%360},100%,60%,${a*0.6})`);g.addColorStop(1,'hsla(0,0%,100%,0)');ctx.fillStyle=g;ctx.fillRect(f.x-140,f.y-215,280,255);}
   if(f.legend&&!f.gone&&!f.out){const pl=0.32+0.18*Math.sin(G.frame*0.22),g=ctx.createRadialGradient(f.x,f.y-80,10,f.x,f.y-80,135);g.addColorStop(0,`rgba(255,226,90,${pl.toFixed(3)})`);g.addColorStop(0.65,`rgba(255,200,40,${(pl*0.45).toFixed(3)})`);g.addColorStop(1,'rgba(255,200,40,0)');ctx.fillStyle=g;ctx.fillRect(f.x-135,f.y-215,270,270);} // 伝説の剣：ずっと黄色いオーラ
+  if(f.dark&&!f.out){const pl=0.4+0.2*Math.sin(G.frame*0.2),g=ctx.createRadialGradient(f.x,f.y-80,8,f.x,f.y-80,135);g.addColorStop(0,`rgba(30,0,50,${pl.toFixed(3)})`);g.addColorStop(0.6,`rgba(120,40,190,${(pl*0.45).toFixed(3)})`);g.addColorStop(1,'rgba(60,0,90,0)');ctx.fillStyle=g;ctx.fillRect(f.x-140,f.y-215,280,270); // 闇堕ちのオーラ
+    ctx.save();ctx.lineJoin='round';for(let i=0;i<2;i++){const a=((G.frame*17+i*180)%360)*Math.PI/180;ctx.beginPath();for(let k=0;k<=4;k++){const rr=34+12*k,j=((G.frame*11+i*37+k*19)%11-5)*2;const x=f.x+Math.cos(a)*rr+j,y=f.y-80+Math.sin(a)*rr*1.4-j;k?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.strokeStyle='rgba(150,60,230,.55)';ctx.lineWidth=6;ctx.stroke();ctx.strokeStyle='#1a0626';ctx.lineWidth=2.5;ctx.stroke();}ctx.restore();}
   if(f.volt>0&&!f.out){const pl=0.28+0.22*Math.sin(G.frame*0.7),g=ctx.createRadialGradient(f.x,f.y-80,8,f.x,f.y-80,125);g.addColorStop(0,`rgba(255,240,120,${pl.toFixed(3)})`);g.addColorStop(1,'rgba(255,220,60,0)');ctx.fillStyle=g;ctx.fillRect(f.x-130,f.y-210,260,260); // 帯電のオーラ
     ctx.save();ctx.lineJoin='round';for(let i=0;i<3;i++){const a=((G.frame*23+i*120)%360)*Math.PI/180;ctx.beginPath();for(let k=0;k<=4;k++){const rr=28+11*k,j=((G.frame*13+i*31+k*17)%11-5)*2;const x=f.x+Math.cos(a)*rr+j,y=f.y-80+Math.sin(a)*rr*1.5-j;k?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.strokeStyle='rgba(255,230,90,.5)';ctx.lineWidth=6;ctx.stroke();ctx.strokeStyle='#fffbe0';ctx.lineWidth=2;ctx.stroke();}ctx.restore();}
   if(f.pump>0||f.hustle>0||f.weapon==='ishihara'){const c=f.weapon==='ishihara'?'255,200,40':f.pump>0?'255,110,50':'255,215,60',pl=0.25+0.2*Math.sin(G.frame*0.3),g=ctx.createRadialGradient(f.x,f.y-80,10,f.x,f.y-80,115);g.addColorStop(0,`rgba(${c},${pl.toFixed(3)})`);g.addColorStop(1,`rgba(${c},0)`);ctx.fillStyle=g;ctx.fillRect(f.x-125,f.y-200,250,240);}
@@ -3733,6 +3793,7 @@ function storyEnemy(){
   const fid=STORYS.cast&&STORYS.cast.F;
   if(S.friend&&fid)Object.assign(e,clone(MEMBER_BUILD[fid]||{job:'sword',weapon:'katana',stats:{atk:3,spd:2,hp:3,def:2,mp:0}}),{person:fid,skin:0,name:'洗脳'+personName(fid)});
   if(e.person==='yagi'&&e.boss)e.skin=Math.floor(Math.random()*Math.max(1,personSkins('yagi').length));
+  if(e.person&&S.enemy.dark)e.name='闇'+personName(e.person); // 闇堕ち
   if(e.person&&STORYS.p1.person===e.person&&!S.friend)e.name='偽'+personName(e.person); // 自分と同じ人なら偽者
   return e;
 }
@@ -3989,7 +4050,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='44';
+const GAME_VER='46';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
