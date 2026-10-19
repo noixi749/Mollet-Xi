@@ -172,6 +172,7 @@ table.moves{border-collapse:collapse;width:100%;font-size:14px}
 .talk-skip{align-self:flex-end;width:auto}
 #battle.talking .ctl{visibility:hidden}
 .overlay.fixed{position:fixed;z-index:30}
+.news-body{display:flex;flex-direction:column;gap:10px;font:14px/1.6 var(--f-body)}.news-body h3{margin:0;font:400 18px/1.3 var(--f-display);color:var(--hot)}.news-body small{color:var(--ink-soft);font-weight:700}.news-body ul{margin:0;padding-left:1.2em}.news-body li{margin:2px 0}
 .padlist{display:flex;flex-direction:column;gap:6px}
 .padrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;border:2px solid var(--rule);border-radius:10px;padding:6px 10px}
 .padrow.hit{border-color:var(--marker);background:rgba(255,201,61,.14)}
@@ -474,7 +475,7 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
     <div class="sheet" data-pane="rank" hidden>
       <header class="sh-head"><button type="button" class="sh-back" aria-label="戻る">←</button><h2>組手ランキング</h2><span class="note" id="rkStatus"></span></header>
       <div class="sh-body">
-        <p class="note" id="rkNote">組手で何人抜いたか。使ったキャラとジョブも出る。名前と一言は「プロフィール」で変えられる。</p>
+        <p class="note" id="rkNote">10/19 にリセットした（CPUの強さが変わったため）。組手で何人抜いたか。使ったキャラとジョブも出る。名前と一言は「プロフィール」で変えられる。</p>
         <ol class="rank" id="rkList"></ol>
       </div>
     </div>
@@ -833,6 +834,13 @@ textarea{font:500 15px/1.5 var(--f-body);border:2px solid var(--ink);border-radi
     </div>
   </section>
 
+  <div id="news" class="overlay fixed" hidden>
+    <div class="panel" role="dialog" aria-modal="true" aria-labelledby="newsTitle">
+      <h2 id="newsTitle">お知らせ</h2>
+      <div id="newsBody" class="news-body"></div>
+      <div class="row-actions"><button class="btn primary" id="newsOk" type="button">OK</button></div>
+    </div>
+  </div>
   <div id="dlg" class="overlay fixed" hidden>
     <div class="panel" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
       <h2 id="dlgTitle">キャラ名管理</h2>
@@ -1541,6 +1549,7 @@ function load(){
   try{const s=localStorage.getItem(STORE);if(s){const d=JSON.parse(s);if(d&&typeof d==='object')DATA=Object.assign(DATA,d);}}catch(e){}
   if(!Array.isArray(DATA.favs))DATA.favs=[];
   DATA.favs.forEach(fixWpn);
+  if(DATA.rankFrom!==RANK_FROM){DATA.kumiteBest=0;DATA.kumiteBestC='';DATA.kumiteBestJ='';DATA.kumiteBestW='';DATA.rankFrom=RANK_FROM;} // 組手の自己ベストもリセット
 }
 function save(){try{localStorage.setItem(STORE,JSON.stringify(DATA));return true;}catch(e){return false;}}
 
@@ -4145,7 +4154,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='48';
+const GAME_VER='49';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
@@ -4178,10 +4187,21 @@ function saveProfile(){
   const mine=RANK&&RANK.find(r=>r.id===p.id);if(mine)pushRank(mine.s,mine.c,true);
 }
 /* ---- ランキング（組手で何人抜いたか。claude.ai では db、GitHub 版は Firebase で全員と共有） ---- */
+const NEWS=[ // 新しいお知らせを先頭に足す（id を増やすと、まだ見てへん人に1回だけ出る）
+  {id:1,d:'2026/10/19',t:'組手ランキングをリセットしました',b:'CPUの強さに「げきつよ」「やぎつよ」が増えて、組手は12人目から「げきつよ」が出るようになりました。条件が変わったので、組手のランキングと自己ベストをリセットしました。もう一回、何人抜けるか挑戦してな！',
+   list:['新ジョブ「天使」（弓）と新メンバー「レイカ」','新武器「雷」と新メンバー「シュン・マツカワ」','全キャラにステップ（←← か →→、十字キーの上のボタン）','ストーリー第3章「ヤギ・ワールドツアー」・第4章「陰キャの王」','剣系の攻撃モーションを作り直し','メニューとバトルのBGM・効果音（設定で音量を変えられる）','オンラインの観戦モード']},
+];
+function showNews(force){
+  const n=NEWS[0];if(!n||(!force&&(DATA.newsSeen|0)>=n.id))return;
+  const box=$('#newsBody');box.textContent='';box.append(elx('small','',n.d),elx('h3','',n.t),elx('p','',n.b));
+  if(n.list&&n.list.length){box.appendChild(elx('b','','最近の更新'));const ul=document.createElement('ul');for(const x of n.list)ul.appendChild(elx('li','',x));box.appendChild(ul);}
+  $('#news').hidden=false;
+}
 let RANK=null;
+const RANK_FROM=Date.UTC(2026,9,19,9,45); // 2026/10/19 18:45（日本時間）にリセット。CPUの強さが増えて組手の条件が変わったため
 function initRank(db){
   try{db.collection('rank').onSnapshot(snap=>{
-    const arr=[];for(const d of snap.docs){const v=d.data()||{},sc=Math.max(0,Math.min(999,Math.floor(+v.s||0)));if(!sc||!/^u[a-z0-9]{4,30}$/.test(d.id))continue;
+    const arr=[];for(const d of snap.docs){const v=d.data()||{},sc=Math.max(0,Math.min(999,Math.floor(+v.s||0)));if(!sc||(+v.at||0)<RANK_FROM||!/^u[a-z0-9]{4,30}$/.test(d.id))continue;
       const j=typeof v.j==='string'&&JOBS[v.j]&&!JOBS[v.j].hidden?v.j:'',w=j&&typeof v.w==='string'&&JOBS[j].weapons.includes(v.w)?v.w:'';
       arr.push({id:d.id,n:cleanName(v.n)||'ななし',m:cleanMsg(v.m),s:sc,c:cleanName(v.c),p:rosterPerson(v.p)?v.p:'',k:Math.max(0,v.k|0),j,w,at:+v.at||0});}
     arr.sort((a,b)=>b.s-a.s||a.at-b.at);RANK=arr;renderRank();
@@ -4790,6 +4810,8 @@ function init(){
   $('#lbEdit').addEventListener('click',()=>{const c=findChar(DATA.sel);openEditor(c,!!(c&&c.sample));});
   $('#onCreate').addEventListener('click',()=>{aInit();netEnter(true);});
   $('#onJoin').addEventListener('click',()=>{aInit();netEnter(false);});
+  $('#newsOk').addEventListener('click',()=>{DATA.newsSeen=NEWS[0].id;save();$('#news').hidden=true;});
+  setTimeout(()=>{if(!$('#menu').hidden)showNews();},700);
   $('#onWatch').addEventListener('click',()=>{aInit();netEnter(false,true);});
   $('#onCode').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();aInit();netEnter(false);}});
   $('#lbLeave').addEventListener('click',()=>{netLeave();goMenuFromNet();});
