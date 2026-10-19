@@ -129,3 +129,7 @@ node src/tools/tune_master.js src/mami-fight.html 4 10   # 勝率の調整（TUN
 - `apk/MummyFight.apk`（パッケージ jp.naohisa.mummyfight）。WebView の殻は MummyRS.apk の classes.dex をそのまま使い、マニフェストの名前・アイコン・中身（assets/www にこのフォルダの index.html・roster.js・bgm.mp3・op.mp3）を入れかえて、APK署名 v2 で署名し直したもの。
 - 作り方：scratchpad の `apktool_py/build_fight_apk.py <鍵フォルダ> <出力> <versionName> <versionCode>`。更新するときは同じ鍵（mummyfight-key.pem / mummyfight-cert.der）で、versionCode を上げる。鍵が変わるとアンインストールせんと入らへん。
 - 戻るボタンは `window.androidBack()`（OP中→スキップ、バトル中→ポーズ、メニューの画面→1つ前へ）。
+
+## 格闘の必殺技のあと（v56）
+- 前は「3秒間無敵」。今は5秒間スーパーアーマー（ひるまへんけどダメージはそのまま受ける。相手の必殺技・投げ・カウンターは通る）＋攻撃1.15倍。`FURY_T`／`FURY_ATK`。タイマーは今まで通り `f.star`（虹色のオーラ）。
+- 無敵がなくなって少し弱なったので TUNE を調整：ステゴロ 1.072→1.12、トンファー 1.028→1.08。CPU同士の勝率：拳法47%・ステゴロ44%・トンファー42%。

@@ -970,6 +970,7 @@ const WEAPONS={
 };
 const CMD={P:'パンチ',K:'キック',S1:'↓↘→ ＋ パンチ',S2:'→↓↘ ＋ パンチ',S3:'↓↙← ＋ キック'};
 const SCMD={S1:'↓↘→P',S2:'→↓↘P',S3:'↓↙←K'};
+const FURY_T=300,FURY_ATK=1.15; // 格闘の必殺技のあと：5秒間スーパーアーマー＋攻撃1.15倍
 const DMG_ALL=0.9; // ゲーム全体の攻撃力（殿下：上げすぎたので0.9倍）
 const SPEED_ALL=1.15; // ゲーム全体のキャラの移動速度（殿下：速度感がほしい）
 const HOVER_MP=0.38; // 天使の浮遊で1フレームに減るMP
@@ -1256,7 +1257,7 @@ function derive(c){
   return d;
 }
 /* 武器ごとの強さの調整（CPU同士の勝率が揃うように合わせた値）。dmg=与えるダメージ、hp=体力 */
-const TUNE={crossbow:{dmg:1.1},stegoro:{dmg:1.072},tonfa:{dmg:1.028},kenpo:{dmg:1.1},greatsword:{dmg:0.96},katana:{dmg:0.936},hammer:{dmg:0.973},onehand:{dmg:1.45},boosthammer:{dmg:1.04},gunblade:{dmg:1},staff:{dmg:1.189},grimoire:{dmg:1.054},ninjutsu:{dmg:1.164},thunder:{dmg:1.1,hp:0.85},handgun:{dmg:1.61},shotgun:{dmg:1.378},sniper:{dmg:1.283},akimbo:{dmg:1.15},rocket:{dmg:1.118},drill:{dmg:1.046},beam:{dmg:1.156},bow:{dmg:1.3},iai:{dmg:0.724},nitoryu:{dmg:1.0},ninja:{dmg:0.946},muscle:{dmg:1,hp:0.95},hustle:{dmg:1},ishihara:{dmg:1.4,hp:0.6,fixed:true}};
+const TUNE={crossbow:{dmg:1.1},stegoro:{dmg:1.12},tonfa:{dmg:1.08},kenpo:{dmg:1.1},greatsword:{dmg:0.96},katana:{dmg:0.936},hammer:{dmg:0.973},onehand:{dmg:1.45},boosthammer:{dmg:1.04},gunblade:{dmg:1},staff:{dmg:1.189},grimoire:{dmg:1.054},ninjutsu:{dmg:1.164},thunder:{dmg:1.1,hp:0.85},handgun:{dmg:1.61},shotgun:{dmg:1.378},sniper:{dmg:1.283},akimbo:{dmg:1.15},rocket:{dmg:1.118},drill:{dmg:1.046},beam:{dmg:1.156},bow:{dmg:1.3},iai:{dmg:0.724},nitoryu:{dmg:1.0},ninja:{dmg:0.946},muscle:{dmg:1,hp:0.95},hustle:{dmg:1},ishihara:{dmg:1.4,hp:0.6,fixed:true}};
 function M(o){return Object.assign({name:'',kind:'melee',startup:6,active:4,recovery:10,dmg:5,hb:null,kb:4,hitstun:15,lift:0,mp:0,dash:0,rise:0,multi:1,inv:0,proj:null,pose:'punch',sfx:'hit',fx:null,fxColor:'#e8452c'},o);}
 const EMPTY=M({kind:'none',startup:0,active:0,recovery:12,pose:'idle'});
 
@@ -2075,7 +2076,7 @@ function startMove(f,key){
     const spk=!f.onGround&&f.moves.SPA?'SPA':'SP'; // 天使は空中で使うと矢の雨
     if(!f.moves.SP||(f.sg||0)<100||(!f.onGround&&spk!=='SPA'))return;
     f.sg=0;G.cutin={f,name:f.moves[spk].name,t:0,life:58};
-    if(f.job==='fighter'){f.star=180;banner('無敵モード！');} // 格闘は必殺技で3秒間無敵
+    if(f.job==='fighter'){f.star=FURY_T;banner('スーパーアーマー！ 攻撃1.15倍');} // 格闘は必殺技で5秒間スーパーアーマー＋攻撃1.15倍（殿下）
     G.hitstop=Math.max(G.hitstop,48);G.shake=Math.max(G.shake,4);sfx('super');
   }
   let mv=f.moves[key];const air=!f.onGround;
@@ -2332,7 +2333,6 @@ function applyHit(att,def,mv,isProj,dir,pt){
   if(G.phase!=='fight')return false;
   if(def.state==='attack'&&def.move&&def.move.kind==='step'&&def.moveT<=def.move.dodge){if(G.frame-(def.dodgeFx||0)>16){def.dodgeFx=G.frame;addText(def.x,def.y-190,'ステップ！','#7fe3ff',30);addSmoke(def.x,def.y-20,3);}return false;} // ステップでよけた
   if(def.inv>0||def.state==='down'||def.state==='getup'||def.state==='ko'||def.state==='launch')return false;
-  if(def.star>0){if(G.frame-(def.starFx||0)>8){def.starFx=G.frame;addSpark(pt.x,pt.y,'#ffffff');addText(def.x,def.y-200,'無敵！','#ffd23f',26);}return false;}
   if(def.clone){ // 分身：何で殴られても1発ずつ減って、3発で消える
     def.cloneHp--;def.flash=8;def.lastHurt=G.frame;addSpark(pt.x,pt.y,'#ffffff');sfx('hit');G.hitstop=Math.max(G.hitstop,3);
     if(!mv.sp)att.sg=Math.min(100,(att.sg||0)+4);
@@ -2342,20 +2342,21 @@ function applyHit(att,def,mv,isProj,dir,pt){
   }
   const proj=isProj||mv.kind==='beam';
   const ironBody=def.weapon==='ishihara'&&def.armorT>0&&!def.armorBroken&&def.onGround&&['idle','walk','crouch','attack','land'].includes(def.state);
-  if((ironBody||(def.state==='attack'&&def.move&&def.move.armor&&def.moveT<def.move.startup+def.move.active&&(def.armorUsed||0)<def.move.armor))&&!mv.throw&&mv.kind!=='cstrike'&&!mv.sp){ // アーマー（石原は常時）
-    const ar=Math.max(1,Math.round(mv.dmg*DMG_ALL*att.atkMul*def.defMul*(def.weapon==='ishihara'?1:0.6))); // 石原はひるまへんけど体力はしっかり減る
+  const fury=def.star>0; // 格闘の必殺技のあと：スーパーアーマー（ひるまへんけどダメージは受ける）
+  if((ironBody||fury||(def.state==='attack'&&def.move&&def.move.armor&&def.moveT<def.move.startup+def.move.active&&(def.armorUsed||0)<def.move.armor))&&!mv.throw&&mv.kind!=='cstrike'&&!mv.sp){ // アーマー（石原は常時）
+    const ar=Math.max(1,Math.round(mv.dmg*DMG_ALL*att.atkMul*(att.star>0?FURY_ATK:1)*def.defMul*(def.weapon==='ishihara'||fury&&!ironBody?1:0.6))); // 石原はひるまへんけど体力はしっかり減る
     if(ironBody&&def.hp-ar>0){ // 石原：アーマーゲージが減って、なくなったらブレイクしてダウン
       def.armorG-=ar*2.4+6;def.hp-=ar;def.lastHurt=G.frame;def.flash=6;
       if(def.armorG<=0){def.armorG=0;def.armorBroken=true;def.move=null;def.state='airhit';def.onGround=false;def.vy=-8;def.vx=dir*4/def.weight;
         addText(def.x,def.y-210,'アーマーブレイク！','#ff4a3d',34);sfx('heavy');addRing(pt.x,pt.y,'#ff8a3d');G.hitstop=Math.max(G.hitstop,14);G.shake=Math.max(G.shake,10);return true;}
       sfx('guard');addSpark(pt.x,pt.y,'#ffd23f');if(G.frame-(def.starFx||0)>10){def.starFx=G.frame;addText(def.x,def.y-200,'効かん！','#ff8a3d',30);}G.hitstop=Math.max(G.hitstop,6);return true;
     }
-    if(def.hp-ar>0){def.armorUsed=(def.armorUsed||0)+1;def.hp-=ar;def.flash=6;def.lastHurt=G.frame;sfx('guard');addSpark(pt.x,pt.y,'#ffd23f');addText(def.x,def.y-200,'効かん！','#ff8a3d',30);G.hitstop=Math.max(G.hitstop,6);return true;}
+    if(def.hp-ar>0){if(!fury)def.armorUsed=(def.armorUsed||0)+1;def.hp-=ar;def.flash=6;def.lastHurt=G.frame;sfx('guard');addSpark(pt.x,pt.y,'#ffd23f');addText(def.x,def.y-200,'効かん！','#ff8a3d',30);G.hitstop=Math.max(G.hitstop,6);return true;}
   }
   const guarding=def.onGround&&['idle','walk','crouch','blockstun','land'].includes(def.state)&&(def.gBtn||def.rel===4||def.rel===1);
   if(guarding&&G.frame<=def.justUntil&&mv.kind!=='cstrike'&&!mv.throw&&!mv.unblock){def.justUntil=-1;return doCounter(att,def,mv,isProj,dir,pt);}
   const gucci=personOf(att)==='tanigucci'&&FEMALE.has(personOf(def)); // 谷GUCCI：相手が女やと攻撃力1.25倍
-  const raw=Math.max(1,Math.round(mv.dmg*DMG_ALL*att.atkMul*(att.pump>0?1.25:1)*def.defMul*(def.pump>0?0.85:1)*(gucci?1.25:1)*anikiRage(att)*(att.engine>0?1.25:1)*(att.legend?1.25:1)*(personOf(att)==='yusei'&&personOf(def)==='kojimaimo'&&att.legend?1.25:1)));
+  const raw=Math.max(1,Math.round(mv.dmg*DMG_ALL*att.atkMul*(att.pump>0?1.25:1)*def.defMul*(def.pump>0?0.85:1)*(gucci?1.25:1)*anikiRage(att)*(att.star>0?FURY_ATK:1)*(att.engine>0?1.25:1)*(att.legend?1.25:1)*(personOf(att)==='yusei'&&personOf(def)==='kojimaimo'&&att.legend?1.25:1)));
   if(gucci&&G.frame-(att.gucciFx||0)>24){att.gucciFx=G.frame;addText(def.x,def.y-232,'×1.25','#ff4a3d',26);}
   let crushed=false;
   if(guarding&&!mv.throw&&!mv.unblock){
@@ -4036,7 +4037,7 @@ function fillMoves(tb,job,weapon){
   c1.className='cmd';c1.textContent='攻撃に合わせてガード';c2.textContent=mv.CS.name+'（カウンター）';c3.textContent='反撃して浮かせる・弾やビームははね返す'+(job==='hero'?'・盾でガードするのでMPが減らへん':'')+(weapon==='kenpo'?'・拳法は受付がいちばん長い（物理キャラの2.5倍）':weapon==='iai'?'・居合は受付が長め':JOBS[job]&&JOBS[job].phys?'・物理キャラは受付が長い':'');
   tr.append(c1,c2,c3);tb.appendChild(tr);
   if(mv.SP){const r=document.createElement('tr'),a=document.createElement('td'),b=document.createElement('td'),c=document.createElement('td');
-    a.className='cmd';a.textContent='ゲージ満タンで「必殺」';b.textContent=mv.SP.name;c.textContent=({gym:'相手全員を1秒マヒさせる',legend:'地面から伝説の剣を引き抜く。そのラウンドの間ずっと攻撃1.25倍・速さ1.05倍・黄色いオーラ（ゲージはたまりにくい）',melee:mv.SP.swingGrab?'つかんでブン回して壁までぶん投げる（ガード不能・近い壁ならマヒ）':undefined,zip:'画面の端から端まで一瞬で駆け抜けて斬る（ガード不能）',clone:'5秒間、分身が一緒に戦う（分身は3発で消える）',volt:'自分に雷を落として5秒間帯電。殴った相手も触れた相手も感電してマヒ',heal:'地上で使うと体力を'+Math.round((mv.SP.heal||0.3)*100)+'%回復'+(mv.SPA?'。浮遊中に使うと「'+mv.SPA.name+'」：相手の頭上に矢の雨を降らせる':'')}[mv.SP.kind]||(mv.SP.proj&&mv.SP.proj.kind==='slashwave'?'巨大な斬撃が地をはって飛ぶ（何人でも貫通）':mv.SP.proj&&mv.SP.proj.kind==='sonic'?'ソニックブームを3連発で飛ばす':mv.SP.proj&&mv.SP.proj.ret?'超大型手裏剣が行って戻ってくる（往復で2回当たる）':'必殺技・大ダメージ'))+(job==='fighter'?'・出したら3秒間無敵':'');r.append(a,b,c);tb.appendChild(r);}
+    a.className='cmd';a.textContent='ゲージ満タンで「必殺」';b.textContent=mv.SP.name;c.textContent=({gym:'相手全員を1秒マヒさせる',legend:'地面から伝説の剣を引き抜く。そのラウンドの間ずっと攻撃1.25倍・速さ1.05倍・黄色いオーラ（ゲージはたまりにくい）',melee:mv.SP.swingGrab?'つかんでブン回して壁までぶん投げる（ガード不能・近い壁ならマヒ）':undefined,zip:'画面の端から端まで一瞬で駆け抜けて斬る（ガード不能）',clone:'5秒間、分身が一緒に戦う（分身は3発で消える）',volt:'自分に雷を落として5秒間帯電。殴った相手も触れた相手も感電してマヒ',heal:'地上で使うと体力を'+Math.round((mv.SP.heal||0.3)*100)+'%回復'+(mv.SPA?'。浮遊中に使うと「'+mv.SPA.name+'」：相手の頭上に矢の雨を降らせる':'')}[mv.SP.kind]||(mv.SP.proj&&mv.SP.proj.kind==='slashwave'?'巨大な斬撃が地をはって飛ぶ（何人でも貫通）':mv.SP.proj&&mv.SP.proj.kind==='sonic'?'ソニックブームを3連発で飛ばす':mv.SP.proj&&mv.SP.proj.ret?'超大型手裏剣が行って戻ってくる（往復で2回当たる）':'必殺技・大ダメージ'))+(job==='fighter'?'・出したら5秒間スーパーアーマー（ひるまへん）＋攻撃1.15倍':'');r.append(a,b,c);tb.appendChild(r);}
 }
 
 /* ---- エディタ ---- */
@@ -4607,7 +4608,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='55';
+const GAME_VER='56';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
@@ -5135,7 +5136,7 @@ function applySnap(s){
       moveT:a[10]|0,air:!!a[11],inv:a[12]|0,t:+a[13]||0,flash:+a[14]||0,guardCrouch:!!a[15],gBtn:!!a[16],rel:(a[17]|0)||5,justUntil:G.frame+(a[18]|0),comboShow:a[19]|0,comboT:a[20]|0,comboDmg:+a[21]||0,
       ko:!!a[22],gone:!!a[23],spin:+a[24]||0,mpFlash:a[25]|0,phase2:!!a[26],onGround:!!a[27],out:!!a[28],wallB:!!a[29]});
     f.ammo=a.length>30?Math.max(0,Math.min(f.mag,a[30]|0)):f.ammo;
-    if(a.length>31){f.pump=(a[31]&1)?60:0;f.hustle=(a[31]&2)?60:0;f.star=(a[31]&4)?120:0;f.engine=(a[31]&8)?60:0;f.legend=!!(a[31]&16);f.fly=!!(a[31]&32);f.volt=(a[31]&64)?60:0;}
+    if(a.length>31){f.pump=(a[31]&1)?60:0;f.hustle=(a[31]&2)?60:0;f.star=(a[31]&4)?FURY_T:0;f.engine=(a[31]&8)?60:0;f.legend=!!(a[31]&16);f.fly=!!(a[31]&32);f.volt=(a[31]&64)?60:0;}
     if(a.length>33)f.form=a[33]?'gun':'blade';
     if(a.length>32){f.armorBroken=a[32]<0;f.armorG=Math.min(100,Math.abs(+a[32]||0));f.armorT=a[32]?1:0;}
     f.move=mk==='X'?EMPTY:mk?(f.moves[mk]||null):null;
