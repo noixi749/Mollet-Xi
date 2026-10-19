@@ -909,6 +909,7 @@ const WEAPONS={
 };
 const CMD={P:'パンチ',K:'キック',S1:'↓↘→ ＋ パンチ',S2:'→↓↘ ＋ パンチ',S3:'↓↙← ＋ キック'};
 const SCMD={S1:'↓↘→P',S2:'→↓↘P',S3:'↓↙←K'};
+const SPEED_ALL=1.15; // ゲーム全体のキャラの移動速度（殿下：速度感がほしい）
 const HOVER_MP=0.38; // 天使の浮遊で1フレームに減るMP
 const JUST=8,JUST_PHYS=15; // ジャストガードの受付（フレーム）。物理キャラ（格闘・大剣・ロボ）は長い
 const MIRROR={1:3,2:2,3:1,4:6,5:5,6:4,7:9,8:8,9:7};
@@ -1073,7 +1074,7 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 function derive(c){
   const j=JOBS[c.job],s=c.stats;
   const w=WEAPONS[c.weapon]||{},t=TUNE[c.weapon]||{};
-  const d={maxHp:Math.round((100+j.hp+10*s.hp)*(t.hp||1)),atkMul:1+0.07*s.atk,defMul:Math.max(0.5,1-0.045*s.def)*(t.def||1),walk:j.walk*1.1*(1+0.05*s.spd)*(w.walk||1),jump:j.jump*(1+0.012*s.spd)*(w.jump||1),maxMp:40+10*s.mp,mpRegen:(8+1.0*s.mp)/60,weight:j.weight};
+  const d={maxHp:Math.round((100+j.hp+10*s.hp)*(t.hp||1)),atkMul:1+0.07*s.atk,defMul:Math.max(0.5,1-0.045*s.def)*(t.def||1),walk:j.walk*1.1*SPEED_ALL*(1+0.05*s.spd)*(w.walk||1),jump:j.jump*(1+0.012*s.spd)*(w.jump||1),maxMp:40+10*s.mp,mpRegen:(8+1.0*s.mp)/60,weight:j.weight};
   const tr=traitOf(c); // 人物の特性
   const tw=tr&&tr.wpn&&tr.wpn[c.weapon];if(tw&&tw.spd){d.walk*=tw.spd;d.jump*=1+(tw.spd-1)*0.3;}
   if(tr){if(tr.hp)d.maxHp=Math.round(d.maxHp*tr.hp);if(tr.atk)d.atkMul*=tr.atk;if(tr.blade&&BLADES.has(c.weapon))d.atkMul*=tr.blade;if(tr.def)d.defMul*=tr.def;if(tr.spd){d.walk*=tr.spd;d.jump*=1+(tr.spd-1)*0.3;}if(tr.mpRegen)d.mpRegen*=tr.mpRegen;}
@@ -3720,7 +3721,7 @@ async function fbJoin(name,opts){
 
 
 /* ================= メニューのタブ・プロフィール・組手・ランキング・問い合わせ ================= */
-const GAME_VER='40';
+const GAME_VER='41';
 const TABS=['battle','online','kumite','rank','story','chara','profile','names','settings','howto','inbox'];
 let SHEETS=[]; // 開いてるパネルの重なり（戻るで1つ前へ）
 function applySheets(){
